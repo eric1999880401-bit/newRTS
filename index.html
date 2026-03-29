@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#111827" />
+  <title>Powerlifting Log</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --panel-3: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: #334155;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --ok: #10b981;
+      --shadow: 0 18px 40px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.4;
+    }
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .hero {
+      background: linear-gradient(135deg, rgba(56,189,248,.18), rgba(34,197,94,.12));
+      border: 1px solid rgba(148,163,184,.2);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    h1, h2, h3 { margin: 0; }
+    .sub {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button, .button, input, select, textarea {
+      font: inherit;
+    }
+    button, .button {
+      border: 1px solid rgba(148,163,184,.2);
+      background: #111827;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    button:hover, .button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(56,189,248,.5);
+    }
+    .primary {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      border-color: transparent;
+      color: white;
+    }
+    .secondary {
+      background: #0f172a;
+    }
+    .danger {
+      background: rgba(239,68,68,.12);
+      color: #fecaca;
+      border-color: rgba(239,68,68,.35);
+    }
+    .pill {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(148,163,184,.25);
+      color: var(--muted);
+      background: rgba(15,23,42,.6);
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .tab {
+      min-width: 170px;
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(15,23,42,.75);
+    }
+    .tab.active {
+      outline: 2px solid rgba(56,189,248,.6);
+      background: rgba(2,132,199,.14);
+    }
+    .tab small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .panel {
+      background: rgba(17,24,39,.94);
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .panel h2 {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    .panel .hint {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: #0b1220;
+      color: var(--text);
+      border: 1px solid rgba(148,163,184,.2);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .readonly {
+      opacity: .82;
+    }
+    .metrics {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .metric {
+      background: rgba(15,23,42,.88);
+      border: 1px solid rgba(148,163,184,.14);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .metric .k {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .metric .v {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .ok { color: #86efac; }
+    .warn { color: #fcd34d; }
+    .bad { color: #fca5a5; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(148,163,184,.15);
+      vertical-align: top;
+    }
+    th {
+      color: #cbd5e1;
+      font-weight: 600;
+      background: rgba(15,23,42,.6);
+      position: sticky;
+      top: 0;
+    }
+    .table-wrap {
+      overflow: auto;
+      max-height: 480px;
+      border: 1px solid rgba(148,163,184,.16);
+      border-radius: 14px;
+    }
+    .right { text-align: right; }
+    .muted { color: var(--muted); }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .spacer { flex: 1; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      border: 1px solid rgba(148,163,184,.2);
+    }
+    .status.ok { color: #86efac; background: rgba(16,185,129,.08); }
+    .status.warn { color: #fcd34d; background: rgba(245,158,11,.08); }
+    .status.bad { color: #fca5a5; background: rgba(239,68,68,.08); }
+    .inline-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .actions-inline {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    details {
+      border: 1px solid rgba(148,163,184,.16);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(15,23,42,.42);
+    }
+    summary {
+      cursor: pointer;
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+    .empty {
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+    @media (max-width: 1100px) {
+      .grid-3, .grid-4, .grid-2, .metrics {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 760px) {
+      .grid-3, .grid-4, .grid-2, .metrics {
+        grid-template-columns: 1fr;
+      }
+      .app { padding: 12px; }
+      .hero { padding: 16px; }
+      .topbar {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="topbar">
+        <div>
+          <h1>Powerlifting Log — Dual User</h1>
+          <div class="sub">
+            GitHub Pages ready • English UI • two separate users, two separate programs, two separate logs
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="primary" id="exportAllBtn">Export all data to Excel</button>
+          <button id="backupBtn">Backup JSON</button>
+          <label class="button" for="restoreInput">Restore JSON</label>
+          <input id="restoreInput" type="file" accept=".json" hidden />
+        </div>
+      </div>
+
+      <div class="tabs" id="userTabs"></div>
+      <div class="footer-note">
+        This version stores data in the browser for fast offline-style use after loading. If the same site is opened on another device, the data will not sync unless a backend is added.
+      </div>
+    </section>
+
+    <div class="grid grid-2">
+      <section class="panel">
+        <h2>Active user settings</h2>
+        <div class="hint">Each user has an independent name, rounding increment, fatigue threshold, imported program, and training log.</div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="userName">Display name</label>
+            <input id="userName" type="text" placeholder="User name" />
+          </div>
+          <div class="field">
+            <label for="roundingKg">Rounding increment (kg)</label>
+            <input id="roundingKg" type="number" min="0.1" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="fatigueDropPct">Fatigue drop target (%)</label>
+            <input id="fatigueDropPct" type="number" min="0" max="25" step="0.5" />
+          </div>
+          <div class="field">
+            <label for="defaultTopSetSource">Back-off recommendation base</label>
+            <select id="defaultTopSetSource">
+              <option value="latestTop">Latest top set in this session</option>
+              <option value="currentSet">Current set e1RM</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions-inline">
+          <button id="saveSettingsBtn">Save settings</button>
+          <button class="secondary" id="loadBundledProgramBtn">Reload bundled sample program to active user</button>
+          <button class="danger" id="clearActiveDataBtn">Clear active user's log</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Program import</h2>
+        <div class="hint">Import one program file for the active user. The parser is already aligned to the RTS-style workbook format that contains a <span class="mono">Schedule_12w</span> sheet.</div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="programImport">Import program (.xlsx, .xls, .csv)</label>
+            <input id="programImport" type="file" accept=".xlsx,.xls,.csv" />
+          </div>
+          <div class="field">
+            <label>Program status</label>
+            <div class="metric">
+              <div class="k">Rows imported for active user</div>
+              <div class="v" id="programCount">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="inline-note">Expected columns: Week, Day, Phase, Focus, Main Lift, Top Set Target, Back-off Plan, Secondary Lift, Secondary Prescription, Accessories / Notes.</div>
+        <details style="margin-top:12px">
+          <summary>Method used in this app</summary>
+          <div class="inline-note" style="margin-top:10px">
+            e1RM is calculated from load ÷ %1RM. The %1RM is taken from an RTS-style reps × RPE table. Back-off recommendations multiply the selected e1RM by the target table percentage, then round to the user's chosen plate increment. Fatigue drop is computed as:
+            <span class="mono">(reference e1RM − current e1RM) / reference e1RM × 100</span>.
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:16px">
+      <section class="panel">
+        <h2>Plan viewer</h2>
+        <div class="hint">Check the active user's imported program by week and day so the workout is visible without comparing against another file.</div>
+        <div class="grid grid-3">
+          <div class="field">
+            <label for="filterWeek">Week</label>
+            <select id="filterWeek"></select>
+          </div>
+          <div class="field">
+            <label for="filterDay">Day</label>
+            <select id="filterDay"></select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="usePlanForLogBtn">Use this week/day in log form</button>
+          </div>
+        </div>
+        <div id="planCards" style="margin-top:14px"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Current set calculator</h2>
+        <div class="hint">Enter the set to get %1RM, e1RM, suggested back-off load, and fatigue status.</div>
+        <div class="grid grid-4">
+          <div class="field">
+            <label for="logDate">Date</label>
+            <input id="logDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="logWeek">Week #</label>
+            <select id="logWeek"></select>
+          </div>
+          <div class="field">
+            <label for="logDay">Training day</label>
+            <select id="logDay"></select>
+          </div>
+          <div class="field">
+            <label for="logLift">Lift</label>
+            <select id="logLift">
+              <option>Squat</option>
+              <option>Bench</option>
+              <option>Deadlift</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="logVariation">Variation</label>
+            <select id="logVariation">
+              <option>Competition</option>
+              <option>Paused</option>
+              <option>Board</option>
+              <option>Pin</option>
+              <option>Spoto</option>
+              <option>Box</option>
+              <option>Tempo</option>
+              <option>Touch and Go</option>
+              <option>Close Grip</option>
+              <option>Deficit</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field" id="variationOtherWrap" style="display:none">
+            <label for="logVariationOther">Other variation</label>
+            <input id="logVariationOther" type="text" placeholder="Type custom variation" />
+          </div>
+          <div class="field">
+            <label for="logSetType">Set type</label>
+            <select id="logSetType">
+              <option>Warm up</option>
+              <option>Top</option>
+              <option>Back off</option>
+              <option>Secondary</option>
+              <option>Accessory</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="logReps">Reps</label>
+            <select id="logReps"></select>
+          </div>
+          <div class="field">
+            <label for="logWeight">Weight (kg)</label>
+            <input id="logWeight" type="number" step="0.1" min="0" />
+          </div>
+          <div class="field">
+            <label for="logRpe">RPE</label>
+            <select id="logRpe"></select>
+          </div>
+          <div class="field">
+            <label for="targetReps">Target back-off reps</label>
+            <select id="targetReps"></select>
+          </div>
+          <div class="field">
+            <label for="targetRpe">Target back-off RPE</label>
+            <select id="targetRpe"></select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label for="logSessionFocus">Session focus</label>
+          <input id="logSessionFocus" type="text" placeholder="Auto-filled from imported program when available" />
+        </div>
+        <div class="grid grid-2" style="margin-top:12px">
+          <div class="field">
+            <label for="logTechNotes">Technique notes</label>
+            <textarea id="logTechNotes" placeholder="Bar path, depth, lockout, stability, pain, etc."></textarea>
+          </div>
+          <div class="field">
+            <label for="logGeneralNotes">General notes</label>
+            <textarea id="logGeneralNotes" placeholder="Sleep, readiness, accessories, session comments, etc."></textarea>
+          </div>
+        </div>
+
+        <div class="metrics" style="margin-top:14px">
+          <div class="metric">
+            <div class="k">%1RM lookup</div>
+            <div class="v" id="pct1rmMetric">—</div>
+          </div>
+          <div class="metric">
+            <div class="k">Current e1RM</div>
+            <div class="v" id="e1rmMetric">—</div>
+          </div>
+          <div class="metric">
+            <div class="k">Suggested back-off load</div>
+            <div class="v" id="suggestedMetric">—</div>
+          </div>
+          <div class="metric">
+            <div class="k">Fatigue drop</div>
+            <div class="v" id="fatigueMetric">—</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <div id="fatigueStatus" class="status warn">Waiting for a reference top set</div>
+          <div class="spacer"></div>
+          <button id="applySuggestedBtn">Use suggested load</button>
+          <button class="primary" id="saveSetBtn">Save set</button>
+        </div>
+
+        <div class="footer-note" id="calcSourceNote"></div>
+      </section>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:16px">
+      <section class="panel">
+        <h2>Current session log</h2>
+        <div class="hint">Filtered by active user + selected date.</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time order</th>
+                <th>Lift</th>
+                <th>Variation</th>
+                <th>Type</th>
+                <th class="right">Reps</th>
+                <th class="right">Weight</th>
+                <th class="right">RPE</th>
+                <th class="right">e1RM</th>
+                <th class="right">Fatigue %</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="sessionLogBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Recent log history</h2>
+        <div class="hint">Last 20 rows for the active user.</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Week</th>
+                <th>Day</th>
+                <th>Lift</th>
+                <th>Variation</th>
+                <th>Type</th>
+                <th class="right">Reps</th>
+                <th class="right">Weight</th>
+                <th class="right">RPE</th>
+                <th class="right">e1RM</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "powerlifting_dual_user_app_v2";
+    const DEFAULT_PROGRAM_USER1 = [{"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 3×5 @6 (stop if any set >6.5)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6 (2-count pause)", "accessoriesNotes": "RDL 2–3×6–8 @6–7; chest-supported row 3×8–12; abs 2–3×8–12"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6.5–7", "backoffPlan": "4×4 @6 (all comp pauses; stop if >6.5)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6 (strict depth / stay braced)", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6 (cap last set ≤6.5)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "3×6 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 4×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6–6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×4 @6–6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×5 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7", "backoffPlan": "−5% then 4×3 @6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×4 @6.5–7, then 3×4 @6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×3 @6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2×15–20"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×4 @6.5", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 4, "phase": "Pivot / deload", "day": 1, "focus": "Squat + light bench", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Goal: drop fatigue hard. Only easy blood-flow accessories if desired."}, {"week": 4, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat technique", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "2×3 @5.5–6", "accessoriesNotes": "Everything should feel fast. No grinders, no soreness chasing."}, {"week": 4, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench technique", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @5.5–6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×5 @6", "accessoriesNotes": "Everything should feel fast. Stop if position breaks."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7.5", "backoffPlan": "−5% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7, then 3×4 @6.5–7", "accessoriesNotes": "Keep assistance, but cut 1 set if recovery is tight."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7.5", "backoffPlan": "4×3 @6.5–7 (comp pause, cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats + triceps stay in. Use conservative jumps, especially on bench."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Back ext or hamstrings 2×8–12; upper back 2–3×10–15"}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8", "backoffPlan": "−5% then 3×3 @7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7–7.5, then 3×4 @6.5–7", "accessoriesNotes": "Keep bar speed honest. If single overshoots, hold or reduce load."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8", "backoffPlan": "4×3 @7 (cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6–6.5", "accessoriesNotes": "Lats + triceps, but avoid elbow / wrist irritation."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5", "backoffPlan": "−6% then 3×3 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Deadlift volume stays moderate—quality over fatigue."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8 (repeat if W6 overshot)", "backoffPlan": "−5% then 2–3×2 @7", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×3 @7.5, then 3×3 @6.5–7", "accessoriesNotes": "Do not force a PR single here. Clean reps only."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8 (repeat if touch inconsistent)", "backoffPlan": "3×2 @7", "secondaryLift": "Box Squat", "secondaryPrescription": "3×2 @6–6.5", "accessoriesNotes": "Bench should look like competition every rep."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5–8", "backoffPlan": "−6% then 2–3×2 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "3×4 @6.5", "accessoriesNotes": "If recovery is poor, do only 2 back-off sets."}, {"week": 8, "phase": "Pivot / deload", "day": 1, "focus": "Squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×3 @6", "accessoriesNotes": "Strip fatigue. Only light pump work if you feel beat up."}, {"week": 8, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat touch", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Squat variation", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "Everything should feel easy and technically sharp."}, {"week": 8, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench touch", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×2 @6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Leave the gym feeling better than you walked in."}, {"week": 9, "phase": "Block 3 — Realization", "day": 1, "focus": "Peak squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "2–3×2 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Low volume, high quality. Film the single and first back-off set."}, {"week": 9, "phase": "Block 3 — Realization", "day": 2, "focus": "Peak bench + light squat", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "3×2 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "No grinders. Every bench rep must be comp-standard."}, {"week": 9, "phase": "Block 3 — Realization", "day": 3, "focus": "Peak deadlift + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @8", "backoffPlan": "2×2 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "3×3 @6.5", "accessoriesNotes": "Finish deadlifts hard, but stop if position opens."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 1, "focus": "Squat opener practice", "mainLift": "Comp Squat", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2×1 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Treat this as opener rehearsal, not maxing."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 2, "focus": "Bench opener practice", "mainLift": "Comp Bench", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2–3×1 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Protect the touch. If wrist pain >3/10, downshift."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 3, "focus": "Deadlift opener practice", "mainLift": "Sumo Deadlift", "topSetTarget": "Planned opener 1×1 @8", "backoffPlan": "1–2×1 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "No chasing second attempts in training."}, {"week": 11, "phase": "Taper", "day": 1, "focus": "Squat taper", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Minimal assistance only if it improves recovery."}, {"week": 11, "phase": "Taper", "day": 2, "focus": "Bench taper", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Keep everything fast and crisp."}, {"week": 11, "phase": "Taper", "day": 3, "focus": "Deadlift taper", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Walk out fresh."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 1, "focus": "Test squat + light bench", "mainLift": "Squat Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; shut it down if depth slips", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Comp standard first: depth non-negotiable."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 2, "focus": "Test bench + light squat", "mainLift": "Bench Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; only comp-standard touches count", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "No touch = no make. Protect the wrist if needed."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 3, "focus": "Test deadlift", "mainLift": "Deadlift Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; stop if lockout soft / position breaks", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Lockout standard: knees + hips through, no overextension."}];
+    const RPE_TABLE = {"10.0": {"1": 1.0, "2": 0.955, "3": 0.922, "4": 0.892, "5": 0.863, "6": 0.837, "7": 0.811, "8": 0.786, "9": 0.762, "10": 0.739, "11": 0.707, "12": 0.68}, "9.5": {"1": 0.978, "2": 0.939, "3": 0.907, "4": 0.878, "5": 0.85, "6": 0.824, "7": 0.799, "8": 0.774, "9": 0.751, "10": 0.723, "11": 0.694, "12": 0.667}, "9.0": {"1": 0.955, "2": 0.922, "3": 0.892, "4": 0.863, "5": 0.837, "6": 0.811, "7": 0.786, "8": 0.762, "9": 0.739, "10": 0.707, "11": 0.68, "12": 0.653}, "8.5": {"1": 0.939, "2": 0.907, "3": 0.878, "4": 0.85, "5": 0.824, "6": 0.799, "7": 0.774, "8": 0.751, "9": 0.723, "10": 0.694, "11": 0.667, "12": 0.64}, "8.0": {"1": 0.922, "2": 0.892, "3": 0.863, "4": 0.837, "5": 0.811, "6": 0.786, "7": 0.762, "8": 0.739, "9": 0.707, "10": 0.68, "11": 0.653, "12": 0.626}, "7.5": {"1": 0.907, "2": 0.878, "3": 0.85, "4": 0.824, "5": 0.799, "6": 0.774, "7": 0.751, "8": 0.723, "9": 0.694, "10": 0.667, "11": 0.64, "12": 0.613}, "7.0": {"1": 0.892, "2": 0.863, "3": 0.837, "4": 0.811, "5": 0.786, "6": 0.762, "7": 0.739, "8": 0.707, "9": 0.68, "10": 0.653, "11": 0.626, "12": 0.599}, "6.5": {"1": 0.878, "2": 0.85, "3": 0.824, "4": 0.799, "5": 0.774, "6": 0.751, "7": 0.723, "8": 0.694, "9": 0.667, "10": 0.64, "11": 0.613, "12": 0.586}, "6.0": {"1": 0.863, "2": 0.837, "3": 0.811, "4": 0.786, "5": 0.762, "6": 0.739, "7": 0.707, "8": 0.68, "9": 0.653, "10": 0.626, "11": 0.599, "12": 0.572}, "5.5": {"1": 0.85, "2": 0.824, "3": 0.799, "4": 0.774, "5": 0.751, "6": 0.723, "7": 0.694, "8": 0.667, "9": 0.64, "10": 0.613, "11": 0.586, "12": 0.559}, "5.0": {"1": 0.837, "2": 0.811, "3": 0.786, "4": 0.762, "5": 0.739, "6": 0.707, "7": 0.68, "8": 0.653, "9": 0.626, "10": 0.599, "11": 0.572, "12": 0.545}};
+
+    function makeDefaultState() {
+      return {
+        activeUserId: "u1",
+        users: {
+          u1: {
+            id: "u1",
+            name: "User 1",
+            roundingKg: 2.5,
+            fatigueDropPct: 5,
+            backoffBase: "latestTop",
+            program: DEFAULT_PROGRAM_USER1,
+            logs: []
+          },
+          u2: {
+            id: "u2",
+            name: "User 2",
+            roundingKg: 2.5,
+            fatigueDropPct: 5,
+            backoffBase: "latestTop",
+            program: [],
+            logs: []
+          }
+        }
+      };
+    }
+
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return makeDefaultState();
+        const parsed = JSON.parse(raw);
+        const fallback = makeDefaultState();
+        return {
+          activeUserId: parsed.activeUserId || "u1",
+          users: {
+            u1: { ...fallback.users.u1, ...(parsed.users?.u1 || {}) },
+            u2: { ...fallback.users.u2, ...(parsed.users?.u2 || {}) }
+          }
+        };
+      } catch (err) {
+        console.error(err);
+        return makeDefaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getActiveUser() {
+      return state.users[state.activeUserId];
+    }
+
+    function formatNumber(value, digits = 1) {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return "—";
+      return Number(value).toFixed(digits);
+    }
+
+    function roundToIncrement(value, increment) {
+      const step = Number(increment) || 2.5;
+      return Math.round(Number(value) / step) * step;
+    }
+
+    function normalizeHeader(text) {
+      return String(text || "")
+        .toLowerCase()
+        .replace(/[#()]/g, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function normalizeProgramRow(row) {
+      const map = {};
+      Object.keys(row).forEach((key) => {
+        map[normalizeHeader(key)] = row[key];
+      });
+      const get = (...keys) => {
+        for (const key of keys) {
+          if (map[key] !== undefined && map[key] !== null) return map[key];
+        }
+        return "";
+      };
+      const week = Number(get("week", "week "));
+      const day = Number(get("day", "training day"));
+      if (!week || !day) return null;
+      return {
+        week,
+        phase: String(get("phase") || ""),
+        day,
+        focus: String(get("focus", "session focus") || ""),
+        mainLift: String(get("main lift", "mainlift", "lift 1") || ""),
+        topSetTarget: String(get("top set target", "top set", "topsettarget") || ""),
+        backoffPlan: String(get("back off plan", "backoff plan", "back off", "backoff") || ""),
+        secondaryLift: String(get("secondary lift", "secondary", "lift 2") || ""),
+        secondaryPrescription: String(get("secondary prescription", "secondary rx", "secondary plan") || ""),
+        accessoriesNotes: String(get("accessories notes", "accessories / notes", "accessories", "notes") || "")
+      };
+    }
+
+    function getPercent1RM(reps, rpe) {
+      const repKey = Number(reps);
+      const rpeKey = Number(rpe).toFixed(1);
+      const row = RPE_TABLE[rpeKey] || RPE_TABLE[Number(rpeKey)];
+      if (!row) return null;
+      const pct = row[repKey];
+      return pct ? Number(pct) : null;
+    }
+
+    function calcE1RM(weight, reps, rpe) {
+      const pct = getPercent1RM(reps, rpe);
+      if (!pct || !weight) return null;
+      return Number(weight) / pct;
+    }
+
+    function getProgramFor(userId, week, day) {
+      return (state.users[userId].program || []).filter((row) => Number(row.week) === Number(week) && Number(row.day) === Number(day));
+    }
+
+    function getWeekOptions() {
+      const active = getActiveUser();
+      const maxProgramWeek = Math.max(12, ...active.program.map((r) => Number(r.week) || 0));
+      return Array.from({ length: maxProgramWeek }, (_, i) => i + 1);
+    }
+
+    function getLatestReferenceTop({ userId, date, lift }) {
+      const logs = state.users[userId].logs
+        .filter((row) => row.date === date && row.lift === lift && row.setType === "Top")
+        .sort((a, b) => a.order - b.order);
+      return logs.length ? logs[logs.length - 1] : null;
+    }
+
+    function getCurrentSessionLogs() {
+      const user = getActiveUser();
+      const date = document.getElementById("logDate").value;
+      return user.logs
+        .filter((row) => row.date === date)
+        .sort((a, b) => a.order - b.order);
+    }
+
+    function computeCurrentMetrics() {
+      const user = getActiveUser();
+      const reps = Number(document.getElementById("logReps").value);
+      const rpe = Number(document.getElementById("logRpe").value);
+      const weight = Number(document.getElementById("logWeight").value);
+      const date = document.getElementById("logDate").value;
+      const lift = document.getElementById("logLift").value;
+      const targetReps = Number(document.getElementById("targetReps").value);
+      const targetRpe = Number(document.getElementById("targetRpe").value);
+      const setType = document.getElementById("logSetType").value;
+
+      const pct = getPercent1RM(reps, rpe);
+      const e1rm = calcE1RM(weight, reps, rpe);
+
+      let referenceTop = null;
+      if (user.backoffBase === "latestTop" && setType !== "Top") {
+        referenceTop = getLatestReferenceTop({ userId: user.id, date, lift });
+      }
+
+      const baseE1RM = referenceTop?.e1rm || e1rm;
+      const suggestedPct = getPercent1RM(targetReps, targetRpe);
+      const suggestedWeight = baseE1RM && suggestedPct ? roundToIncrement(baseE1RM * suggestedPct, user.roundingKg) : null;
+
+      let fatiguePct = null;
+      if (referenceTop?.e1rm && e1rm) {
+        fatiguePct = ((referenceTop.e1rm - e1rm) / referenceTop.e1rm) * 100;
+      }
+
+      return {
+        pct,
+        e1rm,
+        referenceTop,
+        fatiguePct,
+        targetReps,
+        targetRpe,
+        suggestedWeight,
+        baseE1RM
+      };
+    }
+
+    function getVariationValue() {
+      const variation = document.getElementById("logVariation").value;
+      if (variation !== "Other") return variation;
+      return document.getElementById("logVariationOther").value.trim() || "Other";
+    }
+
+    function autoFillSessionFocus() {
+      const week = Number(document.getElementById("logWeek").value);
+      const day = Number(document.getElementById("logDay").value);
+      const matches = getProgramFor(state.activeUserId, week, day);
+      const input = document.getElementById("logSessionFocus");
+      if (!matches.length) return;
+      input.value = matches.map((x) => x.focus).filter(Boolean)[0] || input.value;
+    }
+
+    function renderUserTabs() {
+      const el = document.getElementById("userTabs");
+      el.innerHTML = "";
+      Object.values(state.users).forEach((user) => {
+        const btn = document.createElement("button");
+        btn.className = "tab" + (state.activeUserId === user.id ? " active" : "");
+        btn.innerHTML = `<strong>${escapeHtml(user.name)}</strong><small>${user.program.length} plan rows • ${user.logs.length} logged sets</small>`;
+        btn.onclick = () => {
+          state.activeUserId = user.id;
+          saveState();
+          refreshAll();
+        };
+        el.appendChild(btn);
+      });
+    }
+
+    function renderSettings() {
+      const user = getActiveUser();
+      document.getElementById("userName").value = user.name;
+      document.getElementById("roundingKg").value = user.roundingKg;
+      document.getElementById("fatigueDropPct").value = user.fatigueDropPct;
+      document.getElementById("defaultTopSetSource").value = user.backoffBase || "latestTop";
+      document.getElementById("programCount").textContent = user.program.length;
+    }
+
+    function renderWeekDaySelectors() {
+      const weekOptions = getWeekOptions();
+      const weekSelectIds = ["filterWeek", "logWeek"];
+      weekSelectIds.forEach((id) => {
+        const sel = document.getElementById(id);
+        const current = Number(sel.value) || weekOptions[0];
+        sel.innerHTML = weekOptions.map((w) => `<option value="${w}">${w}</option>`).join("");
+        sel.value = String(weekOptions.includes(current) ? current : weekOptions[0]);
+      });
+
+      const daySelectIds = ["filterDay", "logDay"];
+      daySelectIds.forEach((id) => {
+        const sel = document.getElementById(id);
+        const current = Number(sel.value) || 1;
+        sel.innerHTML = [1,2,3,4,5,6,7].map((d) => `<option value="${d}">${d}</option>`).join("");
+        sel.value = String(current);
+      });
+    }
+
+    function renderPlanCards() {
+      const week = Number(document.getElementById("filterWeek").value);
+      const day = Number(document.getElementById("filterDay").value);
+      const container = document.getElementById("planCards");
+      const rows = getProgramFor(state.activeUserId, week, day);
+      if (!rows.length) {
+        container.innerHTML = `<div class="empty">No imported program row for week ${week}, day ${day}.</div>`;
+        return;
+      }
+      container.innerHTML = rows.map((row) => `
+        <div class="panel" style="padding:14px; margin-bottom:12px; background: rgba(15,23,42,.75); box-shadow:none;">
+          <div class="row" style="margin-bottom:10px">
+            <span class="pill">Week ${row.week}</span>
+            <span class="pill">Day ${row.day}</span>
+            <span class="pill">${escapeHtml(row.phase || "Phase not specified")}</span>
+          </div>
+          <div class="grid grid-2">
+            <div>
+              <div class="muted">Focus</div>
+              <div><strong>${escapeHtml(row.focus || "—")}</strong></div>
+              <div class="inline-note">Main lift: ${escapeHtml(row.mainLift || "—")}</div>
+              <div class="inline-note">Top set target: ${escapeHtml(row.topSetTarget || "—")}</div>
+              <div class="inline-note">Back-off plan: ${escapeHtml(row.backoffPlan || "—")}</div>
+            </div>
+            <div>
+              <div class="muted">Secondary work</div>
+              <div><strong>${escapeHtml(row.secondaryLift || "—")}</strong></div>
+              <div class="inline-note">Prescription: ${escapeHtml(row.secondaryPrescription || "—")}</div>
+              <div class="inline-note">Accessories / notes: ${escapeHtml(row.accessoriesNotes || "—")}</div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderMetrics() {
+      const user = getActiveUser();
+      const metrics = computeCurrentMetrics();
+
+      document.getElementById("pct1rmMetric").textContent = metrics.pct ? (metrics.pct * 100).toFixed(1) + "%" : "—";
+      document.getElementById("e1rmMetric").textContent = metrics.e1rm ? formatNumber(metrics.e1rm, 1) + " kg" : "—";
+      document.getElementById("suggestedMetric").textContent = metrics.suggestedWeight ? formatNumber(metrics.suggestedWeight, 1) + " kg" : "—";
+      document.getElementById("fatigueMetric").textContent = metrics.fatiguePct !== null ? formatNumber(metrics.fatiguePct, 1) + "%" : "—";
+
+      const status = document.getElementById("fatigueStatus");
+      if (!metrics.referenceTop) {
+        status.className = "status warn";
+        status.textContent = user.backoffBase === "latestTop"
+          ? "Waiting for a saved top set on this date and lift"
+          : "Using current set e1RM as back-off base";
+      } else if (metrics.fatiguePct >= user.fatigueDropPct) {
+        status.className = "status bad";
+        status.textContent = `Fatigue drop reached: ${
+          formatNumber(metrics.fatiguePct, 1)
+        }% (target ${formatNumber(user.fatigueDropPct, 1)}%)`;
+      } else {
+        status.className = "status ok";
+        status.textContent = `Fatigue drop not reached: ${
+          formatNumber(metrics.fatiguePct, 1)
+        }% / target ${formatNumber(user.fatigueDropPct, 1)}%`;
+      }
+
+      const baseText = metrics.referenceTop
+        ? `Back-off recommendation is using the latest saved top set for this session: ${formatNumber(metrics.referenceTop.e1rm, 1)} kg e1RM.`
+        : metrics.e1rm
+          ? `Back-off recommendation is using the current set e1RM: ${formatNumber(metrics.e1rm, 1)} kg.`
+          : "Enter reps, weight, and RPE to calculate.";
+      document.getElementById("calcSourceNote").textContent = baseText;
+    }
+
+    function renderSessionLog() {
+      const body = document.getElementById("sessionLogBody");
+      const rows = getCurrentSessionLogs();
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="10" class="empty">No sets saved for the selected date.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map((row) => `
+        <tr>
+          <td>${row.order}</td>
+          <td>${escapeHtml(row.lift)}</td>
+          <td>${escapeHtml(row.variation)}</td>
+          <td>${escapeHtml(row.setType)}</td>
+          <td class="right">${row.reps}</td>
+          <td class="right">${formatNumber(row.weight, 1)}</td>
+          <td class="right">${formatNumber(row.rpe, 1)}</td>
+          <td class="right">${formatNumber(row.e1rm, 1)}</td>
+          <td class="right">${row.fatiguePct === null ? "—" : formatNumber(row.fatiguePct, 1)}</td>
+          <td><button onclick="deleteLog('${row.id}')">Delete</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderHistory() {
+      const body = document.getElementById("historyBody");
+      const rows = [...getActiveUser().logs].sort((a,b) => new Date(b.date) - new Date(a.date) || b.order - a.order).slice(0, 20);
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="10" class="empty">No log history yet.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.date)}</td>
+          <td>${row.week}</td>
+          <td>${row.day}</td>
+          <td>${escapeHtml(row.lift)}</td>
+          <td>${escapeHtml(row.variation)}</td>
+          <td>${escapeHtml(row.setType)}</td>
+          <td class="right">${row.reps}</td>
+          <td class="right">${formatNumber(row.weight, 1)}</td>
+          <td class="right">${formatNumber(row.rpe, 1)}</td>
+          <td class="right">${formatNumber(row.e1rm, 1)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function refreshAll() {
+      renderUserTabs();
+      renderSettings();
+      renderWeekDaySelectors();
+      autoFillSessionFocus();
+      renderPlanCards();
+      renderMetrics();
+      renderSessionLog();
+      renderHistory();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function populateFixedSelectors() {
+      document.getElementById("logReps").innerHTML = Array.from({ length: 10 }, (_, i) => i + 1).map((v) => `<option value="${v}">${v}</option>`).join("");
+      document.getElementById("targetReps").innerHTML = Array.from({ length: 10 }, (_, i) => i + 1).map((v) => `<option value="${v}">${v}</option>`).join("");
+      const rpeValues = Array.from({ length: 19 }, (_, i) => (i + 2) / 2).filter((v) => v >= 1 && v <= 10);
+      const options = rpeValues.map((v) => `<option value="${v.toFixed(1)}">${v.toFixed(1)}</option>`).join("");
+      document.getElementById("logRpe").innerHTML = options;
+      document.getElementById("targetRpe").innerHTML = options;
+      document.getElementById("logRpe").value = "8.0";
+      document.getElementById("targetRpe").value = "6.0";
+      document.getElementById("logReps").value = "1";
+      document.getElementById("targetReps").value = "5";
+      document.getElementById("logDate").value = new Date().toISOString().slice(0, 10);
+    }
+
+    function saveSet() {
+      const user = getActiveUser();
+      const metrics = computeCurrentMetrics();
+      const date = document.getElementById("logDate").value;
+      const week = Number(document.getElementById("logWeek").value);
+      const day = Number(document.getElementById("logDay").value);
+      const lift = document.getElementById("logLift").value;
+      const setType = document.getElementById("logSetType").value;
+      const weight = Number(document.getElementById("logWeight").value);
+      const reps = Number(document.getElementById("logReps").value);
+      const rpe = Number(document.getElementById("logRpe").value);
+
+      if (!date || !weight || !reps || !rpe) {
+        alert("Please enter date, reps, weight, and RPE.");
+        return;
+      }
+
+      const row = {
+        id: crypto.randomUUID(),
+        order: user.logs.filter((x) => x.date === date).length + 1,
+        date,
+        week,
+        day,
+        sessionFocus: document.getElementById("logSessionFocus").value.trim(),
+        lift,
+        variation: getVariationValue(),
+        setType,
+        reps,
+        weight,
+        rpe,
+        pct1rm: metrics.pct,
+        e1rm: metrics.e1rm,
+        targetReps: Number(document.getElementById("targetReps").value),
+        targetRpe: Number(document.getElementById("targetRpe").value),
+        suggestedBackoff: metrics.suggestedWeight,
+        techNotes: document.getElementById("logTechNotes").value.trim(),
+        generalNotes: document.getElementById("logGeneralNotes").value.trim(),
+        referenceTopE1RM: metrics.referenceTop?.e1rm ?? null,
+        fatiguePct: metrics.fatiguePct
+      };
+
+      user.logs.push(row);
+      saveState();
+      renderMetrics();
+      renderSessionLog();
+      renderHistory();
+
+      if (setType === "Top") {
+        document.getElementById("targetReps").focus();
+      }
+    }
+
+    function deleteLog(id) {
+      const user = getActiveUser();
+      user.logs = user.logs.filter((row) => row.id !== id).map((row, index) => ({ ...row, order: index + 1 }));
+      saveState();
+      refreshAll();
+    }
+    window.deleteLog = deleteLog;
+
+    async function importProgramFile(file) {
+      const user = getActiveUser();
+      const name = file.name.toLowerCase();
+      if (name.endsWith(".csv")) {
+        const text = await file.text();
+        const workbook = XLSX.read(text, { type: "string" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const normalized = rows.map(normalizeProgramRow).filter(Boolean);
+        user.program = normalized;
+        saveState();
+        refreshAll();
+        return;
+      }
+
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const preferredSheetName = workbook.SheetNames.find((s) => s.toLowerCase() === "schedule_12w") || workbook.SheetNames[0];
+      const sheet = workbook.Sheets[preferredSheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      const normalized = rows.map(normalizeProgramRow).filter(Boolean);
+
+      if (!normalized.length) {
+        alert("No usable program rows were found. Please check the column names.");
+        return;
+      }
+
+      user.program = normalized;
+      saveState();
+      refreshAll();
+    }
+
+    function exportAllToExcel() {
+      const wb = XLSX.utils.book_new();
+
+      const profiles = Object.values(state.users).map((u) => ({
+        userId: u.id,
+        name: u.name,
+        roundingKg: u.roundingKg,
+        fatigueDropPct: u.fatigueDropPct,
+        backoffBase: u.backoffBase,
+        programRows: u.program.length,
+        loggedSets: u.logs.length
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profiles), "Profiles");
+
+      Object.values(state.users).forEach((u) => {
+        const programRows = u.program.map((r) => ({
+          Week: r.week,
+          Phase: r.phase,
+          Day: r.day,
+          Focus: r.focus,
+          MainLift: r.mainLift,
+          TopSetTarget: r.topSetTarget,
+          BackoffPlan: r.backoffPlan,
+          SecondaryLift: r.secondaryLift,
+          SecondaryPrescription: r.secondaryPrescription,
+          AccessoriesNotes: r.accessoriesNotes
+        }));
+        const logRows = u.logs.map((r) => ({
+          Date: r.date,
+          Week: r.week,
+          Day: r.day,
+          SessionFocus: r.sessionFocus,
+          Lift: r.lift,
+          Variation: r.variation,
+          SetType: r.setType,
+          Reps: r.reps,
+          WeightKg: r.weight,
+          RPE: r.rpe,
+          Percent1RM: r.pct1rm,
+          E1RMKg: r.e1rm,
+          TargetBackoffReps: r.targetReps,
+          TargetBackoffRPE: r.targetRpe,
+          SuggestedBackoffKg: r.suggestedBackoff,
+          ReferenceTopE1RMKg: r.referenceTopE1RM,
+          FatigueDropPercent: r.fatiguePct,
+          TechniqueNotes: r.techNotes,
+          GeneralNotes: r.generalNotes
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(programRows.length ? programRows : [{ note: "No program imported" }]), `Program_${safeSheetName(u.name)}`.slice(0, 31));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logRows.length ? logRows : [{ note: "No log rows yet" }]), `Log_${safeSheetName(u.name)}`.slice(0, 31));
+      });
+
+      const referenceRows = [];
+      Object.entries(RPE_TABLE).forEach(([rpe, row]) => {
+        const out = { RPE: Number(rpe) };
+        Object.entries(row).forEach(([rep, pct]) => {
+          out[`Rep_${rep}`] = pct;
+        });
+        referenceRows.push(out);
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(referenceRows), "RPE_Table");
+
+      XLSX.writeFile(wb, "powerlifting_log_dual_user.xlsx");
+    }
+
+    function safeSheetName(text) {
+      return String(text || "User").replace(/[\\/?*\[\]:]/g, "_");
+    }
+
+    function backupJson() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "powerlifting_log_backup.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function restoreJson(file) {
+      const text = await file.text();
+      const restored = JSON.parse(text);
+      state = {
+        activeUserId: restored.activeUserId || "u1",
+        users: {
+          u1: { ...makeDefaultState().users.u1, ...(restored.users?.u1 || {}) },
+          u2: { ...makeDefaultState().users.u2, ...(restored.users?.u2 || {}) }
+        }
+      };
+      saveState();
+      refreshAll();
+    }
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+      const user = getActiveUser();
+      user.name = document.getElementById("userName").value.trim() || user.name;
+      user.roundingKg = Number(document.getElementById("roundingKg").value) || 2.5;
+      user.fatigueDropPct = Number(document.getElementById("fatigueDropPct").value) || 5;
+      user.backoffBase = document.getElementById("defaultTopSetSource").value;
+      saveState();
+      refreshAll();
+    });
+
+    document.getElementById("loadBundledProgramBtn").addEventListener("click", () => {
+      getActiveUser().program = [...DEFAULT_PROGRAM_USER1];
+      saveState();
+      refreshAll();
+    });
+
+    document.getElementById("clearActiveDataBtn").addEventListener("click", () => {
+      if (!confirm("Clear all logged sets for the active user?")) return;
+      getActiveUser().logs = [];
+      saveState();
+      refreshAll();
+    });
+
+    document.getElementById("programImport").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        await importProgramFile(file);
+      } catch (err) {
+        console.error(err);
+        alert("Program import failed. Please verify the file structure.");
+      } finally {
+        e.target.value = "";
+      }
+    });
+
+    document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
+    document.getElementById("backupBtn").addEventListener("click", backupJson);
+
+    document.getElementById("restoreInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        await restoreJson(file);
+      } catch (err) {
+        console.error(err);
+        alert("Backup restore failed.");
+      } finally {
+        e.target.value = "";
+      }
+    });
+
+    document.getElementById("usePlanForLogBtn").addEventListener("click", () => {
+      document.getElementById("logWeek").value = document.getElementById("filterWeek").value;
+      document.getElementById("logDay").value = document.getElementById("filterDay").value;
+      autoFillSessionFocus();
+      renderMetrics();
+      renderSessionLog();
+    });
+
+    document.getElementById("saveSetBtn").addEventListener("click", saveSet);
+    document.getElementById("applySuggestedBtn").addEventListener("click", () => {
+      const suggested = computeCurrentMetrics().suggestedWeight;
+      if (!suggested) return;
+      document.getElementById("logWeight").value = Number(suggested).toFixed(1).replace(/\.0$/, "");
+      renderMetrics();
+    });
+
+    ["logDate","logWeek","logDay","logLift","logVariation","logSetType","logReps","logWeight","logRpe","targetReps","targetRpe","filterWeek","filterDay"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        if (id === "logWeek" || id === "logDay") autoFillSessionFocus();
+        if (id === "filterWeek" || id === "filterDay") renderPlanCards();
+        if (id === "logDate") renderSessionLog();
+        if (id === "logLift" || id === "logDate") autoFillSessionFocus();
+        renderMetrics();
+      });
+      document.getElementById(id).addEventListener("change", () => {
+        if (id === "logWeek" || id === "logDay") autoFillSessionFocus();
+        if (id === "filterWeek" || id === "filterDay") renderPlanCards();
+        if (id === "logDate") renderSessionLog();
+        if (id === "logLift" || id === "logDate") autoFillSessionFocus();
+        renderMetrics();
+      });
+    });
+
+    document.getElementById("logVariation").addEventListener("change", (e) => {
+      document.getElementById("variationOtherWrap").style.display = e.target.value === "Other" ? "block" : "none";
+    });
+
+    populateFixedSelectors();
+    refreshAll();
+  </script>
+</body>
+</html>
