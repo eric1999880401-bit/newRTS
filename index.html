@@ -102,28 +102,67 @@
       color: var(--muted);
       background: rgba(15,23,42,.6);
     }
-    .tabs {
+
+    /* User tabs */
+    .user-tabs {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       margin-top: 16px;
     }
-    .tab {
+    .user-tab {
       min-width: 170px;
       text-align: left;
       padding: 12px 14px;
       border-radius: 14px;
       background: rgba(15,23,42,.75);
     }
-    .tab.active {
+    .user-tab.active {
       outline: 2px solid rgba(56,189,248,.6);
       background: rgba(2,132,199,.14);
     }
-    .tab small {
+    .user-tab small {
       display: block;
       color: var(--muted);
       margin-top: 4px;
     }
+
+    /* Page navigation tabs */
+    .page-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 18px;
+      background: rgba(15,23,42,.6);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: 16px;
+      padding: 4px;
+    }
+    .page-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .page-tab:hover {
+      color: var(--text);
+      transform: none;
+      border-color: transparent;
+    }
+    .page-tab.active {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: white;
+      border-color: transparent;
+    }
+    .page-content { display: none; }
+    .page-content.active { display: block; }
+
     .grid {
       display: grid;
       gap: 16px;
@@ -165,9 +204,6 @@
       padding: 10px 12px;
     }
     textarea { min-height: 88px; resize: vertical; }
-    .readonly {
-      opacity: .82;
-    }
     .metrics {
       display: grid;
       gap: 12px;
@@ -271,6 +307,66 @@
       text-align: center;
       color: var(--muted);
     }
+
+    /* History accordion */
+    .history-date-group {
+      border: 1px solid rgba(148,163,184,.16);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background: rgba(15,23,42,.42);
+    }
+    .history-date-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background .15s;
+      user-select: none;
+    }
+    .history-date-header:hover {
+      background: rgba(56,189,248,.06);
+    }
+    .history-date-header .date-label {
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .history-date-header .date-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .history-date-header .date-meta .pill {
+      font-size: 11px;
+    }
+    .history-date-header .chevron {
+      transition: transform .2s;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .history-date-group.open .chevron {
+      transform: rotate(180deg);
+    }
+    .history-date-body {
+      display: none;
+      padding: 0 16px 14px;
+    }
+    .history-date-group.open .history-date-body {
+      display: block;
+    }
+    .history-notes {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: rgba(15,23,42,.6);
+      border-radius: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .history-notes strong {
+      color: #cbd5e1;
+    }
+
     @media (max-width: 1100px) {
       .grid-3, .grid-4, .grid-2, .metrics {
         grid-template-columns: 1fr 1fr;
@@ -285,244 +381,256 @@
       .topbar {
         align-items: flex-start;
       }
+      .page-tab {
+        font-size: 12px;
+        padding: 10px 8px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="app">
+    <!-- Header with user tabs -->
     <section class="hero">
       <div class="topbar">
         <div>
-          <h1>Powerlifting Log — Dual User</h1>
+          <h1>Powerlifting Log</h1>
           <div class="sub">
-            GitHub Pages ready • English UI • two separate users, two separate programs, two separate logs
+            Dual user • offline-ready • browser storage
           </div>
         </div>
         <div class="top-actions">
-          <button class="primary" id="exportAllBtn">Export all data to Excel</button>
-          <button id="backupBtn">Backup JSON</button>
-          <label class="button" for="restoreInput">Restore JSON</label>
-          <input id="restoreInput" type="file" accept=".json" hidden />
+          <button class="primary" id="exportAllBtn">Export Excel</button>
+          <button id="backupProgramBtn">Backup Program</button>
+          <label class="button" for="restoreProgramInput">Import Program</label>
+          <input id="restoreProgramInput" type="file" accept=".xlsx,.xls,.csv" hidden />
         </div>
       </div>
-
-      <div class="tabs" id="userTabs"></div>
-      <div class="footer-note">
-        This version stores data in the browser for fast offline-style use after loading. If the same site is opened on another device, the data will not sync unless a backend is added.
-      </div>
+      <div class="user-tabs" id="userTabs"></div>
     </section>
 
-    <div class="grid grid-2">
-      <section class="panel">
-        <h2>Active user settings</h2>
-        <div class="hint">Each user has an independent name, rounding increment, fatigue threshold, imported program, and training log.</div>
-        <div class="grid grid-2">
-          <div class="field">
-            <label for="userName">Display name</label>
-            <input id="userName" type="text" placeholder="User name" />
-          </div>
-          <div class="field">
-            <label for="roundingKg">Rounding increment (kg)</label>
-            <input id="roundingKg" type="number" min="0.1" step="0.1" />
-          </div>
-          <div class="field">
-            <label for="fatigueDropPct">Fatigue drop target (%)</label>
-            <input id="fatigueDropPct" type="number" min="0" max="25" step="0.5" />
-          </div>
-          <div class="field">
-            <label for="defaultTopSetSource">Back-off recommendation base</label>
-            <select id="defaultTopSetSource">
-              <option value="latestTop">Latest top set in this session</option>
-              <option value="currentSet">Current set e1RM</option>
-            </select>
-          </div>
-        </div>
-        <div class="actions-inline">
-          <button id="saveSettingsBtn">Save settings</button>
-          <button class="secondary" id="loadBundledProgramBtn">Reload bundled sample program to active user</button>
-          <button class="danger" id="clearActiveDataBtn">Clear active user's log</button>
-        </div>
-      </section>
+    <!-- Page navigation -->
+    <div class="page-tabs">
+      <button class="page-tab active" data-page="settings">Settings & Import</button>
+      <button class="page-tab" data-page="workout">Today's Workout</button>
+      <button class="page-tab" data-page="history">History</button>
+    </div>
 
-      <section class="panel">
-        <h2>Program import</h2>
-        <div class="hint">Import one program file for the active user. The parser is already aligned to the RTS-style workbook format that contains a <span class="mono">Schedule_12w</span> sheet.</div>
-        <div class="grid grid-2">
-          <div class="field">
-            <label for="programImport">Import program (.xlsx, .xls, .csv)</label>
-            <input id="programImport" type="file" accept=".xlsx,.xls,.csv" />
-          </div>
-          <div class="field">
-            <label>Program status</label>
-            <div class="metric">
-              <div class="k">Rows imported for active user</div>
-              <div class="v" id="programCount">0</div>
+    <!-- PAGE 1: Settings & Import -->
+    <div id="page-settings" class="page-content active">
+      <div class="grid grid-2">
+        <section class="panel">
+          <h2>Active user settings</h2>
+          <div class="hint">Each user has an independent name, rounding increment, fatigue threshold, imported program, and training log.</div>
+          <div class="grid grid-2">
+            <div class="field">
+              <label for="userName">Display name</label>
+              <input id="userName" type="text" placeholder="User name" />
+            </div>
+            <div class="field">
+              <label for="roundingKg">Rounding increment (kg)</label>
+              <input id="roundingKg" type="number" min="0.1" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="fatigueDropPct">Fatigue drop target (%)</label>
+              <input id="fatigueDropPct" type="number" min="0" max="25" step="0.5" />
+            </div>
+            <div class="field">
+              <label for="defaultTopSetSource">Back-off recommendation base</label>
+              <select id="defaultTopSetSource">
+                <option value="latestTop">Latest top set in this session</option>
+                <option value="currentSet">Current set e1RM</option>
+              </select>
             </div>
           </div>
-        </div>
-        <div class="inline-note">Expected columns: Week, Day, Phase, Focus, Main Lift, Top Set Target, Back-off Plan, Secondary Lift, Secondary Prescription, Accessories / Notes.</div>
-        <details style="margin-top:12px">
-          <summary>Method used in this app</summary>
-          <div class="inline-note" style="margin-top:10px">
-            e1RM is calculated from load ÷ %1RM. The %1RM is taken from an RTS-style reps × RPE table. Back-off recommendations multiply the selected e1RM by the target table percentage, then round to the user's chosen plate increment. Fatigue drop is computed as:
-            <span class="mono">(reference e1RM − current e1RM) / reference e1RM × 100</span>.
+          <div class="actions-inline">
+            <button id="saveSettingsBtn">Save settings</button>
+            <button class="secondary" id="loadBundledProgramBtn">Reload bundled sample program</button>
+            <button class="danger" id="clearActiveDataBtn">Clear active user's log</button>
           </div>
-        </details>
-      </section>
+        </section>
+
+        <section class="panel">
+          <h2>Program import</h2>
+          <div class="hint">Import one program file for the active user. The parser is aligned to the RTS-style workbook format that contains a <span class="mono">Schedule_12w</span> sheet.</div>
+          <div class="grid grid-2">
+            <div class="field">
+              <label for="programImport">Import program (.xlsx, .xls, .csv)</label>
+              <input id="programImport" type="file" accept=".xlsx,.xls,.csv" />
+            </div>
+            <div class="field">
+              <label>Program status</label>
+              <div class="metric">
+                <div class="k">Rows imported for active user</div>
+                <div class="v" id="programCount">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="inline-note">Expected columns: Week, Day, Phase, Focus, Main Lift, Top Set Target, Back-off Plan, Secondary Lift, Secondary Prescription, Accessories / Notes.</div>
+          <details style="margin-top:12px">
+            <summary>Method used in this app</summary>
+            <div class="inline-note" style="margin-top:10px">
+              e1RM is calculated from load / %1RM. The %1RM is taken from an RTS-style reps x RPE table. Back-off recommendations multiply the selected e1RM by the target table percentage, then round to the user's chosen plate increment. Fatigue drop is computed as:
+              <span class="mono">(reference e1RM - current e1RM) / reference e1RM x 100</span>.
+            </div>
+          </details>
+        </section>
+      </div>
     </div>
 
-    <div class="grid grid-2" style="margin-top:16px">
-      <section class="panel">
-        <h2>Plan viewer</h2>
-        <div class="hint">Check the active user's imported program by week and day so the workout is visible without comparing against another file.</div>
-        <div class="grid grid-3">
-          <div class="field">
-            <label for="filterWeek">Week</label>
-            <select id="filterWeek"></select>
+    <!-- PAGE 2: Today's Workout -->
+    <div id="page-workout" class="page-content">
+      <div class="grid grid-2">
+        <section class="panel">
+          <h2>Plan viewer</h2>
+          <div class="hint">Check the active user's imported program by week and day.</div>
+          <div class="grid grid-3">
+            <div class="field">
+              <label for="filterWeek">Week</label>
+              <select id="filterWeek"></select>
+            </div>
+            <div class="field">
+              <label for="filterDay">Day</label>
+              <select id="filterDay"></select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="usePlanForLogBtn">Use this week/day in log form</button>
+            </div>
           </div>
-          <div class="field">
-            <label for="filterDay">Day</label>
-            <select id="filterDay"></select>
-          </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <button id="usePlanForLogBtn">Use this week/day in log form</button>
-          </div>
-        </div>
-        <div id="planCards" style="margin-top:14px"></div>
-      </section>
+          <div id="planCards" style="margin-top:14px"></div>
+        </section>
 
-      <section class="panel">
-        <h2>Current set calculator</h2>
-        <div class="hint">Enter the set to get %1RM, e1RM, suggested back-off load, and fatigue status.</div>
-        <div class="grid grid-4">
-          <div class="field">
-            <label for="logDate">Date</label>
-            <input id="logDate" type="date" />
+        <section class="panel">
+          <h2>Current set calculator</h2>
+          <div class="hint">Enter the set to get %1RM, e1RM, suggested back-off load, and fatigue status.</div>
+          <div class="grid grid-4">
+            <div class="field">
+              <label for="logDate">Date</label>
+              <input id="logDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="logWeek">Week #</label>
+              <select id="logWeek"></select>
+            </div>
+            <div class="field">
+              <label for="logDay">Training day</label>
+              <select id="logDay"></select>
+            </div>
+            <div class="field">
+              <label for="logLift">Lift</label>
+              <select id="logLift">
+                <option>Squat</option>
+                <option>Bench</option>
+                <option>Deadlift</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="logVariation">Variation</label>
+              <select id="logVariation">
+                <option>Competition</option>
+                <option>Paused</option>
+                <option>Board</option>
+                <option>Pin</option>
+                <option>Spoto</option>
+                <option>Box</option>
+                <option>Tempo</option>
+                <option>Touch and Go</option>
+                <option>Close Grip</option>
+                <option>Deficit</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field" id="variationOtherWrap" style="display:none">
+              <label for="logVariationOther">Other variation</label>
+              <input id="logVariationOther" type="text" placeholder="Type custom variation" />
+            </div>
+            <div class="field">
+              <label for="logSetType">Set type</label>
+              <select id="logSetType">
+                <option>Warm up</option>
+                <option>Top</option>
+                <option>Back off</option>
+                <option>Secondary</option>
+                <option>Accessory</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="logReps">Reps</label>
+              <select id="logReps"></select>
+            </div>
+            <div class="field">
+              <label for="logWeight">Weight (kg)</label>
+              <input id="logWeight" type="number" step="0.1" min="0" />
+            </div>
+            <div class="field">
+              <label for="logRpe">RPE</label>
+              <select id="logRpe"></select>
+            </div>
+            <div class="field">
+              <label for="targetReps">Target back-off reps</label>
+              <select id="targetReps"></select>
+            </div>
+            <div class="field">
+              <label for="targetRpe">Target back-off RPE</label>
+              <select id="targetRpe"></select>
+            </div>
           </div>
-          <div class="field">
-            <label for="logWeek">Week #</label>
-            <select id="logWeek"></select>
-          </div>
-          <div class="field">
-            <label for="logDay">Training day</label>
-            <select id="logDay"></select>
-          </div>
-          <div class="field">
-            <label for="logLift">Lift</label>
-            <select id="logLift">
-              <option>Squat</option>
-              <option>Bench</option>
-              <option>Deadlift</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="logVariation">Variation</label>
-            <select id="logVariation">
-              <option>Competition</option>
-              <option>Paused</option>
-              <option>Board</option>
-              <option>Pin</option>
-              <option>Spoto</option>
-              <option>Box</option>
-              <option>Tempo</option>
-              <option>Touch and Go</option>
-              <option>Close Grip</option>
-              <option>Deficit</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field" id="variationOtherWrap" style="display:none">
-            <label for="logVariationOther">Other variation</label>
-            <input id="logVariationOther" type="text" placeholder="Type custom variation" />
-          </div>
-          <div class="field">
-            <label for="logSetType">Set type</label>
-            <select id="logSetType">
-              <option>Warm up</option>
-              <option>Top</option>
-              <option>Back off</option>
-              <option>Secondary</option>
-              <option>Accessory</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="logReps">Reps</label>
-            <select id="logReps"></select>
-          </div>
-          <div class="field">
-            <label for="logWeight">Weight (kg)</label>
-            <input id="logWeight" type="number" step="0.1" min="0" />
-          </div>
-          <div class="field">
-            <label for="logRpe">RPE</label>
-            <select id="logRpe"></select>
-          </div>
-          <div class="field">
-            <label for="targetReps">Target back-off reps</label>
-            <select id="targetReps"></select>
-          </div>
-          <div class="field">
-            <label for="targetRpe">Target back-off RPE</label>
-            <select id="targetRpe"></select>
-          </div>
-        </div>
 
-        <div class="field" style="margin-top:12px">
-          <label for="logSessionFocus">Session focus</label>
-          <input id="logSessionFocus" type="text" placeholder="Auto-filled from imported program when available" />
-        </div>
-        <div class="grid grid-2" style="margin-top:12px">
-          <div class="field">
-            <label for="logTechNotes">Technique notes</label>
-            <textarea id="logTechNotes" placeholder="Bar path, depth, lockout, stability, pain, etc."></textarea>
+          <div class="field" style="margin-top:12px">
+            <label for="logSessionFocus">Session focus</label>
+            <input id="logSessionFocus" type="text" placeholder="Auto-filled from imported program when available" />
           </div>
-          <div class="field">
-            <label for="logGeneralNotes">General notes</label>
-            <textarea id="logGeneralNotes" placeholder="Sleep, readiness, accessories, session comments, etc."></textarea>
+          <div class="grid grid-2" style="margin-top:12px">
+            <div class="field">
+              <label for="logTechNotes">Technique notes</label>
+              <textarea id="logTechNotes" placeholder="Bar path, depth, lockout, stability, pain, etc."></textarea>
+            </div>
+            <div class="field">
+              <label for="logGeneralNotes">General notes</label>
+              <textarea id="logGeneralNotes" placeholder="Sleep, readiness, accessories, session comments, etc."></textarea>
+            </div>
           </div>
-        </div>
 
-        <div class="metrics" style="margin-top:14px">
-          <div class="metric">
-            <div class="k">%1RM lookup</div>
-            <div class="v" id="pct1rmMetric">—</div>
+          <div class="metrics" style="margin-top:14px">
+            <div class="metric">
+              <div class="k">%1RM lookup</div>
+              <div class="v" id="pct1rmMetric">—</div>
+            </div>
+            <div class="metric">
+              <div class="k">Current e1RM</div>
+              <div class="v" id="e1rmMetric">—</div>
+            </div>
+            <div class="metric">
+              <div class="k">Suggested back-off load</div>
+              <div class="v" id="suggestedMetric">—</div>
+            </div>
+            <div class="metric">
+              <div class="k">Fatigue drop</div>
+              <div class="v" id="fatigueMetric">—</div>
+            </div>
           </div>
-          <div class="metric">
-            <div class="k">Current e1RM</div>
-            <div class="v" id="e1rmMetric">—</div>
-          </div>
-          <div class="metric">
-            <div class="k">Suggested back-off load</div>
-            <div class="v" id="suggestedMetric">—</div>
-          </div>
-          <div class="metric">
-            <div class="k">Fatigue drop</div>
-            <div class="v" id="fatigueMetric">—</div>
-          </div>
-        </div>
 
-        <div class="row" style="margin-top:14px">
-          <div id="fatigueStatus" class="status warn">Waiting for a reference top set</div>
-          <div class="spacer"></div>
-          <button id="applySuggestedBtn">Use suggested load</button>
-          <button class="primary" id="saveSetBtn">Save set</button>
-        </div>
+          <div class="row" style="margin-top:14px">
+            <div id="fatigueStatus" class="status warn">Waiting for a reference top set</div>
+            <div class="spacer"></div>
+            <button id="applySuggestedBtn">Use suggested load</button>
+            <button class="primary" id="saveSetBtn">Save set</button>
+          </div>
+          <div class="footer-note" id="calcSourceNote"></div>
+        </section>
+      </div>
 
-        <div class="footer-note" id="calcSourceNote"></div>
-      </section>
-    </div>
-
-    <div class="grid grid-2" style="margin-top:16px">
-      <section class="panel">
+      <!-- Current session log below -->
+      <section class="panel" style="margin-top:16px">
         <h2>Current session log</h2>
         <div class="hint">Filtered by active user + selected date.</div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Time order</th>
+                <th>#</th>
                 <th>Lift</th>
                 <th>Variation</th>
                 <th>Type</th>
@@ -538,29 +646,14 @@
           </table>
         </div>
       </section>
+    </div>
 
+    <!-- PAGE 3: History -->
+    <div id="page-history" class="page-content">
       <section class="panel">
-        <h2>Recent log history</h2>
-        <div class="hint">Last 20 rows for the active user.</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Week</th>
-                <th>Day</th>
-                <th>Lift</th>
-                <th>Variation</th>
-                <th>Type</th>
-                <th class="right">Reps</th>
-                <th class="right">Weight</th>
-                <th class="right">RPE</th>
-                <th class="right">e1RM</th>
-              </tr>
-            </thead>
-            <tbody id="historyBody"></tbody>
-          </table>
-        </div>
+        <h2>Training history</h2>
+        <div class="hint">All logged sessions for the active user, grouped by date. Click a date to expand.</div>
+        <div id="historyAccordion"></div>
       </section>
     </div>
   </div>
@@ -739,16 +832,7 @@
         fatiguePct = ((referenceTop.e1rm - e1rm) / referenceTop.e1rm) * 100;
       }
 
-      return {
-        pct,
-        e1rm,
-        referenceTop,
-        fatiguePct,
-        targetReps,
-        targetRpe,
-        suggestedWeight,
-        baseE1RM
-      };
+      return { pct, e1rm, referenceTop, fatiguePct, targetReps, targetRpe, suggestedWeight, baseE1RM };
     }
 
     function getVariationValue() {
@@ -766,12 +850,33 @@
       input.value = matches.map((x) => x.focus).filter(Boolean)[0] || input.value;
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    /* ── Page navigation ── */
+    function switchPage(pageName) {
+      document.querySelectorAll(".page-tab").forEach((t) => t.classList.toggle("active", t.dataset.page === pageName));
+      document.querySelectorAll(".page-content").forEach((p) => p.classList.toggle("active", p.id === "page-" + pageName));
+      if (pageName === "history") renderHistory();
+    }
+
+    document.querySelectorAll(".page-tab").forEach((tab) => {
+      tab.addEventListener("click", () => switchPage(tab.dataset.page));
+    });
+
+    /* ── Render functions ── */
     function renderUserTabs() {
       const el = document.getElementById("userTabs");
       el.innerHTML = "";
       Object.values(state.users).forEach((user) => {
         const btn = document.createElement("button");
-        btn.className = "tab" + (state.activeUserId === user.id ? " active" : "");
+        btn.className = "user-tab" + (state.activeUserId === user.id ? " active" : "");
         btn.innerHTML = `<strong>${escapeHtml(user.name)}</strong><small>${user.program.length} plan rows • ${user.logs.length} logged sets</small>`;
         btn.onclick = () => {
           state.activeUserId = user.id;
@@ -793,16 +898,13 @@
 
     function renderWeekDaySelectors() {
       const weekOptions = getWeekOptions();
-      const weekSelectIds = ["filterWeek", "logWeek"];
-      weekSelectIds.forEach((id) => {
+      ["filterWeek", "logWeek"].forEach((id) => {
         const sel = document.getElementById(id);
         const current = Number(sel.value) || weekOptions[0];
         sel.innerHTML = weekOptions.map((w) => `<option value="${w}">${w}</option>`).join("");
         sel.value = String(weekOptions.includes(current) ? current : weekOptions[0]);
       });
-
-      const daySelectIds = ["filterDay", "logDay"];
-      daySelectIds.forEach((id) => {
+      ["filterDay", "logDay"].forEach((id) => {
         const sel = document.getElementById(id);
         const current = Number(sel.value) || 1;
         sel.innerHTML = [1,2,3,4,5,6,7].map((d) => `<option value="${d}">${d}</option>`).join("");
@@ -862,14 +964,10 @@
           : "Using current set e1RM as back-off base";
       } else if (metrics.fatiguePct >= user.fatigueDropPct) {
         status.className = "status bad";
-        status.textContent = `Fatigue drop reached: ${
-          formatNumber(metrics.fatiguePct, 1)
-        }% (target ${formatNumber(user.fatigueDropPct, 1)}%)`;
+        status.textContent = `Fatigue drop reached: ${formatNumber(metrics.fatiguePct, 1)}% (target ${formatNumber(user.fatigueDropPct, 1)}%)`;
       } else {
         status.className = "status ok";
-        status.textContent = `Fatigue drop not reached: ${
-          formatNumber(metrics.fatiguePct, 1)
-        }% / target ${formatNumber(user.fatigueDropPct, 1)}%`;
+        status.textContent = `Fatigue drop not reached: ${formatNumber(metrics.fatiguePct, 1)}% / target ${formatNumber(user.fatigueDropPct, 1)}%`;
       }
 
       const baseText = metrics.referenceTop
@@ -904,26 +1002,96 @@
     }
 
     function renderHistory() {
-      const body = document.getElementById("historyBody");
-      const rows = [...getActiveUser().logs].sort((a,b) => new Date(b.date) - new Date(a.date) || b.order - a.order).slice(0, 20);
-      if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="10" class="empty">No log history yet.</td></tr>`;
+      const container = document.getElementById("historyAccordion");
+      const user = getActiveUser();
+      const logs = [...user.logs].sort((a, b) => new Date(b.date) - new Date(a.date) || b.order - a.order);
+
+      if (!logs.length) {
+        container.innerHTML = `<div class="empty">No log history yet.</div>`;
         return;
       }
-      body.innerHTML = rows.map((row) => `
-        <tr>
-          <td>${escapeHtml(row.date)}</td>
-          <td>${row.week}</td>
-          <td>${row.day}</td>
-          <td>${escapeHtml(row.lift)}</td>
-          <td>${escapeHtml(row.variation)}</td>
-          <td>${escapeHtml(row.setType)}</td>
-          <td class="right">${row.reps}</td>
-          <td class="right">${formatNumber(row.weight, 1)}</td>
-          <td class="right">${formatNumber(row.rpe, 1)}</td>
-          <td class="right">${formatNumber(row.e1rm, 1)}</td>
-        </tr>
-      `).join("");
+
+      // Group by date
+      const grouped = new Map();
+      logs.forEach((row) => {
+        if (!grouped.has(row.date)) grouped.set(row.date, []);
+        grouped.get(row.date).push(row);
+      });
+
+      let html = "";
+      for (const [date, rows] of grouped) {
+        // Sort rows within date by order
+        rows.sort((a, b) => a.order - b.order);
+
+        // Collect summary info
+        const lifts = [...new Set(rows.map((r) => r.lift))];
+        const setCount = rows.length;
+        const week = rows[0].week;
+        const day = rows[0].day;
+        const focus = rows[0].sessionFocus || "";
+
+        // Collect notes for the session
+        const techNotes = [...new Set(rows.map((r) => r.techNotes).filter(Boolean))];
+        const generalNotes = [...new Set(rows.map((r) => r.generalNotes).filter(Boolean))];
+
+        html += `
+        <div class="history-date-group">
+          <div class="history-date-header" onclick="this.parentElement.classList.toggle('open')">
+            <div>
+              <div class="date-label">${escapeHtml(date)}</div>
+              <div style="color:var(--muted);font-size:12px;margin-top:2px">
+                ${focus ? escapeHtml(focus) + " — " : ""}W${week}D${day} — ${setCount} set${setCount > 1 ? "s" : ""}
+              </div>
+            </div>
+            <div class="date-meta">
+              ${lifts.map((l) => `<span class="pill">${escapeHtml(l)}</span>`).join("")}
+              <span class="chevron">&#9660;</span>
+            </div>
+          </div>
+          <div class="history-date-body">
+            <div class="table-wrap" style="max-height:none">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Lift</th>
+                    <th>Variation</th>
+                    <th>Type</th>
+                    <th class="right">Reps</th>
+                    <th class="right">Weight</th>
+                    <th class="right">RPE</th>
+                    <th class="right">e1RM</th>
+                    <th class="right">Fatigue %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows.map((row) => `
+                    <tr>
+                      <td>${row.order}</td>
+                      <td>${escapeHtml(row.lift)}</td>
+                      <td>${escapeHtml(row.variation)}</td>
+                      <td>${escapeHtml(row.setType)}</td>
+                      <td class="right">${row.reps}</td>
+                      <td class="right">${formatNumber(row.weight, 1)}</td>
+                      <td class="right">${formatNumber(row.rpe, 1)}</td>
+                      <td class="right">${formatNumber(row.e1rm, 1)}</td>
+                      <td class="right">${row.fatiguePct === null ? "—" : formatNumber(row.fatiguePct, 1)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+            ${(techNotes.length || generalNotes.length) ? `
+              <div class="history-notes">
+                ${techNotes.length ? `<div><strong>Technique:</strong> ${escapeHtml(techNotes.join(" | "))}</div>` : ""}
+                ${generalNotes.length ? `<div style="margin-top:4px"><strong>General:</strong> ${escapeHtml(generalNotes.join(" | "))}</div>` : ""}
+              </div>
+            ` : ""}
+          </div>
+        </div>`;
+      }
+
+      container.innerHTML = html;
     }
 
     function refreshAll() {
@@ -935,15 +1103,6 @@
       renderMetrics();
       renderSessionLog();
       renderHistory();
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
     }
 
     function populateFixedSelectors() {
@@ -980,16 +1139,11 @@
       const row = {
         id: crypto.randomUUID(),
         order: user.logs.filter((x) => x.date === date).length + 1,
-        date,
-        week,
-        day,
+        date, week, day,
         sessionFocus: document.getElementById("logSessionFocus").value.trim(),
         lift,
         variation: getVariationValue(),
-        setType,
-        reps,
-        weight,
-        rpe,
+        setType, reps, weight, rpe,
         pct1rm: metrics.pct,
         e1rm: metrics.e1rm,
         targetReps: Number(document.getElementById("targetReps").value),
@@ -1056,49 +1210,27 @@
       const wb = XLSX.utils.book_new();
 
       const profiles = Object.values(state.users).map((u) => ({
-        userId: u.id,
-        name: u.name,
-        roundingKg: u.roundingKg,
-        fatigueDropPct: u.fatigueDropPct,
-        backoffBase: u.backoffBase,
-        programRows: u.program.length,
-        loggedSets: u.logs.length
+        userId: u.id, name: u.name, roundingKg: u.roundingKg,
+        fatigueDropPct: u.fatigueDropPct, backoffBase: u.backoffBase,
+        programRows: u.program.length, loggedSets: u.logs.length
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profiles), "Profiles");
 
       Object.values(state.users).forEach((u) => {
         const programRows = u.program.map((r) => ({
-          Week: r.week,
-          Phase: r.phase,
-          Day: r.day,
-          Focus: r.focus,
-          MainLift: r.mainLift,
-          TopSetTarget: r.topSetTarget,
-          BackoffPlan: r.backoffPlan,
-          SecondaryLift: r.secondaryLift,
+          Week: r.week, Phase: r.phase, Day: r.day, Focus: r.focus,
+          MainLift: r.mainLift, TopSetTarget: r.topSetTarget,
+          BackoffPlan: r.backoffPlan, SecondaryLift: r.secondaryLift,
           SecondaryPrescription: r.secondaryPrescription,
           AccessoriesNotes: r.accessoriesNotes
         }));
         const logRows = u.logs.map((r) => ({
-          Date: r.date,
-          Week: r.week,
-          Day: r.day,
-          SessionFocus: r.sessionFocus,
-          Lift: r.lift,
-          Variation: r.variation,
-          SetType: r.setType,
-          Reps: r.reps,
-          WeightKg: r.weight,
-          RPE: r.rpe,
-          Percent1RM: r.pct1rm,
-          E1RMKg: r.e1rm,
-          TargetBackoffReps: r.targetReps,
-          TargetBackoffRPE: r.targetRpe,
-          SuggestedBackoffKg: r.suggestedBackoff,
-          ReferenceTopE1RMKg: r.referenceTopE1RM,
-          FatigueDropPercent: r.fatiguePct,
-          TechniqueNotes: r.techNotes,
-          GeneralNotes: r.generalNotes
+          Date: r.date, Week: r.week, Day: r.day, SessionFocus: r.sessionFocus,
+          Lift: r.lift, Variation: r.variation, SetType: r.setType,
+          Reps: r.reps, WeightKg: r.weight, RPE: r.rpe, Percent1RM: r.pct1rm,
+          E1RMKg: r.e1rm, TargetBackoffReps: r.targetReps, TargetBackoffRPE: r.targetRpe,
+          SuggestedBackoffKg: r.suggestedBackoff, ReferenceTopE1RMKg: r.referenceTopE1RM,
+          FatigueDropPercent: r.fatiguePct, TechniqueNotes: r.techNotes, GeneralNotes: r.generalNotes
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(programRows.length ? programRows : [{ note: "No program imported" }]), `Program_${safeSheetName(u.name)}`.slice(0, 31));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logRows.length ? logRows : [{ note: "No log rows yet" }]), `Log_${safeSheetName(u.name)}`.slice(0, 31));
@@ -1107,13 +1239,10 @@
       const referenceRows = [];
       Object.entries(RPE_TABLE).forEach(([rpe, row]) => {
         const out = { RPE: Number(rpe) };
-        Object.entries(row).forEach(([rep, pct]) => {
-          out[`Rep_${rep}`] = pct;
-        });
+        Object.entries(row).forEach(([rep, pct]) => { out[`Rep_${rep}`] = pct; });
         referenceRows.push(out);
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(referenceRows), "RPE_Table");
-
       XLSX.writeFile(wb, "powerlifting_log_dual_user.xlsx");
     }
 
@@ -1121,29 +1250,29 @@
       return String(text || "User").replace(/[\\/?*\[\]:]/g, "_");
     }
 
-    function backupJson() {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "powerlifting_log_backup.json";
-      a.click();
-      URL.revokeObjectURL(a.href);
+    function backupProgram() {
+      const user = getActiveUser();
+      if (!user.program.length) {
+        alert("Active user has no program to backup.");
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const rows = user.program.map((r) => ({
+        Week: r.week, Phase: r.phase, Day: r.day, Focus: r.focus,
+        "Main Lift": r.mainLift, "Top Set Target": r.topSetTarget,
+        "Back-off Plan": r.backoffPlan, "Secondary Lift": r.secondaryLift,
+        "Secondary Prescription": r.secondaryPrescription,
+        "Accessories / Notes": r.accessoriesNotes
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Schedule_12w");
+      XLSX.writeFile(wb, `program_backup_${safeSheetName(user.name)}.xlsx`);
     }
 
-    async function restoreJson(file) {
-      const text = await file.text();
-      const restored = JSON.parse(text);
-      state = {
-        activeUserId: restored.activeUserId || "u1",
-        users: {
-          u1: { ...makeDefaultState().users.u1, ...(restored.users?.u1 || {}) },
-          u2: { ...makeDefaultState().users.u2, ...(restored.users?.u2 || {}) }
-        }
-      };
-      saveState();
-      refreshAll();
+    async function restoreProgram(file) {
+      await importProgramFile(file);
     }
 
+    /* ── Event listeners ── */
     document.getElementById("saveSettingsBtn").addEventListener("click", () => {
       const user = getActiveUser();
       user.name = document.getElementById("userName").value.trim() || user.name;
@@ -1170,30 +1299,20 @@
     document.getElementById("programImport").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      try {
-        await importProgramFile(file);
-      } catch (err) {
-        console.error(err);
-        alert("Program import failed. Please verify the file structure.");
-      } finally {
-        e.target.value = "";
-      }
+      try { await importProgramFile(file); }
+      catch (err) { console.error(err); alert("Program import failed. Please verify the file structure."); }
+      finally { e.target.value = ""; }
     });
 
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
-    document.getElementById("backupBtn").addEventListener("click", backupJson);
+    document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
 
-    document.getElementById("restoreInput").addEventListener("change", async (e) => {
+    document.getElementById("restoreProgramInput").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      try {
-        await restoreJson(file);
-      } catch (err) {
-        console.error(err);
-        alert("Backup restore failed.");
-      } finally {
-        e.target.value = "";
-      }
+      try { await restoreProgram(file); }
+      catch (err) { console.error(err); alert("Program import failed. Please verify the file structure."); }
+      finally { e.target.value = ""; }
     });
 
     document.getElementById("usePlanForLogBtn").addEventListener("click", () => {
