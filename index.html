@@ -400,10 +400,13 @@
           </div>
         </div>
         <div class="top-actions">
-          <button class="primary" id="exportAllBtn">Export Excel</button>
+          <button class="primary" id="exportAllBtn">Export All</button>
           <button id="backupProgramBtn">Backup Program</button>
           <label class="button" for="restoreProgramInput">Import Program</label>
           <input id="restoreProgramInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+          <button id="backupLogsBtn">Backup Logs</button>
+          <label class="button" for="restoreLogsInput">Import Logs</label>
+          <input id="restoreLogsInput" type="file" accept=".xlsx,.xls,.csv" hidden />
         </div>
       </div>
       <div class="user-tabs" id="userTabs"></div>
@@ -1272,6 +1275,89 @@
       await importProgramFile(file);
     }
 
+    function backupLogs() {
+      const user = getActiveUser();
+      if (!user.logs.length) {
+        alert("Active user has no logs to backup.");
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const rows = user.logs.map((r) => ({
+        Date: r.date, Week: r.week, Day: r.day, SessionFocus: r.sessionFocus,
+        Lift: r.lift, Variation: r.variation, SetType: r.setType,
+        Reps: r.reps, Weight: r.weight, RPE: r.rpe, Percent1RM: r.pct1rm,
+        E1RM: r.e1rm, TargetBackoffReps: r.targetReps, TargetBackoffRPE: r.targetRpe,
+        SuggestedBackoff: r.suggestedBackoff, ReferenceTopE1RM: r.referenceTopE1RM,
+        FatigueDrop: r.fatiguePct, TechniqueNotes: r.techNotes, GeneralNotes: r.generalNotes
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Logs");
+      XLSX.writeFile(wb, `logs_backup_${safeSheetName(user.name)}.xlsx`);
+    }
+
+    async function restoreLogs(file) {
+      const user = getActiveUser();
+      const name = file.name.toLowerCase();
+      let workbook;
+      if (name.endsWith(".csv")) {
+        const text = await file.text();
+        workbook = XLSX.read(text, { type: "string" });
+      } else {
+        const data = await file.arrayBuffer();
+        workbook = XLSX.read(data, { type: "array" });
+      }
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+      if (!rows.length) {
+        alert("No log rows found in the file.");
+        return;
+      }
+
+      const imported = rows.map((r, i) => ({
+        id: crypto.randomUUID(),
+        order: i + 1,
+        date: String(r.Date || ""),
+        week: Number(r.Week) || 0,
+        day: Number(r.Day) || 0,
+        sessionFocus: String(r.SessionFocus || ""),
+        lift: String(r.Lift || ""),
+        variation: String(r.Variation || ""),
+        setType: String(r.SetType || ""),
+        reps: Number(r.Reps) || 0,
+        weight: Number(r.Weight) || 0,
+        rpe: Number(r.RPE) || 0,
+        pct1rm: r.Percent1RM !== "" ? Number(r.Percent1RM) : null,
+        e1rm: r.E1RM !== "" ? Number(r.E1RM) : null,
+        targetReps: Number(r.TargetBackoffReps) || 0,
+        targetRpe: Number(r.TargetBackoffRPE) || 0,
+        suggestedBackoff: r.SuggestedBackoff !== "" ? Number(r.SuggestedBackoff) : null,
+        referenceTopE1RM: r.ReferenceTopE1RM !== "" ? Number(r.ReferenceTopE1RM) : null,
+        fatiguePct: r.FatigueDrop !== "" ? Number(r.FatigueDrop) : null,
+        techNotes: String(r.TechniqueNotes || ""),
+        generalNotes: String(r.GeneralNotes || "")
+      })).filter((r) => r.date && r.lift);
+
+      if (!imported.length) {
+        alert("No valid log rows found. Please check the column names match the exported format.");
+        return;
+      }
+
+      const mode = confirm(`Found ${imported.length} log rows.\n\nOK = Merge with existing logs\nCancel = Replace all existing logs`);
+      if (mode) {
+        user.logs = [...user.logs, ...imported];
+      } else {
+        user.logs = imported;
+      }
+      // Re-number orders per date
+      const byDate = {};
+      user.logs.forEach((r) => { (byDate[r.date] = byDate[r.date] || []).push(r); });
+      Object.values(byDate).forEach((arr) => arr.sort((a, b) => a.order - b.order).forEach((r, i) => r.order = i + 1));
+
+      saveState();
+      refreshAll();
+      alert(`Successfully imported ${imported.length} log rows for ${user.name}.`);
+    }
+
     /* ── Event listeners ── */
     document.getElementById("saveSettingsBtn").addEventListener("click", () => {
       const user = getActiveUser();
@@ -1306,12 +1392,21 @@
 
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
+    document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
 
     document.getElementById("restoreProgramInput").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
       try { await restoreProgram(file); }
       catch (err) { console.error(err); alert("Program import failed. Please verify the file structure."); }
+      finally { e.target.value = ""; }
+    });
+
+    document.getElementById("restoreLogsInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try { await restoreLogs(file); }
+      catch (err) { console.error(err); alert("Logs import failed. Please verify the file structure."); }
       finally { e.target.value = ""; }
     });
 
