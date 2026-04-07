@@ -8,6 +8,8 @@
   <meta name="theme-color" content="#111827" />
   <title>Powerlifting Log</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
     :root {
       --bg: #0b1020;
@@ -396,7 +398,7 @@
         <div>
           <h1>Powerlifting Log</h1>
           <div class="sub">
-            Dual user • offline-ready • browser storage
+            Dual user • offline-ready • <span id="syncStatusText">offline</span>
           </div>
         </div>
         <div class="top-actions">
@@ -479,6 +481,36 @@
           </details>
         </section>
       </div>
+
+      <!-- Firebase Cloud Sync -->
+      <section class="panel" style="margin-top:16px">
+        <h2>Cloud Sync (Firebase)</h2>
+        <div class="hint">Connect to Firebase Realtime Database to sync data across devices in real time. Paste your Firebase config below.</div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="fbApiKey">apiKey</label>
+            <input id="fbApiKey" type="text" placeholder="AIzaSy..." />
+          </div>
+          <div class="field">
+            <label for="fbAuthDomain">authDomain</label>
+            <input id="fbAuthDomain" type="text" placeholder="your-project.firebaseapp.com" />
+          </div>
+          <div class="field">
+            <label for="fbDatabaseURL">databaseURL</label>
+            <input id="fbDatabaseURL" type="text" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+          </div>
+          <div class="field">
+            <label for="fbProjectId">projectId</label>
+            <input id="fbProjectId" type="text" placeholder="your-project" />
+          </div>
+        </div>
+        <div class="actions-inline">
+          <button class="primary" id="fbConnectBtn">Connect & Sync</button>
+          <button class="danger" id="fbDisconnectBtn">Disconnect</button>
+          <div id="fbStatusIndicator" class="status warn" style="margin-left:8px">Not connected</div>
+        </div>
+        <div class="footer-note">Config is saved in your browser. Once connected, all changes sync automatically.</div>
+      </section>
     </div>
 
     <!-- PAGE 2: Today's Workout -->
@@ -715,6 +747,118 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      firebasePush();
+    }
+
+    /* ── Firebase Cloud Sync ── */
+    const FB_CONFIG_KEY = "powerlifting_firebase_config";
+    let fbApp = null;
+    let fbDb = null;
+    let fbRef = null;
+    let fbListener = null;
+    let fbSyncing = false; // guard to prevent echo loops
+
+    function firebasePush() {
+      if (!fbRef || fbSyncing) return;
+      // Push only the users object (activeUserId is local per device)
+      fbRef.set({ users: state.users }).catch((err) => {
+        console.error("Firebase push failed:", err);
+        updateFbStatus("bad", "Sync error");
+      });
+    }
+
+    function firebaseConnect(config) {
+      try {
+        // Clean up previous connection
+        firebaseDisconnect();
+
+        fbApp = firebase.initializeApp(config, "plApp_" + Date.now());
+        fbDb = fbApp.database();
+        fbRef = fbDb.ref("powerlifting_log");
+
+        updateFbStatus("warn", "Connecting...");
+
+        // Listen for real-time changes
+        fbListener = fbRef.on("value", (snapshot) => {
+          const data = snapshot.val();
+          if (!data || !data.users) {
+            // DB is empty — push our local state up
+            firebasePush();
+            updateFbStatus("ok", "Connected (initial push)");
+            return;
+          }
+          // Merge remote data into local state
+          fbSyncing = true;
+          const fallback = makeDefaultState();
+          state.users = {
+            u1: { ...fallback.users.u1, ...(data.users.u1 || {}) },
+            u2: { ...fallback.users.u2, ...(data.users.u2 || {}) }
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          refreshAll();
+          fbSyncing = false;
+          updateFbStatus("ok", "Synced");
+          updateSyncStatusText("synced");
+        });
+
+        // Save config for auto-reconnect
+        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
+
+      } catch (err) {
+        console.error("Firebase connect failed:", err);
+        updateFbStatus("bad", "Connection failed: " + err.message);
+      }
+    }
+
+    function firebaseDisconnect() {
+      if (fbRef && fbListener) {
+        fbRef.off("value", fbListener);
+        fbListener = null;
+      }
+      if (fbApp) {
+        fbApp.delete().catch(() => {});
+        fbApp = null;
+        fbDb = null;
+        fbRef = null;
+      }
+      localStorage.removeItem(FB_CONFIG_KEY);
+      updateFbStatus("warn", "Not connected");
+      updateSyncStatusText("offline");
+    }
+
+    function updateFbStatus(level, text) {
+      const el = document.getElementById("fbStatusIndicator");
+      if (!el) return;
+      el.className = "status " + level;
+      el.textContent = text;
+    }
+
+    function updateSyncStatusText(text) {
+      const el = document.getElementById("syncStatusText");
+      if (el) el.textContent = text;
+    }
+
+    function loadFbConfigUI() {
+      const saved = localStorage.getItem(FB_CONFIG_KEY);
+      if (!saved) return;
+      try {
+        const c = JSON.parse(saved);
+        document.getElementById("fbApiKey").value = c.apiKey || "";
+        document.getElementById("fbAuthDomain").value = c.authDomain || "";
+        document.getElementById("fbDatabaseURL").value = c.databaseURL || "";
+        document.getElementById("fbProjectId").value = c.projectId || "";
+      } catch (e) {}
+    }
+
+    function tryAutoReconnect() {
+      const saved = localStorage.getItem(FB_CONFIG_KEY);
+      if (!saved) return;
+      try {
+        const config = JSON.parse(saved);
+        if (config.apiKey && config.databaseURL) {
+          firebaseConnect(config);
+        }
+      } catch (e) {}
     }
 
     function getActiveUser() {
@@ -1483,8 +1627,29 @@
       document.getElementById("variationOtherWrap").style.display = e.target.value === "Other" ? "block" : "none";
     });
 
+    /* ── Firebase UI events ── */
+    document.getElementById("fbConnectBtn").addEventListener("click", () => {
+      const config = {
+        apiKey: document.getElementById("fbApiKey").value.trim(),
+        authDomain: document.getElementById("fbAuthDomain").value.trim(),
+        databaseURL: document.getElementById("fbDatabaseURL").value.trim(),
+        projectId: document.getElementById("fbProjectId").value.trim()
+      };
+      if (!config.apiKey || !config.databaseURL) {
+        alert("Please fill in at least apiKey and databaseURL.");
+        return;
+      }
+      firebaseConnect(config);
+    });
+
+    document.getElementById("fbDisconnectBtn").addEventListener("click", () => {
+      firebaseDisconnect();
+    });
+
     populateFixedSelectors();
+    loadFbConfigUI();
     refreshAll();
+    tryAutoReconnect();
   </script>
 </body>
 </html>
