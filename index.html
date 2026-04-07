@@ -1296,53 +1296,89 @@
 
     async function restoreLogs(file) {
       const user = getActiveUser();
-      const name = file.name.toLowerCase();
+      const fname = file.name.toLowerCase();
       let workbook;
-      if (name.endsWith(".csv")) {
+      if (fname.endsWith(".csv")) {
         const text = await file.text();
         workbook = XLSX.read(text, { type: "string" });
       } else {
         const data = await file.arrayBuffer();
         workbook = XLSX.read(data, { type: "array" });
       }
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // Find the best sheet: prefer one starting with "Log_", otherwise first sheet
+      let sheetName = workbook.SheetNames.find((s) => s.toLowerCase().startsWith("log_")) || workbook.SheetNames[0];
+
+      // If multiple Log_ sheets exist, let user pick
+      const logSheets = workbook.SheetNames.filter((s) => s.toLowerCase().startsWith("log_"));
+      if (logSheets.length > 1) {
+        const choice = prompt(
+          `Multiple log sheets found:\n${logSheets.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\nEnter the number to import:`,
+          "1"
+        );
+        const idx = Number(choice) - 1;
+        if (idx >= 0 && idx < logSheets.length) sheetName = logSheets[idx];
+      }
+
+      const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
       if (!rows.length) {
-        alert("No log rows found in the file.");
+        alert(`No log rows found in sheet "${sheetName}".`);
         return;
       }
 
-      const imported = rows.map((r, i) => ({
-        id: crypto.randomUUID(),
-        order: i + 1,
-        date: String(r.Date || ""),
-        week: Number(r.Week) || 0,
-        day: Number(r.Day) || 0,
-        sessionFocus: String(r.SessionFocus || ""),
-        lift: String(r.Lift || ""),
-        variation: String(r.Variation || ""),
-        setType: String(r.SetType || ""),
-        reps: Number(r.Reps) || 0,
-        weight: Number(r.Weight) || 0,
-        rpe: Number(r.RPE) || 0,
-        pct1rm: r.Percent1RM !== "" ? Number(r.Percent1RM) : null,
-        e1rm: r.E1RM !== "" ? Number(r.E1RM) : null,
-        targetReps: Number(r.TargetBackoffReps) || 0,
-        targetRpe: Number(r.TargetBackoffRPE) || 0,
-        suggestedBackoff: r.SuggestedBackoff !== "" ? Number(r.SuggestedBackoff) : null,
-        referenceTopE1RM: r.ReferenceTopE1RM !== "" ? Number(r.ReferenceTopE1RM) : null,
-        fatiguePct: r.FatigueDrop !== "" ? Number(r.FatigueDrop) : null,
-        techNotes: String(r.TechniqueNotes || ""),
-        generalNotes: String(r.GeneralNotes || "")
-      })).filter((r) => r.date && r.lift);
+      // Flexible column getter: try multiple name variants
+      function col(r, ...keys) {
+        for (const k of keys) {
+          if (r[k] !== undefined && r[k] !== "") return r[k];
+        }
+        return "";
+      }
+
+      const imported = rows.map((r, i) => {
+        const date = String(col(r, "Date", "date") || "");
+        const lift = String(col(r, "Lift", "lift") || "");
+        if (!date || !lift) return null;
+
+        const weight = Number(col(r, "Weight", "WeightKg", "weight", "weightKg")) || 0;
+        const e1rmVal = col(r, "E1RM", "E1RMKg", "e1rm", "e1rmKg");
+        const pctVal = col(r, "Percent1RM", "percent1rm", "Pct1RM");
+        const sugVal = col(r, "SuggestedBackoff", "SuggestedBackoffKg");
+        const refVal = col(r, "ReferenceTopE1RM", "ReferenceTopE1RMKg");
+        const fatVal = col(r, "FatigueDrop", "FatigueDropPercent", "FatiguePct");
+
+        return {
+          id: crypto.randomUUID(),
+          order: i + 1,
+          date,
+          week: Number(col(r, "Week", "week")) || 0,
+          day: Number(col(r, "Day", "day")) || 0,
+          sessionFocus: String(col(r, "SessionFocus", "sessionFocus", "Session Focus") || ""),
+          lift,
+          variation: String(col(r, "Variation", "variation") || ""),
+          setType: String(col(r, "SetType", "setType", "Set Type") || ""),
+          reps: Number(col(r, "Reps", "reps")) || 0,
+          weight,
+          rpe: Number(col(r, "RPE", "rpe", "Rpe")) || 0,
+          pct1rm: pctVal !== "" ? Number(pctVal) : null,
+          e1rm: e1rmVal !== "" ? Number(e1rmVal) : null,
+          targetReps: Number(col(r, "TargetBackoffReps", "targetReps")) || 0,
+          targetRpe: Number(col(r, "TargetBackoffRPE", "targetRpe")) || 0,
+          suggestedBackoff: sugVal !== "" ? Number(sugVal) : null,
+          referenceTopE1RM: refVal !== "" ? Number(refVal) : null,
+          fatiguePct: fatVal !== "" ? Number(fatVal) : null,
+          techNotes: String(col(r, "TechniqueNotes", "techNotes", "Technique Notes") || ""),
+          generalNotes: String(col(r, "GeneralNotes", "generalNotes", "General Notes") || "")
+        };
+      }).filter(Boolean);
 
       if (!imported.length) {
-        alert("No valid log rows found. Please check the column names match the exported format.");
+        alert("No valid log rows found. Please check the file contains Date and Lift columns.");
         return;
       }
 
-      const mode = confirm(`Found ${imported.length} log rows.\n\nOK = Merge with existing logs\nCancel = Replace all existing logs`);
+      const mode = confirm(`Found ${imported.length} log rows from sheet "${sheetName}".\n\nOK = Merge with existing logs\nCancel = Replace all existing logs`);
       if (mode) {
         user.logs = [...user.logs, ...imported];
       } else {
