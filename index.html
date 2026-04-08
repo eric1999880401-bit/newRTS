@@ -369,6 +369,33 @@
       color: #cbd5e1;
     }
 
+    /* Edit modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.72);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      width: 100%;
+      max-width: 720px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .edit-btn {
+      background: rgba(56,189,248,.10);
+      color: #7dd3fc;
+      border-color: rgba(56,189,248,.3);
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    .edit-btn:hover { border-color: #38bdf8; }
+
     @media (max-width: 1100px) {
       .grid-3, .grid-4, .grid-2, .metrics {
         grid-template-columns: 1fr 1fr;
@@ -472,6 +499,9 @@
             </div>
           </div>
           <div class="inline-note">Expected columns: Week, Day, Phase, Focus, Main Lift, Top Set Target, Back-off Plan, Secondary Lift, Secondary Prescription, Accessories / Notes.</div>
+          <div class="actions-inline" style="margin-top:10px">
+            <button id="downloadTemplateBtn">⬇ Download Program Template</button>
+          </div>
           <details style="margin-top:12px">
             <summary>Method used in this app</summary>
             <div class="inline-note" style="margin-top:10px">
@@ -693,6 +723,97 @@
     </div>
   </div>
 
+  <!-- Edit Log Modal -->
+  <div id="editModal" class="modal-backdrop">
+    <div class="panel modal-card">
+      <div class="row" style="margin-bottom:14px">
+        <h2>Edit Log Entry</h2>
+        <div class="spacer"></div>
+        <button onclick="closeEditModal()">✕ Close</button>
+      </div>
+      <div class="grid grid-4">
+        <div class="field">
+          <label>Date</label>
+          <input id="editLogDate" type="date" />
+        </div>
+        <div class="field">
+          <label>Week #</label>
+          <input id="editLogWeek" type="number" min="1" max="52" />
+        </div>
+        <div class="field">
+          <label>Day</label>
+          <input id="editLogDay" type="number" min="1" max="7" />
+        </div>
+        <div class="field">
+          <label>Lift</label>
+          <select id="editLogLift">
+            <option>Squat</option>
+            <option>Bench</option>
+            <option>Deadlift</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Variation</label>
+          <select id="editLogVariation" onchange="document.getElementById('editVariationOtherWrap').style.display=this.value==='Other'?'block':'none'">
+            <option>Competition</option>
+            <option>Paused</option>
+            <option>Board</option>
+            <option>Pin</option>
+            <option>Spoto</option>
+            <option>Box</option>
+            <option>Tempo</option>
+            <option>Touch and Go</option>
+            <option>Close Grip</option>
+            <option>Deficit</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field" id="editVariationOtherWrap" style="display:none">
+          <label>Custom variation</label>
+          <input id="editLogVariationOther" type="text" />
+        </div>
+        <div class="field">
+          <label>Set type</label>
+          <select id="editLogSetType">
+            <option>Warm up</option>
+            <option>Top</option>
+            <option>Back off</option>
+            <option>Secondary</option>
+            <option>Accessory</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reps</label>
+          <input id="editLogReps" type="number" min="1" max="20" />
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input id="editLogWeight" type="number" step="0.1" min="0" />
+        </div>
+        <div class="field">
+          <label>RPE</label>
+          <input id="editLogRpe" type="number" step="0.5" min="5" max="10" />
+        </div>
+      </div>
+      <div class="grid grid-2" style="margin-top:12px">
+        <div class="field">
+          <label>Technique notes</label>
+          <textarea id="editLogTechNotes"></textarea>
+        </div>
+        <div class="field">
+          <label>General notes</label>
+          <textarea id="editLogGeneralNotes"></textarea>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <div class="spacer"></div>
+        <button onclick="closeEditModal()">Cancel</button>
+        <button class="primary" onclick="saveEditLog()">Save changes</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const STORAGE_KEY = "powerlifting_dual_user_app_v2";
     const DEFAULT_PROGRAM_USER1 = [{"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 3×5 @6 (stop if any set >6.5)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6 (2-count pause)", "accessoriesNotes": "RDL 2–3×6–8 @6–7; chest-supported row 3×8–12; abs 2–3×8–12"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6.5–7", "backoffPlan": "4×4 @6 (all comp pauses; stop if >6.5)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6 (strict depth / stay braced)", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6 (cap last set ≤6.5)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "3×6 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 4×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6–6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×4 @6–6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×5 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7", "backoffPlan": "−5% then 4×3 @6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×4 @6.5–7, then 3×4 @6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×3 @6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2×15–20"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×4 @6.5", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 4, "phase": "Pivot / deload", "day": 1, "focus": "Squat + light bench", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Goal: drop fatigue hard. Only easy blood-flow accessories if desired."}, {"week": 4, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat technique", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "2×3 @5.5–6", "accessoriesNotes": "Everything should feel fast. No grinders, no soreness chasing."}, {"week": 4, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench technique", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @5.5–6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×5 @6", "accessoriesNotes": "Everything should feel fast. Stop if position breaks."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7.5", "backoffPlan": "−5% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7, then 3×4 @6.5–7", "accessoriesNotes": "Keep assistance, but cut 1 set if recovery is tight."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7.5", "backoffPlan": "4×3 @6.5–7 (comp pause, cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats + triceps stay in. Use conservative jumps, especially on bench."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Back ext or hamstrings 2×8–12; upper back 2–3×10–15"}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8", "backoffPlan": "−5% then 3×3 @7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7–7.5, then 3×4 @6.5–7", "accessoriesNotes": "Keep bar speed honest. If single overshoots, hold or reduce load."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8", "backoffPlan": "4×3 @7 (cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6–6.5", "accessoriesNotes": "Lats + triceps, but avoid elbow / wrist irritation."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5", "backoffPlan": "−6% then 3×3 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Deadlift volume stays moderate—quality over fatigue."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8 (repeat if W6 overshot)", "backoffPlan": "−5% then 2–3×2 @7", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×3 @7.5, then 3×3 @6.5–7", "accessoriesNotes": "Do not force a PR single here. Clean reps only."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8 (repeat if touch inconsistent)", "backoffPlan": "3×2 @7", "secondaryLift": "Box Squat", "secondaryPrescription": "3×2 @6–6.5", "accessoriesNotes": "Bench should look like competition every rep."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5–8", "backoffPlan": "−6% then 2–3×2 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "3×4 @6.5", "accessoriesNotes": "If recovery is poor, do only 2 back-off sets."}, {"week": 8, "phase": "Pivot / deload", "day": 1, "focus": "Squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×3 @6", "accessoriesNotes": "Strip fatigue. Only light pump work if you feel beat up."}, {"week": 8, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat touch", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Squat variation", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "Everything should feel easy and technically sharp."}, {"week": 8, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench touch", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×2 @6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Leave the gym feeling better than you walked in."}, {"week": 9, "phase": "Block 3 — Realization", "day": 1, "focus": "Peak squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "2–3×2 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Low volume, high quality. Film the single and first back-off set."}, {"week": 9, "phase": "Block 3 — Realization", "day": 2, "focus": "Peak bench + light squat", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "3×2 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "No grinders. Every bench rep must be comp-standard."}, {"week": 9, "phase": "Block 3 — Realization", "day": 3, "focus": "Peak deadlift + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @8", "backoffPlan": "2×2 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "3×3 @6.5", "accessoriesNotes": "Finish deadlifts hard, but stop if position opens."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 1, "focus": "Squat opener practice", "mainLift": "Comp Squat", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2×1 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Treat this as opener rehearsal, not maxing."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 2, "focus": "Bench opener practice", "mainLift": "Comp Bench", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2–3×1 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Protect the touch. If wrist pain >3/10, downshift."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 3, "focus": "Deadlift opener practice", "mainLift": "Sumo Deadlift", "topSetTarget": "Planned opener 1×1 @8", "backoffPlan": "1–2×1 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "No chasing second attempts in training."}, {"week": 11, "phase": "Taper", "day": 1, "focus": "Squat taper", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Minimal assistance only if it improves recovery."}, {"week": 11, "phase": "Taper", "day": 2, "focus": "Bench taper", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Keep everything fast and crisp."}, {"week": 11, "phase": "Taper", "day": 3, "focus": "Deadlift taper", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Walk out fresh."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 1, "focus": "Test squat + light bench", "mainLift": "Squat Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; shut it down if depth slips", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Comp standard first: depth non-negotiable."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 2, "focus": "Test bench + light squat", "mainLift": "Bench Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; only comp-standard touches count", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "No touch = no make. Protect the wrist if needed."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 3, "focus": "Test deadlift", "mainLift": "Deadlift Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; stop if lockout soft / position breaks", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Lockout standard: knees + hips through, no overextension."}];
@@ -879,35 +1000,56 @@
       return String(text || "")
         .toLowerCase()
         .replace(/[#()]/g, "")
-        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
     }
 
+    // Map Chinese (and other common variant) column names to canonical English keys
+    const HEADER_ALIASES = {
+      "week": "week", "週": "week", "周": "week", "星期": "week", "week ": "week",
+      "day": "day", "天": "day", "日": "day", "訓練日": "day", "training day": "day",
+      "phase": "phase", "階段": "phase", "週期": "phase", "周期": "phase",
+      "focus": "focus", "重點": "focus", "焦點": "focus", "session focus": "focus",
+      "main lift": "mainLift", "mainlift": "mainLift", "lift 1": "mainLift", "主項": "mainLift", "主要動作": "mainLift", "主項目": "mainLift",
+      "top set target": "topSetTarget", "top set": "topSetTarget", "topsettarget": "topSetTarget", "頂組目標": "topSetTarget", "最大組目標": "topSetTarget",
+      "back-off plan": "backoffPlan", "back off plan": "backoffPlan", "backoff plan": "backoffPlan", "back off": "backoffPlan", "backoff": "backoffPlan", "退階計畫": "backoffPlan", "減量計畫": "backoffPlan", "退階": "backoffPlan",
+      "secondary lift": "secondaryLift", "secondary": "secondaryLift", "lift 2": "secondaryLift", "副項": "secondaryLift", "次要動作": "secondaryLift", "副項目": "secondaryLift",
+      "secondary prescription": "secondaryPrescription", "secondary rx": "secondaryPrescription", "secondary plan": "secondaryPrescription", "副項處方": "secondaryPrescription", "次要處方": "secondaryPrescription",
+      "accessories / notes": "accessoriesNotes", "accessories notes": "accessoriesNotes", "accessories": "accessoriesNotes", "notes": "accessoriesNotes", "輔助動作": "accessoriesNotes", "備註": "accessoriesNotes", "輔助/備註": "accessoriesNotes", "輔助動作/備註": "accessoriesNotes"
+    };
+
     function normalizeProgramRow(row) {
-      const map = {};
+      const result = {};
       Object.keys(row).forEach((key) => {
-        map[normalizeHeader(key)] = row[key];
-      });
-      const get = (...keys) => {
-        for (const key of keys) {
-          if (map[key] !== undefined && map[key] !== null) return map[key];
+        const normalized = normalizeHeader(key);
+        const canonical = HEADER_ALIASES[normalized];
+        if (canonical && result[canonical] === undefined) {
+          result[canonical] = row[key];
         }
-        return "";
-      };
-      const week = Number(get("week", "week "));
-      const day = Number(get("day", "training day"));
+      });
+      // Fallback: also try raw key matching (case-insensitive)
+      Object.keys(row).forEach((key) => {
+        const lower = key.trim().toLowerCase();
+        const canonical = HEADER_ALIASES[lower];
+        if (canonical && result[canonical] === undefined) {
+          result[canonical] = row[key];
+        }
+      });
+
+      const week = Number(result.week);
+      const day = Number(result.day);
       if (!week || !day) return null;
       return {
         week,
-        phase: String(get("phase") || ""),
+        phase: String(result.phase || ""),
         day,
-        focus: String(get("focus", "session focus") || ""),
-        mainLift: String(get("main lift", "mainlift", "lift 1") || ""),
-        topSetTarget: String(get("top set target", "top set", "topsettarget") || ""),
-        backoffPlan: String(get("back off plan", "backoff plan", "back off", "backoff") || ""),
-        secondaryLift: String(get("secondary lift", "secondary", "lift 2") || ""),
-        secondaryPrescription: String(get("secondary prescription", "secondary rx", "secondary plan") || ""),
-        accessoriesNotes: String(get("accessories notes", "accessories / notes", "accessories", "notes") || "")
+        focus: String(result.focus || ""),
+        mainLift: String(result.mainLift || ""),
+        topSetTarget: String(result.topSetTarget || ""),
+        backoffPlan: String(result.backoffPlan || ""),
+        secondaryLift: String(result.secondaryLift || ""),
+        secondaryPrescription: String(result.secondaryPrescription || ""),
+        accessoriesNotes: String(result.accessoriesNotes || "")
       };
     }
 
@@ -1143,7 +1285,7 @@
           <td class="right">${formatNumber(row.rpe, 1)}</td>
           <td class="right">${formatNumber(row.e1rm, 1)}</td>
           <td class="right">${row.fatiguePct === null ? "—" : formatNumber(row.fatiguePct, 1)}</td>
-          <td><button onclick="deleteLog('${row.id}')">Delete</button></td>
+          <td style="white-space:nowrap"><button class="edit-btn" onclick="editLog('${row.id}')">Edit</button> <button onclick="deleteLog('${row.id}')">Delete</button></td>
         </tr>
       `).join("");
     }
@@ -1209,6 +1351,7 @@
                     <th class="right">RPE</th>
                     <th class="right">e1RM</th>
                     <th class="right">Fatigue %</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1223,6 +1366,7 @@
                       <td class="right">${formatNumber(row.rpe, 1)}</td>
                       <td class="right">${formatNumber(row.e1rm, 1)}</td>
                       <td class="right">${row.fatiguePct === null ? "—" : formatNumber(row.fatiguePct, 1)}</td>
+                      <td style="white-space:nowrap"><button class="edit-btn" onclick="editLog('${row.id}')">Edit</button> <button class="danger" style="padding:5px 10px;font-size:12px" onclick="if(confirm('Delete this set?'))deleteLog('${row.id}')">Delete</button></td>
                     </tr>
                   `).join("")}
                 </tbody>
@@ -1320,6 +1464,122 @@
       refreshAll();
     }
     window.deleteLog = deleteLog;
+
+    const KNOWN_VARIATIONS = ['Competition','Paused','Board','Pin','Spoto','Box','Tempo','Touch and Go','Close Grip','Deficit','Other'];
+    let editingLogId = null;
+
+    function editLog(id) {
+      const user = getActiveUser();
+      const row = user.logs.find((r) => r.id === id);
+      if (!row) return;
+      editingLogId = id;
+
+      document.getElementById('editLogDate').value = row.date;
+      document.getElementById('editLogWeek').value = row.week;
+      document.getElementById('editLogDay').value = row.day;
+      document.getElementById('editLogLift').value = row.lift;
+      document.getElementById('editLogSetType').value = row.setType;
+      document.getElementById('editLogReps').value = row.reps;
+      document.getElementById('editLogWeight').value = row.weight;
+      document.getElementById('editLogRpe').value = Number(row.rpe).toFixed(1);
+      document.getElementById('editLogTechNotes').value = row.techNotes || '';
+      document.getElementById('editLogGeneralNotes').value = row.generalNotes || '';
+
+      if (KNOWN_VARIATIONS.includes(row.variation)) {
+        document.getElementById('editLogVariation').value = row.variation;
+        document.getElementById('editLogVariationOther').value = '';
+        document.getElementById('editVariationOtherWrap').style.display = 'none';
+      } else {
+        document.getElementById('editLogVariation').value = 'Other';
+        document.getElementById('editLogVariationOther').value = row.variation;
+        document.getElementById('editVariationOtherWrap').style.display = 'block';
+      }
+
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function saveEditLog() {
+      const user = getActiveUser();
+      const idx = user.logs.findIndex((r) => r.id === editingLogId);
+      if (idx === -1) return;
+
+      const reps = Number(document.getElementById('editLogReps').value);
+      const weight = Number(document.getElementById('editLogWeight').value);
+      const rpe = Number(document.getElementById('editLogRpe').value);
+      if (!weight || !reps || !rpe) { alert('Please fill in Reps, Weight, and RPE.'); return; }
+
+      const varSel = document.getElementById('editLogVariation').value;
+      const variation = varSel !== 'Other' ? varSel : (document.getElementById('editLogVariationOther').value.trim() || 'Other');
+
+      user.logs[idx] = {
+        ...user.logs[idx],
+        date: document.getElementById('editLogDate').value,
+        week: Number(document.getElementById('editLogWeek').value),
+        day: Number(document.getElementById('editLogDay').value),
+        lift: document.getElementById('editLogLift').value,
+        variation,
+        setType: document.getElementById('editLogSetType').value,
+        reps, weight, rpe,
+        pct1rm: getPercent1RM(reps, rpe),
+        e1rm: calcE1RM(weight, reps, rpe),
+        techNotes: document.getElementById('editLogTechNotes').value.trim(),
+        generalNotes: document.getElementById('editLogGeneralNotes').value.trim()
+      };
+
+      closeEditModal();
+      saveState();
+      refreshAll();
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('open');
+      editingLogId = null;
+    }
+    window.editLog = editLog;
+    window.closeEditModal = closeEditModal;
+
+    function downloadProgramTemplate() {
+      const wb = XLSX.utils.book_new();
+      const headers = ['Week', 'Day', 'Phase', 'Focus', 'Main Lift', 'Top Set Target', 'Back-off Plan', 'Secondary Lift', 'Secondary Prescription', 'Accessories / Notes'];
+      const chineseHint = ['週', '天', '階段', '重點', '主要動作', '頂組目標', '退階計畫', '次要動作', '次要處方', '輔助動作/備註'];
+      const data = [
+        headers,
+        chineseHint,
+        [1, 1, 'Block 1 — Accumulation', 'Squat priority + bench volume', 'Comp Squat', '1×1 @6.5', '−5% then 3×5 @6 (stop if any set >6.5)', 'Paused Bench', 'Top 1×5 @6.5, then 3×5 @6', 'RDL 2–3×6–8 @6–7; row 3×8–12; abs 2–3×8–12'],
+        [1, 2, 'Block 1 — Accumulation', 'Bench priority + squat control', 'Comp Bench', '1×1 @6.5–7', '4×4 @6 (all comp pauses; stop if >6.5)', '2ct Pause Squat', '3×4 @6 (strict depth)', 'Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20'],
+        [1, 3, 'Block 1 — Accumulation', 'Deadlift priority + bench secondary', 'Sumo Deadlift', '1×1 @6.5', '−6% then 3×4 @6 (cap last set ≤6.5)', 'Close-Grip Paused Bench', '3×6 @6', 'Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15'],
+        [2, 1, 'Block 1 — Accumulation', 'Squat priority + bench volume', 'Comp Squat', '1×1 @6.5', '−5% then 4×4 @6–6.5 (cap last set ≤7)', 'Paused Bench', 'Top 1×5 @6.5, then 3×5 @6–6.5', 'RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12'],
+        [2, 2, 'Block 1 — Accumulation', 'Bench priority + squat control', 'Comp Bench', '1×1 @7', '4×4 @6–6.5 (all comp pauses)', '2ct Pause Squat', '3×4 @6', 'Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20'],
+        [2, 3, 'Block 1 — Accumulation', 'Deadlift priority + bench secondary', 'Sumo Deadlift', '1×1 @6.5', '−6% then 3×4 @6–6.5 (cap last set ≤7)', 'Close-Grip Paused Bench', '4×5 @6', 'Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15']
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      // Set column widths for readability
+      ws['!cols'] = [
+        {wch:6}, {wch:5}, {wch:26}, {wch:34}, {wch:24}, {wch:22}, {wch:40}, {wch:24}, {wch:32}, {wch:48}
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Schedule_12w');
+
+      // Add an instruction sheet
+      const instrData = [
+        ['Powerlifting Program Template — 使用說明'],
+        [''],
+        ['1. 請在 Schedule_12w 分頁填寫你的課表資料'],
+        ['2. 第一行是英文欄位名稱（請勿修改），第二行是中文對照參考（匯入時會自動跳過）'],
+        ['3. 從第三行開始填入你的課表，每一行代表某週某天的訓練計畫'],
+        ['4. Week（週）和 Day（天）欄位為必填，其他欄位可留空'],
+        ['5. 填寫完畢後儲存為 .xlsx 格式，回到 App 使用「Program import」匯入'],
+        [''],
+        ['支援的欄位名稱（中英文皆可）：'],
+        ['Week / 週', 'Day / 天', 'Phase / 階段', 'Focus / 重點', 'Main Lift / 主要動作'],
+        ['Top Set Target / 頂組目標', 'Back-off Plan / 退階計畫', 'Secondary Lift / 次要動作'],
+        ['Secondary Prescription / 次要處方', 'Accessories / Notes / 輔助動作/備註']
+      ];
+      const instrWs = XLSX.utils.aoa_to_sheet(instrData);
+      instrWs['!cols'] = [{wch:28},{wch:28},{wch:28},{wch:28},{wch:28}];
+      XLSX.utils.book_append_sheet(wb, instrWs, '使用說明 Instructions');
+
+      XLSX.writeFile(wb, 'program_template.xlsx');
+    }
 
     async function importProgramFile(file) {
       const user = getActiveUser();
@@ -1570,6 +1830,7 @@
       finally { e.target.value = ""; }
     });
 
+    document.getElementById("downloadTemplateBtn").addEventListener("click", downloadProgramTemplate);
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
