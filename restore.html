@@ -148,6 +148,7 @@
 
     <script>
       const STORAGE_KEY = "powerlifting_dual_user_app_v2";
+      const FB_CONFIG_KEY = "powerlifting_firebase_config";
       const BACKUP_PREFIX = STORAGE_KEY + "_snapshot_";
 
       const fileInput = document.getElementById("backupFile");
@@ -159,6 +160,7 @@
 
       let checkedState = null;
       let checkedCounts = null;
+      let checkedPayload = null;
 
       function countStateData(snapshot) {
         const users = Object.values((snapshot && snapshot.users) || {});
@@ -192,6 +194,7 @@
       function analyzeText(text, sourceLabel) {
         checkedState = null;
         checkedCounts = null;
+        checkedPayload = null;
         restoreBtn.disabled = true;
 
         const payload = JSON.parse(text);
@@ -199,13 +202,17 @@
         const counts = countStateData(state);
         checkedState = state;
         checkedCounts = counts;
+        checkedPayload = payload;
         restoreBtn.disabled = false;
 
         const users = Object.values(state.users)
           .map((user) => `${user.name || user.id}: ${(user.logs || []).length} logged sets, ${(user.program || []).length} program rows`)
           .join("\n");
+        const syncLine = typeof payload?.recoveryStorage?.[FB_CONFIG_KEY] === "string"
+          ? "\nFirebase sync settings: included"
+          : "\nFirebase sync settings: not included";
         setSummary(
-          `Checked: ${sourceLabel}\nAthletes: ${counts.athletes}\nLogged sets: ${counts.logs}\nProgram rows: ${counts.programRows}\n\n${users}`,
+          `Checked: ${sourceLabel}\nAthletes: ${counts.athletes}\nLogged sets: ${counts.logs}\nProgram rows: ${counts.programRows}${syncLine}\n\n${users}`,
           counts.logs > 0 ? "ok" : "warning"
         );
       }
@@ -226,6 +233,19 @@
         if (!current) return;
         const stamp = new Date().toISOString().replace(/[:.]/g, "-");
         localStorage.setItem(`${BACKUP_PREFIX}before_restore_page_${stamp}`, current);
+      }
+
+      function restoreRecoveryStorageFromBackup(payload) {
+        const recoveryStorage = payload?.recoveryStorage;
+        if (!recoveryStorage || typeof recoveryStorage !== "object") return [];
+        const restored = [];
+        [FB_CONFIG_KEY, "powerlifting_theme"].forEach((key) => {
+          if (typeof recoveryStorage[key] === "string") {
+            localStorage.setItem(key, recoveryStorage[key]);
+            restored.push(key);
+          }
+        });
+        return restored;
       }
 
       readClipboardBtn.addEventListener("click", async () => {
@@ -255,14 +275,18 @@
 
       restoreBtn.addEventListener("click", () => {
         if (!checkedState || !checkedCounts) return;
+        const hasSyncSettings = typeof checkedPayload?.recoveryStorage?.[FB_CONFIG_KEY] === "string";
+        const syncLine = hasSyncSettings ? "\nFirebase sync settings will also be restored." : "";
         const ok = confirm(
-          `Restore this backup?\n\nLogged sets: ${checkedCounts.logs}\nProgram rows: ${checkedCounts.programRows}\nAthletes: ${checkedCounts.athletes}\n\nThe current browser data will be saved as a local safety snapshot first.`
+          `Restore this backup?\n\nLogged sets: ${checkedCounts.logs}\nProgram rows: ${checkedCounts.programRows}\nAthletes: ${checkedCounts.athletes}${syncLine}\n\nThe current browser data will be saved as a local safety snapshot first.`
         );
         if (!ok) return;
         makeSafetySnapshot();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedState));
+        const restoredStorageKeys = restoreRecoveryStorageFromBackup(checkedPayload);
+        const restoredSync = restoredStorageKeys.includes(FB_CONFIG_KEY);
         setSummary(
-          `Restore complete.\nLogged sets: ${checkedCounts.logs}\nProgram rows: ${checkedCounts.programRows}\nAthletes: ${checkedCounts.athletes}\n\nOpen the app and verify the History screen.`,
+          `Restore complete.\nLogged sets: ${checkedCounts.logs}\nProgram rows: ${checkedCounts.programRows}\nAthletes: ${checkedCounts.athletes}\nFirebase sync settings restored: ${restoredSync ? "yes" : "no"}\n\nOpen the app and verify the History screen.`,
           "ok"
         );
       });

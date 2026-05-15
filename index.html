@@ -1865,8 +1865,7 @@
       }
     }
 
-    function logIdentity(row) {
-      if (row?.id) return String(row.id);
+    function logNaturalIdentity(row) {
       return [
         row?.date || "",
         row?.lift || "",
@@ -1874,19 +1873,38 @@
         row?.setType || "",
         row?.reps || "",
         row?.weight || "",
-        row?.rpe || "",
-        row?.order || ""
+        row?.rpe || ""
       ].join("|");
     }
 
-    function mergeLogs(localLogs = [], remoteLogs = []) {
-      const merged = new Map();
-      [...remoteLogs, ...localLogs].forEach((row) => {
+    function groupLogsByNaturalIdentity(logs = []) {
+      const groups = new Map();
+      logs.forEach((row) => {
         if (!row) return;
-        const key = logIdentity(row);
-        merged.set(key, { ...(merged.get(key) || {}), ...row });
+        const key = logNaturalIdentity(row);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(row);
       });
-      return Array.from(merged.values()).sort((a, b) => {
+      groups.forEach((group) => {
+        group.sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+      });
+      return groups;
+    }
+
+    function mergeLogs(localLogs = [], remoteLogs = []) {
+      const localGroups = groupLogsByNaturalIdentity(localLogs);
+      const remoteGroups = groupLogsByNaturalIdentity(remoteLogs);
+      const keys = new Set([...remoteGroups.keys(), ...localGroups.keys()]);
+      const merged = [];
+      keys.forEach((key) => {
+        const localGroup = localGroups.get(key) || [];
+        const remoteGroup = remoteGroups.get(key) || [];
+        const maxRows = Math.max(localGroup.length, remoteGroup.length);
+        for (let index = 0; index < maxRows; index += 1) {
+          merged.push({ ...(remoteGroup[index] || {}), ...(localGroup[index] || {}) });
+        }
+      });
+      return merged.sort((a, b) => {
         const dateCompare = String(a.date || "").localeCompare(String(b.date || ""));
         if (dateCompare) return dateCompare;
         return Number(a.order || 0) - Number(b.order || 0);
@@ -1976,7 +1994,8 @@
     function firebaseConnect(config) {
       try {
         // Clean up previous connection
-        firebaseDisconnect();
+        firebaseDisconnect({ forgetConfig: false });
+        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
 
         fbApp = firebase.initializeApp(config, "plApp_" + Date.now());
         fbDb = fbApp.database();
@@ -2009,19 +2028,22 @@
           updateFbStatus("ok", "Synced");
           updateSyncStatusText("Cloud synced");
           firebasePush();
+        }, (err) => {
+          console.error("Firebase read failed:", err);
+          updateFbStatus("bad", err?.code === "PERMISSION_DENIED" ? "Permission denied" : "Sync error");
+          updateSyncStatusText(err?.code === "PERMISSION_DENIED" ? "Cloud permission denied" : "Cloud error");
         });
-
-        // Save config for auto-reconnect
-        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
 
       } catch (err) {
         console.error("Firebase connect failed:", err);
+        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
         updateFbStatus("bad", "Connection failed: " + err.message);
         updateSyncStatusText("Local saved");
       }
     }
 
-    function firebaseDisconnect() {
+    function firebaseDisconnect(options = {}) {
+      const forgetConfig = options.forgetConfig !== false;
       if (fbRef && fbListener) {
         fbRef.off("value", fbListener);
         fbListener = null;
@@ -2032,7 +2054,7 @@
         fbDb = null;
         fbRef = null;
       }
-      localStorage.removeItem(FB_CONFIG_KEY);
+      if (forgetConfig) localStorage.removeItem(FB_CONFIG_KEY);
       updateFbStatus("warn", "Not connected");
       updateSyncStatusText("Local saved");
     }
@@ -3165,18 +3187,42 @@
       return parseStoredState(JSON.stringify(importedState));
     }
 
+    function restoreRecoveryStorageFromBackup(payload) {
+      const recoveryStorage = payload?.recoveryStorage;
+      if (!recoveryStorage || typeof recoveryStorage !== "object") return [];
+      const restored = [];
+      [FB_CONFIG_KEY, "powerlifting_theme"].forEach((key) => {
+        if (typeof recoveryStorage[key] === "string") {
+          localStorage.setItem(key, recoveryStorage[key]);
+          restored.push(key);
+        }
+      });
+      return restored;
+    }
+
     function applyFullBackupPayload(payload, sourceLabel) {
       const imported = parseFullBackupPayload(payload);
       const counts = countStateData(imported);
-      const confirmed = confirm(`Import full backup from ${sourceLabel}?\n\nIt contains ${counts.athletes} athlete(s), ${counts.logs} logged set(s), and ${counts.programRows} program row(s).\n\nThe currently loaded computer data will be saved as a local safety snapshot first.`);
+      const hasSyncSettings = typeof payload?.recoveryStorage?.[FB_CONFIG_KEY] === "string";
+      const syncLine = hasSyncSettings ? "\nFirebase sync settings are included and will be restored." : "";
+      const confirmed = confirm(`Import full backup from ${sourceLabel}?\n\nIt contains ${counts.athletes} athlete(s), ${counts.logs} logged set(s), and ${counts.programRows} program row(s).${syncLine}\n\nThe currently loaded computer data will be saved as a local safety snapshot first.`);
       if (!confirmed) return;
       makeLocalSnapshot("before_full_backup_import");
       state = imported;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const restoredStorageKeys = restoreRecoveryStorageFromBackup(payload);
       updateSyncStatusText("Local saved");
       refreshAll();
-      firebasePush();
-      alert("Full backup imported. Your computer is now using the backup data.");
+      loadFbConfigUI();
+      if (restoredStorageKeys.includes(FB_CONFIG_KEY)) {
+        tryAutoReconnect();
+      } else {
+        firebasePush();
+      }
+      const syncMessage = restoredStorageKeys.includes(FB_CONFIG_KEY)
+        ? " Firebase sync settings were restored and the app is reconnecting."
+        : "";
+      alert(`Full backup imported. Your computer is now using the backup data.${syncMessage}`);
     }
 
     async function importFullBackup(file) {
