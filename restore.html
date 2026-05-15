@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Restore Powerlifting Backup</title>
+    <style>
+      :root {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #172033;
+        background: #f6f8fb;
+      }
+
+      body {
+        margin: 0;
+        padding: 28px;
+      }
+
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+
+      p {
+        line-height: 1.5;
+      }
+
+      section {
+        background: #fff;
+        border: 1px solid #d9e0ea;
+        border-radius: 8px;
+        padding: 18px;
+        margin: 18px 0;
+        box-shadow: 0 8px 22px rgba(22, 34, 51, 0.08);
+      }
+
+      label {
+        display: block;
+        margin: 12px 0 8px;
+        font-weight: 700;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 180px;
+        box-sizing: border-box;
+        resize: vertical;
+        border: 1px solid #c8d2df;
+        border-radius: 8px;
+        padding: 12px;
+        font: 14px Consolas, "Courier New", monospace;
+      }
+
+      input[type="file"] {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #c8d2df;
+        border-radius: 8px;
+        padding: 10px;
+        background: #f9fbfd;
+      }
+
+      button,
+      a.button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        border: 1px solid #1e3a8a;
+        border-radius: 8px;
+        padding: 0 14px;
+        background: #1e3a8a;
+        color: white;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        border-color: #c8d2df;
+        background: white;
+        color: #172033;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .summary {
+        white-space: pre-wrap;
+        background: #eef4ff;
+        border-left: 4px solid #2563eb;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .warning {
+        background: #fff7ed;
+        border-left: 4px solid #d97706;
+      }
+
+      .ok {
+        background: #ecfdf5;
+        border-left-color: #059669;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Restore Powerlifting Backup</h1>
+      <p>This page restores a full backup into the same browser storage used by the app. It saves a local safety snapshot before replacing the loaded data.</p>
+
+      <section class="warning summary">
+        Only restore a backup that shows the expected logged set count. Do not clear the phone browser data until the restored computer data has been checked.
+      </section>
+
+      <section>
+        <label for="backupFile">Choose full backup JSON</label>
+        <input id="backupFile" type="file" accept=".json,application/json">
+
+        <label for="backupText">Or paste full backup JSON</label>
+        <textarea id="backupText" placeholder="Paste full backup JSON here"></textarea>
+
+        <div class="row">
+          <button id="readClipboardBtn" type="button" class="secondary">Paste from clipboard</button>
+          <button id="analyzeBtn" type="button" class="secondary">Check backup</button>
+          <button id="restoreBtn" type="button" disabled>Restore checked backup</button>
+          <a class="button secondary" href="./">Open app</a>
+        </div>
+      </section>
+
+      <section id="summary" class="summary">No backup checked yet.</section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "powerlifting_dual_user_app_v2";
+      const BACKUP_PREFIX = STORAGE_KEY + "_snapshot_";
+
+      const fileInput = document.getElementById("backupFile");
+      const textBox = document.getElementById("backupText");
+      const readClipboardBtn = document.getElementById("readClipboardBtn");
+      const analyzeBtn = document.getElementById("analyzeBtn");
+      const restoreBtn = document.getElementById("restoreBtn");
+      const summaryEl = document.getElementById("summary");
+
+      let checkedState = null;
+      let checkedCounts = null;
+
+      function countStateData(snapshot) {
+        const users = Object.values((snapshot && snapshot.users) || {});
+        return {
+          athletes: users.length,
+          logs: users.reduce((sum, user) => sum + (Array.isArray(user.logs) ? user.logs.length : 0), 0),
+          programRows: users.reduce((sum, user) => sum + (Array.isArray(user.program) ? user.program.length : 0), 0)
+        };
+      }
+
+      function normalizeState(payload) {
+        const state = payload && payload.state ? payload.state : payload;
+        if (!state || typeof state !== "object" || !state.users || typeof state.users !== "object") {
+          throw new Error("Backup does not contain a valid app state.");
+        }
+        Object.values(state.users).forEach((user) => {
+          if (!Array.isArray(user.program)) user.program = [];
+          if (!Array.isArray(user.logs)) user.logs = [];
+        });
+        if (!state.activeUserId || !state.users[state.activeUserId]) {
+          state.activeUserId = Object.keys(state.users)[0] || "u1";
+        }
+        return state;
+      }
+
+      function setSummary(message, kind) {
+        summaryEl.textContent = message;
+        summaryEl.className = "summary" + (kind ? " " + kind : "");
+      }
+
+      function analyzeText(text, sourceLabel) {
+        checkedState = null;
+        checkedCounts = null;
+        restoreBtn.disabled = true;
+
+        const payload = JSON.parse(text);
+        const state = normalizeState(payload);
+        const counts = countStateData(state);
+        checkedState = state;
+        checkedCounts = counts;
+        restoreBtn.disabled = false;
+
+        const users = Object.values(state.users)
+          .map((user) => `${user.name || user.id}: ${(user.logs || []).length} logged sets, ${(user.program || []).length} program rows`)
+          .join("\n");
+        setSummary(
+          `Checked: ${sourceLabel}\nAthletes: ${counts.athletes}\nLogged sets: ${counts.logs}\nProgram rows: ${counts.programRows}\n\n${users}`,
+          counts.logs > 0 ? "ok" : "warning"
+        );
+      }
+
+      async function analyzeCurrentInput() {
+        const file = fileInput.files && fileInput.files[0];
+        if (file) {
+          analyzeText(await file.text(), file.name);
+          return;
+        }
+        const text = textBox.value.trim();
+        if (!text) throw new Error("Choose a JSON file or paste a backup first.");
+        analyzeText(text, "pasted JSON");
+      }
+
+      function makeSafetySnapshot() {
+        const current = localStorage.getItem(STORAGE_KEY);
+        if (!current) return;
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        localStorage.setItem(`${BACKUP_PREFIX}before_restore_page_${stamp}`, current);
+      }
+
+      readClipboardBtn.addEventListener("click", async () => {
+        try {
+          textBox.value = await navigator.clipboard.readText();
+          await analyzeCurrentInput();
+        } catch (err) {
+          setSummary(err.message || "Clipboard paste failed.", "warning");
+        }
+      });
+
+      analyzeBtn.addEventListener("click", async () => {
+        try {
+          await analyzeCurrentInput();
+        } catch (err) {
+          setSummary(err.message || "Backup check failed.", "warning");
+        }
+      });
+
+      fileInput.addEventListener("change", async () => {
+        try {
+          if (fileInput.files && fileInput.files[0]) await analyzeCurrentInput();
+        } catch (err) {
+          setSummary(err.message || "Backup check failed.", "warning");
+        }
+      });
+
+      restoreBtn.addEventListener("click", () => {
+        if (!checkedState || !checkedCounts) return;
+        const ok = confirm(
+          `Restore this backup?\n\nLogged sets: ${checkedCounts.logs}\nProgram rows: ${checkedCounts.programRows}\nAthletes: ${checkedCounts.athletes}\n\nThe current browser data will be saved as a local safety snapshot first.`
+        );
+        if (!ok) return;
+        makeSafetySnapshot();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedState));
+        setSummary(
+          `Restore complete.\nLogged sets: ${checkedCounts.logs}\nProgram rows: ${checkedCounts.programRows}\nAthletes: ${checkedCounts.athletes}\n\nOpen the app and verify the History screen.`,
+          "ok"
+        );
+      });
+    </script>
+  </body>
+</html>
