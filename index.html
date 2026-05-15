@@ -1372,6 +1372,7 @@
         <div class="hint">Export, backup, and restore tools live here so the training screen stays focused.</div>
         <div class="data-actions-grid">
           <button class="primary" id="exportFullBackupBtn" type="button">Export Full Backup</button>
+          <button class="primary" id="shareFullBackupBtn" type="button">Share Full Backup</button>
           <button id="copyFullBackupBtn" type="button">Copy Full Backup</button>
           <label class="button primary" for="importFullBackupInput">Import Full Backup</label>
           <input id="importFullBackupInput" type="file" accept=".json,application/json" hidden />
@@ -1390,7 +1391,7 @@
         <div class="actions-inline">
           <button id="importPastedFullBackupBtn" type="button">Import pasted backup</button>
         </div>
-        <div class="footer-note">For phone-to-computer recovery, use Export Full Backup or Copy Full Backup on the phone. Then send the JSON file or copied text to the computer and import it here.</div>
+        <div class="footer-note">For phone-to-computer recovery, use Share Full Backup, Export Full Backup, or Copy Full Backup on the phone. Then send the JSON file or copied text to the computer and import it here.</div>
         <div class="local-recovery-tools">
           <div id="storageStatus" class="footer-note">Checking local storage...</div>
           <div class="local-recovery-row">
@@ -3087,6 +3088,27 @@
       downloadJsonFile(`powerlifting_full_backup_${date}.json`, buildFullBackupPayload());
     }
 
+    async function shareFullBackup() {
+      const date = new Date().toISOString().slice(0, 10);
+      const filename = `powerlifting_full_backup_${date}.json`;
+      const text = JSON.stringify(buildFullBackupPayload(), null, 2);
+      const file = new File([text], filename, { type: "application/json" });
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+        try {
+          await navigator.share({
+            title: "Powerlifting Log Full Backup",
+            text: "Full backup JSON for restoring Powerlifting Log on another device.",
+            files: [file]
+          });
+          return;
+        } catch (err) {
+          if (err?.name === "AbortError") return;
+          console.warn("Share failed, downloading backup instead:", err);
+        }
+      }
+      downloadJsonFile(filename, buildFullBackupPayload());
+    }
+
     async function copyFullBackup() {
       const text = JSON.stringify(buildFullBackupPayload(), null, 2);
       const pasteBox = document.getElementById("fullBackupPaste");
@@ -3357,6 +3379,7 @@
 
     document.getElementById("downloadTemplateBtn").addEventListener("click", downloadProgramTemplate);
     document.getElementById("exportFullBackupBtn").addEventListener("click", exportFullBackup);
+    document.getElementById("shareFullBackupBtn").addEventListener("click", shareFullBackup);
     document.getElementById("copyFullBackupBtn").addEventListener("click", copyFullBackup);
     document.getElementById("importPastedFullBackupBtn").addEventListener("click", importPastedFullBackup);
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
