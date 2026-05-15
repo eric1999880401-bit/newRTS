@@ -3071,14 +3071,33 @@
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    function getRecoveryLocalStorageBundle() {
+      const bundle = {};
+      try {
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          const lowerKey = String(key || "").toLowerCase();
+          const isTrainingKey = lowerKey.includes("powerlifting") || lowerKey.startsWith("rts-");
+          if (!key || !isTrainingKey) continue;
+          bundle[key] = localStorage.getItem(key);
+        }
+      } catch (err) {
+        console.warn("Recovery storage bundle failed:", err);
+      }
+      return bundle;
+    }
+
     function buildFullBackupPayload() {
       const counts = countStateData(state);
+      const recoveryStorage = getRecoveryLocalStorageBundle();
       return {
         app: "Powerlifting Log",
         backupVersion: 1,
         exportedAt: new Date().toISOString(),
         storageKey: STORAGE_KEY,
         counts,
+        recoveryStorageKeys: Object.keys(recoveryStorage),
+        recoveryStorage,
         state
       };
     }
