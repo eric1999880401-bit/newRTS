@@ -3091,9 +3091,10 @@
     async function shareFullBackup() {
       const date = new Date().toISOString().slice(0, 10);
       const filename = `powerlifting_full_backup_${date}.json`;
-      const text = JSON.stringify(buildFullBackupPayload(), null, 2);
-      const file = new File([text], filename, { type: "application/json" });
-      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      const payload = buildFullBackupPayload();
+      const text = JSON.stringify(payload, null, 2);
+      const file = typeof File !== "undefined" ? new File([text], filename, { type: "application/json" }) : null;
+      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
         try {
           await navigator.share({
             title: "Powerlifting Log Full Backup",
@@ -3103,10 +3104,22 @@
           return;
         } catch (err) {
           if (err?.name === "AbortError") return;
-          console.warn("Share failed, downloading backup instead:", err);
+          console.warn("File share failed, trying text share instead:", err);
         }
       }
-      downloadJsonFile(filename, buildFullBackupPayload());
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Powerlifting Log Full Backup",
+            text
+          });
+          return;
+        } catch (err) {
+          if (err?.name === "AbortError") return;
+          console.warn("Text share failed, downloading backup instead:", err);
+        }
+      }
+      downloadJsonFile(filename, payload);
     }
 
     async function copyFullBackup() {
