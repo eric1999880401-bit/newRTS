@@ -921,6 +921,100 @@
       margin-bottom: 8px;
     }
     .log-console { padding: 22px 26px 26px; }
+    .quick-log-card {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--ivory-soft);
+    }
+    .quick-log-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .quick-log-topline small {
+      color: var(--pencil);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .quick-load-grid {
+      display: grid;
+      grid-template-columns: minmax(96px, .75fr) minmax(180px, 1.5fr) minmax(96px, .75fr);
+      gap: 12px;
+      align-items: end;
+    }
+    .log-drawer {
+      margin-top: 12px;
+      padding: 0;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--ivory);
+      overflow: hidden;
+    }
+    .log-drawer summary {
+      list-style: none;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 13px 16px;
+      cursor: pointer;
+      color: var(--ink-base);
+      background: var(--paper);
+    }
+    .log-drawer summary::-webkit-details-marker { display: none; }
+    .log-drawer summary::after {
+      content: "+";
+      grid-column: 1;
+      grid-row: 1;
+      width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      margin-right: 2px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 50%;
+      color: var(--pencil);
+      font-family: var(--font-display);
+      font-size: 17px;
+      line-height: 1;
+    }
+    .log-drawer[open] summary::after { content: "-"; }
+    .log-drawer summary > span {
+      grid-column: 2;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-style: italic;
+      font-weight: 600;
+    }
+    .log-drawer summary > small {
+      grid-column: 2;
+      color: var(--pencil);
+      font-size: 13px;
+      font-style: italic;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .drawer-body {
+      padding: 16px;
+      border-top: 1px solid var(--rule);
+      background: var(--ivory);
+    }
+    .notes-grid { margin-top: 12px; }
     .segmented {
       display: grid;
       gap: 0;
@@ -1122,9 +1216,11 @@
       .schedule-grid { grid-template-columns: 1fr; }
       .schedule-line { grid-template-columns: 88px minmax(0, 1fr); }
       #page-workout .workout-layout > .training-card:nth-child(2) { order: -1; }
-      .log-console > .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .log-console > .grid-4 > .field:first-child { grid-column: 1 / -1; }
-      .log-console .weight-field { grid-column: 1 / -1; }
+      .quick-log-card { padding: 16px; }
+      .quick-log-topline { display: block; }
+      .quick-log-topline small { display: block; margin-top: 4px; }
+      .quick-load-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .quick-load-grid .weight-field { grid-column: 1 / -1; }
       .save-row { grid-template-columns: 1fr; }
       .save-row .primary { width: 100%; }
       .session-table { display: none; }
@@ -1335,20 +1431,12 @@
             <div class="hint">Pick the lift, enter the set, and save before the next set starts.</div>
           </div>
           <div class="log-console">
-          <div class="grid grid-4">
-            <div class="field">
-              <label for="logDate">Date</label>
-              <input id="logDate" type="date" />
+          <div class="quick-log-card">
+            <div class="quick-log-topline">
+              <span>Quick set</span>
+              <small>Required now: lift, set type, reps, weight, RPE.</small>
             </div>
             <div class="field">
-              <label for="logWeek">Week #</label>
-              <select id="logWeek"></select>
-            </div>
-            <div class="field">
-              <label for="logDay">Training day</label>
-              <select id="logDay"></select>
-            </div>
-            <div class="field span-4">
               <label for="logLift">Lift</label>
               <div class="segmented" id="liftSegmented" aria-label="Lift quick selector">
                 <button type="button" data-target="logLift" data-value="Squat">Squat</button>
@@ -1361,27 +1449,8 @@
                 <option>Deadlift</option>
               </select>
             </div>
+
             <div class="field">
-              <label for="logVariation">Variation</label>
-              <select id="logVariation">
-                <option>Competition</option>
-                <option>Paused</option>
-                <option>Board</option>
-                <option>Pin</option>
-                <option>Spoto</option>
-                <option>Box</option>
-                <option>Tempo</option>
-                <option>Touch and Go</option>
-                <option>Close Grip</option>
-                <option>Deficit</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div class="field" id="variationOtherWrap" style="display:none">
-              <label for="logVariationOther">Other variation</label>
-              <input id="logVariationOther" type="text" placeholder="Type custom variation" />
-            </div>
-            <div class="field span-4">
               <label for="logSetType">Set type</label>
               <div class="segmented set-types" id="setTypeSegmented" aria-label="Set type quick selector">
                 <button type="button" data-target="logSetType" data-value="Warm up">Warm up</button>
@@ -1400,46 +1469,100 @@
                 <option>Other</option>
               </select>
             </div>
-            <div class="field">
-              <label for="logReps">Reps</label>
-              <select id="logReps"></select>
-            </div>
-            <div class="field weight-field">
-              <label for="logWeight">Weight (kg)</label>
-              <div class="number-stepper">
-                <button type="button" data-step-target="logWeight" data-step="-2.5">-</button>
-                <input id="logWeight" type="number" step="0.1" min="0" />
-                <button type="button" data-step-target="logWeight" data-step="2.5">+</button>
+
+            <div class="quick-load-grid">
+              <div class="field">
+                <label for="logReps">Reps</label>
+                <select id="logReps"></select>
               </div>
-            </div>
-            <div class="field">
-              <label for="logRpe">RPE</label>
-              <select id="logRpe"></select>
-            </div>
-            <div class="field">
-              <label for="targetReps">Target back-off reps</label>
-              <select id="targetReps"></select>
-            </div>
-            <div class="field">
-              <label for="targetRpe">Target back-off RPE</label>
-              <select id="targetRpe"></select>
+              <div class="field weight-field">
+                <label for="logWeight">Weight (kg)</label>
+                <div class="number-stepper">
+                  <button type="button" data-step-target="logWeight" data-step="-2.5">-</button>
+                  <input id="logWeight" type="number" step="0.1" min="0" />
+                  <button type="button" data-step-target="logWeight" data-step="2.5">+</button>
+                </div>
+              </div>
+              <div class="field">
+                <label for="logRpe">RPE</label>
+                <select id="logRpe"></select>
+              </div>
             </div>
           </div>
 
-          <div class="field" style="margin-top:12px">
-            <label for="logSessionFocus">Session focus</label>
-            <input id="logSessionFocus" type="text" placeholder="Auto-filled from imported program when available" />
-          </div>
-          <div class="grid grid-2" style="margin-top:12px">
-            <div class="field">
-              <label for="logTechNotes">Technique notes</label>
-              <textarea id="logTechNotes" placeholder="Bar path, depth, lockout, stability, pain, etc."></textarea>
+          <details class="log-drawer">
+            <summary>
+              <span>Session context</span>
+              <small id="contextDrawerSummary">Date, week, day, and session focus</small>
+            </summary>
+            <div class="drawer-body grid grid-3">
+              <div class="field">
+                <label for="logDate">Date</label>
+                <input id="logDate" type="date" />
+              </div>
+              <div class="field">
+                <label for="logWeek">Week #</label>
+                <select id="logWeek"></select>
+              </div>
+              <div class="field">
+                <label for="logDay">Training day</label>
+                <select id="logDay"></select>
+              </div>
+              <div class="field span-4">
+                <label for="logSessionFocus">Session focus</label>
+                <input id="logSessionFocus" type="text" placeholder="Auto-filled from imported program when available" />
+              </div>
             </div>
-            <div class="field">
-              <label for="logGeneralNotes">General notes</label>
-              <textarea id="logGeneralNotes" placeholder="Sleep, readiness, accessories, session comments, etc."></textarea>
+          </details>
+
+          <details class="log-drawer">
+            <summary>
+              <span>Details and notes</span>
+              <small id="detailsDrawerSummary">Variation, back-off target, technique, general notes</small>
+            </summary>
+            <div class="drawer-body">
+              <div class="grid grid-2">
+                <div class="field">
+                  <label for="logVariation">Variation</label>
+                  <select id="logVariation">
+                    <option>Competition</option>
+                    <option>Paused</option>
+                    <option>Board</option>
+                    <option>Pin</option>
+                    <option>Spoto</option>
+                    <option>Box</option>
+                    <option>Tempo</option>
+                    <option>Touch and Go</option>
+                    <option>Close Grip</option>
+                    <option>Deficit</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="field" id="variationOtherWrap" style="display:none">
+                  <label for="logVariationOther">Other variation</label>
+                  <input id="logVariationOther" type="text" placeholder="Type custom variation" />
+                </div>
+                <div class="field">
+                  <label for="targetReps">Target back-off reps</label>
+                  <select id="targetReps"></select>
+                </div>
+                <div class="field">
+                  <label for="targetRpe">Target back-off RPE</label>
+                  <select id="targetRpe"></select>
+                </div>
+              </div>
+              <div class="grid grid-2 notes-grid">
+                <div class="field">
+                  <label for="logTechNotes">Technique notes</label>
+                  <textarea id="logTechNotes" placeholder="Bar path, depth, lockout, stability, pain, etc."></textarea>
+                </div>
+                <div class="field">
+                  <label for="logGeneralNotes">General notes</label>
+                  <textarea id="logGeneralNotes" placeholder="Sleep, readiness, accessories, session comments, etc."></textarea>
+                </div>
+              </div>
             </div>
-          </div>
+          </details>
 
           <div class="metrics" style="margin-top:14px">
             <div class="metric">
@@ -2085,6 +2208,27 @@
       });
     }
 
+    function renderLogDrawerSummaries() {
+      const context = document.getElementById("contextDrawerSummary");
+      const details = document.getElementById("detailsDrawerSummary");
+      if (context) {
+        const date = document.getElementById("logDate")?.value || "Today";
+        const week = document.getElementById("logWeek")?.value || "1";
+        const day = document.getElementById("logDay")?.value || "1";
+        const focus = document.getElementById("logSessionFocus")?.value.trim();
+        context.textContent = `${date} · W${week}D${day}${focus ? " · " + focus : ""}`;
+      }
+      if (details) {
+        const variation = getVariationValue();
+        const targetReps = document.getElementById("targetReps")?.value || "5";
+        const targetRpe = document.getElementById("targetRpe")?.value || "6.0";
+        const tech = document.getElementById("logTechNotes")?.value.trim();
+        const general = document.getElementById("logGeneralNotes")?.value.trim();
+        const noteState = tech || general ? "notes added" : "no notes";
+        details.textContent = `${variation} · back-off ${targetReps} @ ${targetRpe} · ${noteState}`;
+      }
+    }
+
     /* ── Page navigation ── */
     function switchPage(pageName) {
       document.querySelectorAll(".page-tab").forEach((t) => t.classList.toggle("active", t.dataset.page === pageName));
@@ -2274,6 +2418,7 @@
           ? `Back-off recommendation is using the current set e1RM: ${formatNumber(metrics.e1rm, 1)} kg.`
           : "Enter reps, weight, and RPE to calculate.";
       document.getElementById("calcSourceNote").textContent = baseText;
+      renderLogDrawerSummaries();
     }
 
     function renderSessionLog() {
@@ -2928,7 +3073,7 @@
       renderMetrics();
     });
 
-    ["logDate","logWeek","logDay","logLift","logVariation","logSetType","logReps","logWeight","logRpe","targetReps","targetRpe","filterWeek","filterDay"].forEach((id) => {
+    ["logDate","logWeek","logDay","logLift","logVariation","logSetType","logReps","logWeight","logRpe","targetReps","targetRpe","filterWeek","filterDay","logTechNotes","logGeneralNotes"].forEach((id) => {
       document.getElementById(id).addEventListener("input", () => {
         if (id === "logWeek" || id === "logDay") autoFillSessionFocus();
         if (id === "filterWeek" || id === "filterDay") renderPlanCards();
@@ -2947,8 +3092,13 @@
 
     document.getElementById("logVariation").addEventListener("change", (e) => {
       document.getElementById("variationOtherWrap").style.display = e.target.value === "Other" ? "block" : "none";
+      renderLogDrawerSummaries();
     });
-    document.getElementById("logSessionFocus").addEventListener("input", renderDashboardSummary);
+    document.getElementById("logVariationOther").addEventListener("input", renderLogDrawerSummaries);
+    document.getElementById("logSessionFocus").addEventListener("input", () => {
+      renderDashboardSummary();
+      renderLogDrawerSummaries();
+    });
 
     /* ── Firebase UI events ── */
     document.getElementById("fbConnectBtn").addEventListener("click", () => {
