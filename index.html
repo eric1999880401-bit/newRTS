@@ -1371,6 +1371,9 @@
         <h2>Data management</h2>
         <div class="hint">Export, backup, and restore tools live here so the training screen stays focused.</div>
         <div class="data-actions-grid">
+          <button class="primary" id="exportFullBackupBtn" type="button">Export Full Backup</button>
+          <label class="button primary" for="importFullBackupInput">Import Full Backup</label>
+          <input id="importFullBackupInput" type="file" accept=".json,application/json" hidden />
           <button class="primary" id="exportAllBtn" type="button">Export All</button>
           <button id="backupProgramBtn" type="button">Backup Program</button>
           <label class="button" for="restoreProgramInput">Import Program Backup</label>
@@ -1379,7 +1382,7 @@
           <label class="button" for="restoreLogsInput">Import Logs Backup</label>
           <input id="restoreLogsInput" type="file" accept=".xlsx,.xls,.csv" hidden />
         </div>
-        <div class="footer-note">Before major edits or browser cleanup, export a workbook so training history can be restored.</div>
+        <div class="footer-note">For phone-to-computer recovery, use Export Full Backup on the phone, send the JSON file to the computer, then use Import Full Backup here.</div>
         <div class="local-recovery-tools">
           <div id="storageStatus" class="footer-note">Checking local storage...</div>
           <div class="local-recovery-row">
@@ -3047,6 +3050,59 @@
       XLSX.writeFile(wb, "powerlifting_log_dual_user.xlsx");
     }
 
+    function downloadJsonFile(filename, payload) {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function exportFullBackup() {
+      const counts = countStateData(state);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadJsonFile(`powerlifting_full_backup_${date}.json`, {
+        app: "Powerlifting Log",
+        backupVersion: 1,
+        exportedAt: new Date().toISOString(),
+        storageKey: STORAGE_KEY,
+        counts,
+        state
+      });
+    }
+
+    function parseFullBackupPayload(payload) {
+      const importedState = payload?.state || payload;
+      if (!importedState || typeof importedState !== "object" || !importedState.users) {
+        throw new Error("Backup file does not contain a valid app state.");
+      }
+      return parseStoredState(JSON.stringify(importedState));
+    }
+
+    async function importFullBackup(file) {
+      let payload;
+      try {
+        payload = JSON.parse(await file.text());
+      } catch (err) {
+        throw new Error("Backup file is not valid JSON.");
+      }
+      const imported = parseFullBackupPayload(payload);
+      const counts = countStateData(imported);
+      const confirmed = confirm(`Import full backup from ${file.name}?\n\nIt contains ${counts.athletes} athlete(s), ${counts.logs} logged set(s), and ${counts.programRows} program row(s).\n\nThe currently loaded computer data will be saved as a local safety snapshot first.`);
+      if (!confirmed) return;
+      makeLocalSnapshot("before_full_backup_import");
+      state = imported;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      updateSyncStatusText("Local saved");
+      refreshAll();
+      firebasePush();
+      alert("Full backup imported. Your computer is now using the backup data.");
+    }
+
     function safeSheetName(text) {
       return String(text || "User").replace(/[\\/?*\[\]:]/g, "_");
     }
@@ -3252,10 +3308,19 @@
     });
 
     document.getElementById("downloadTemplateBtn").addEventListener("click", downloadProgramTemplate);
+    document.getElementById("exportFullBackupBtn").addEventListener("click", exportFullBackup);
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
     document.getElementById("restoreLocalSnapshotBtn").addEventListener("click", restoreSelectedLocalSnapshot);
+
+    document.getElementById("importFullBackupInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try { await importFullBackup(file); }
+      catch (err) { console.error(err); alert(err.message || "Full backup import failed."); }
+      finally { e.target.value = ""; }
+    });
 
     document.getElementById("restoreProgramInput").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
