@@ -1372,6 +1372,7 @@
         <div class="hint">Export, backup, and restore tools live here so the training screen stays focused.</div>
         <div class="data-actions-grid">
           <button class="primary" id="exportFullBackupBtn" type="button">Export Full Backup</button>
+          <button id="copyFullBackupBtn" type="button">Copy Full Backup</button>
           <label class="button primary" for="importFullBackupInput">Import Full Backup</label>
           <input id="importFullBackupInput" type="file" accept=".json,application/json" hidden />
           <button class="primary" id="exportAllBtn" type="button">Export All</button>
@@ -1382,7 +1383,14 @@
           <label class="button" for="restoreLogsInput">Import Logs Backup</label>
           <input id="restoreLogsInput" type="file" accept=".xlsx,.xls,.csv" hidden />
         </div>
-        <div class="footer-note">For phone-to-computer recovery, use Export Full Backup on the phone, send the JSON file to the computer, then use Import Full Backup here.</div>
+        <div class="field" style="margin-top:14px">
+          <label for="fullBackupPaste">Paste full backup JSON</label>
+          <textarea id="fullBackupPaste" rows="4" placeholder="Paste a copied full backup here on the computer"></textarea>
+        </div>
+        <div class="actions-inline">
+          <button id="importPastedFullBackupBtn" type="button">Import pasted backup</button>
+        </div>
+        <div class="footer-note">For phone-to-computer recovery, use Export Full Backup or Copy Full Backup on the phone. Then send the JSON file or copied text to the computer and import it here.</div>
         <div class="local-recovery-tools">
           <div id="storageStatus" class="footer-note">Checking local storage...</div>
           <div class="local-recovery-row">
@@ -3062,17 +3070,37 @@
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    function exportFullBackup() {
+    function buildFullBackupPayload() {
       const counts = countStateData(state);
-      const date = new Date().toISOString().slice(0, 10);
-      downloadJsonFile(`powerlifting_full_backup_${date}.json`, {
+      return {
         app: "Powerlifting Log",
         backupVersion: 1,
         exportedAt: new Date().toISOString(),
         storageKey: STORAGE_KEY,
         counts,
         state
-      });
+      };
+    }
+
+    function exportFullBackup() {
+      const date = new Date().toISOString().slice(0, 10);
+      downloadJsonFile(`powerlifting_full_backup_${date}.json`, buildFullBackupPayload());
+    }
+
+    async function copyFullBackup() {
+      const text = JSON.stringify(buildFullBackupPayload(), null, 2);
+      const pasteBox = document.getElementById("fullBackupPaste");
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Full backup copied. Send or paste this text on your computer, then use Import pasted backup.");
+      } catch (err) {
+        if (pasteBox) {
+          pasteBox.value = text;
+          pasteBox.focus();
+          pasteBox.select();
+        }
+        alert("Clipboard copy was blocked. The full backup text is shown in the paste box; select all and copy it manually.");
+      }
     }
 
     function parseFullBackupPayload(payload) {
@@ -3083,16 +3111,10 @@
       return parseStoredState(JSON.stringify(importedState));
     }
 
-    async function importFullBackup(file) {
-      let payload;
-      try {
-        payload = JSON.parse(await file.text());
-      } catch (err) {
-        throw new Error("Backup file is not valid JSON.");
-      }
+    function applyFullBackupPayload(payload, sourceLabel) {
       const imported = parseFullBackupPayload(payload);
       const counts = countStateData(imported);
-      const confirmed = confirm(`Import full backup from ${file.name}?\n\nIt contains ${counts.athletes} athlete(s), ${counts.logs} logged set(s), and ${counts.programRows} program row(s).\n\nThe currently loaded computer data will be saved as a local safety snapshot first.`);
+      const confirmed = confirm(`Import full backup from ${sourceLabel}?\n\nIt contains ${counts.athletes} athlete(s), ${counts.logs} logged set(s), and ${counts.programRows} program row(s).\n\nThe currently loaded computer data will be saved as a local safety snapshot first.`);
       if (!confirmed) return;
       makeLocalSnapshot("before_full_backup_import");
       state = imported;
@@ -3101,6 +3123,32 @@
       refreshAll();
       firebasePush();
       alert("Full backup imported. Your computer is now using the backup data.");
+    }
+
+    async function importFullBackup(file) {
+      let payload;
+      try {
+        payload = JSON.parse(await file.text());
+      } catch (err) {
+        throw new Error("Backup file is not valid JSON.");
+      }
+      applyFullBackupPayload(payload, file.name);
+    }
+
+    function importPastedFullBackup() {
+      const text = document.getElementById("fullBackupPaste")?.value.trim();
+      if (!text) {
+        alert("Paste the full backup JSON first.");
+        return;
+      }
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch (err) {
+        alert("Pasted backup is not valid JSON.");
+        return;
+      }
+      applyFullBackupPayload(payload, "pasted JSON");
     }
 
     function safeSheetName(text) {
@@ -3309,6 +3357,8 @@
 
     document.getElementById("downloadTemplateBtn").addEventListener("click", downloadProgramTemplate);
     document.getElementById("exportFullBackupBtn").addEventListener("click", exportFullBackup);
+    document.getElementById("copyFullBackupBtn").addEventListener("click", copyFullBackup);
+    document.getElementById("importPastedFullBackupBtn").addEventListener("click", importPastedFullBackup);
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
