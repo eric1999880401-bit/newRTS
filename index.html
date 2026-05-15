@@ -1198,6 +1198,18 @@
     }
     .data-actions-grid button,
     .data-actions-grid .button { justify-content: center; text-align: center; }
+    .local-recovery-tools {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--rule);
+    }
+    .local-recovery-row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      margin-top: 10px;
+    }
+    .storage-key { word-break: break-all; }
     @media (max-width: 1180px) {
       .workout-layout { grid-template-columns: 1fr; }
       .span-2, .span-4 { grid-column: 1 / -1; }
@@ -1226,6 +1238,7 @@
       .session-table { display: none; }
       .session-cards { display: grid; }
       .data-actions-grid { grid-template-columns: 1fr; }
+      .local-recovery-row { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
       * { transition: none !important; scroll-behavior: auto !important; }
@@ -1243,7 +1256,7 @@
         </div>
       </div>
       <div class="header-actions" aria-label="App actions">
-        <div class="sync-chip"><span class="sync-dot" aria-hidden="true"></span><span id="syncStatusText">offline</span></div>
+        <div class="sync-chip"><span class="sync-dot" aria-hidden="true"></span><span id="syncStatusText">Local saved</span></div>
         <button class="theme-toggle" id="themeToggleBtn" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">
           <span class="theme-toggle-icon" aria-hidden="true">☾</span>
           <span class="theme-toggle-label">Night</span>
@@ -1367,6 +1380,14 @@
           <input id="restoreLogsInput" type="file" accept=".xlsx,.xls,.csv" hidden />
         </div>
         <div class="footer-note">Before major edits or browser cleanup, export a workbook so training history can be restored.</div>
+        <div class="local-recovery-tools">
+          <div id="storageStatus" class="footer-note">Checking local storage...</div>
+          <div class="local-recovery-row">
+            <select id="localRecoverySelect" aria-label="Local recovery snapshots"></select>
+            <button id="restoreLocalSnapshotBtn" type="button">Restore local snapshot</button>
+          </div>
+          <div id="localRecoveryHint" class="footer-note"></div>
+        </div>
       </section>
 
       <!-- Firebase Cloud Sync -->
@@ -1757,6 +1778,7 @@
 
   <script>
     const STORAGE_KEY = "powerlifting_dual_user_app_v2";
+    const BACKUP_PREFIX = STORAGE_KEY + "_snapshot_";
     const DEFAULT_PROGRAM_USER1 = [{"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 3×5 @6 (stop if any set >6.5)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6 (2-count pause)", "accessoriesNotes": "RDL 2–3×6–8 @6–7; chest-supported row 3×8–12; abs 2–3×8–12"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6.5–7", "backoffPlan": "4×4 @6 (all comp pauses; stop if >6.5)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6 (strict depth / stay braced)", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6 (cap last set ≤6.5)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "3×6 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 4×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6–6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×4 @6–6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×5 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7", "backoffPlan": "−5% then 4×3 @6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×4 @6.5–7, then 3×4 @6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×3 @6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2×15–20"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×4 @6.5", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 4, "phase": "Pivot / deload", "day": 1, "focus": "Squat + light bench", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Goal: drop fatigue hard. Only easy blood-flow accessories if desired."}, {"week": 4, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat technique", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "2×3 @5.5–6", "accessoriesNotes": "Everything should feel fast. No grinders, no soreness chasing."}, {"week": 4, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench technique", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @5.5–6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×5 @6", "accessoriesNotes": "Everything should feel fast. Stop if position breaks."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7.5", "backoffPlan": "−5% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7, then 3×4 @6.5–7", "accessoriesNotes": "Keep assistance, but cut 1 set if recovery is tight."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7.5", "backoffPlan": "4×3 @6.5–7 (comp pause, cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats + triceps stay in. Use conservative jumps, especially on bench."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Back ext or hamstrings 2×8–12; upper back 2–3×10–15"}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8", "backoffPlan": "−5% then 3×3 @7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7–7.5, then 3×4 @6.5–7", "accessoriesNotes": "Keep bar speed honest. If single overshoots, hold or reduce load."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8", "backoffPlan": "4×3 @7 (cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6–6.5", "accessoriesNotes": "Lats + triceps, but avoid elbow / wrist irritation."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5", "backoffPlan": "−6% then 3×3 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Deadlift volume stays moderate—quality over fatigue."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8 (repeat if W6 overshot)", "backoffPlan": "−5% then 2–3×2 @7", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×3 @7.5, then 3×3 @6.5–7", "accessoriesNotes": "Do not force a PR single here. Clean reps only."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8 (repeat if touch inconsistent)", "backoffPlan": "3×2 @7", "secondaryLift": "Box Squat", "secondaryPrescription": "3×2 @6–6.5", "accessoriesNotes": "Bench should look like competition every rep."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5–8", "backoffPlan": "−6% then 2–3×2 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "3×4 @6.5", "accessoriesNotes": "If recovery is poor, do only 2 back-off sets."}, {"week": 8, "phase": "Pivot / deload", "day": 1, "focus": "Squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×3 @6", "accessoriesNotes": "Strip fatigue. Only light pump work if you feel beat up."}, {"week": 8, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat touch", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Squat variation", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "Everything should feel easy and technically sharp."}, {"week": 8, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench touch", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×2 @6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Leave the gym feeling better than you walked in."}, {"week": 9, "phase": "Block 3 — Realization", "day": 1, "focus": "Peak squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "2–3×2 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Low volume, high quality. Film the single and first back-off set."}, {"week": 9, "phase": "Block 3 — Realization", "day": 2, "focus": "Peak bench + light squat", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "3×2 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "No grinders. Every bench rep must be comp-standard."}, {"week": 9, "phase": "Block 3 — Realization", "day": 3, "focus": "Peak deadlift + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @8", "backoffPlan": "2×2 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "3×3 @6.5", "accessoriesNotes": "Finish deadlifts hard, but stop if position opens."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 1, "focus": "Squat opener practice", "mainLift": "Comp Squat", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2×1 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Treat this as opener rehearsal, not maxing."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 2, "focus": "Bench opener practice", "mainLift": "Comp Bench", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2–3×1 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Protect the touch. If wrist pain >3/10, downshift."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 3, "focus": "Deadlift opener practice", "mainLift": "Sumo Deadlift", "topSetTarget": "Planned opener 1×1 @8", "backoffPlan": "1–2×1 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "No chasing second attempts in training."}, {"week": 11, "phase": "Taper", "day": 1, "focus": "Squat taper", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Minimal assistance only if it improves recovery."}, {"week": 11, "phase": "Taper", "day": 2, "focus": "Bench taper", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Keep everything fast and crisp."}, {"week": 11, "phase": "Taper", "day": 3, "focus": "Deadlift taper", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Walk out fresh."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 1, "focus": "Test squat + light bench", "mainLift": "Squat Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; shut it down if depth slips", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Comp standard first: depth non-negotiable."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 2, "focus": "Test bench + light squat", "mainLift": "Bench Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; only comp-standard touches count", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "No touch = no make. Protect the wrist if needed."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 3, "focus": "Test deadlift", "mainLift": "Deadlift Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; stop if lockout soft / position breaks", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Lockout standard: knees + hips through, no overextension."}];
     const RPE_TABLE = {"10.0": {"1": 1.0, "2": 0.955, "3": 0.922, "4": 0.892, "5": 0.863, "6": 0.837, "7": 0.811, "8": 0.786, "9": 0.762, "10": 0.739, "11": 0.707, "12": 0.68}, "9.5": {"1": 0.978, "2": 0.939, "3": 0.907, "4": 0.878, "5": 0.85, "6": 0.824, "7": 0.799, "8": 0.774, "9": 0.751, "10": 0.723, "11": 0.694, "12": 0.667}, "9.0": {"1": 0.955, "2": 0.922, "3": 0.892, "4": 0.863, "5": 0.837, "6": 0.811, "7": 0.786, "8": 0.762, "9": 0.739, "10": 0.707, "11": 0.68, "12": 0.653}, "8.5": {"1": 0.939, "2": 0.907, "3": 0.878, "4": 0.85, "5": 0.824, "6": 0.799, "7": 0.774, "8": 0.751, "9": 0.723, "10": 0.694, "11": 0.667, "12": 0.64}, "8.0": {"1": 0.922, "2": 0.892, "3": 0.863, "4": 0.837, "5": 0.811, "6": 0.786, "7": 0.762, "8": 0.739, "9": 0.707, "10": 0.68, "11": 0.653, "12": 0.626}, "7.5": {"1": 0.907, "2": 0.878, "3": 0.85, "4": 0.824, "5": 0.799, "6": 0.774, "7": 0.751, "8": 0.723, "9": 0.694, "10": 0.667, "11": 0.64, "12": 0.613}, "7.0": {"1": 0.892, "2": 0.863, "3": 0.837, "4": 0.811, "5": 0.786, "6": 0.762, "7": 0.739, "8": 0.707, "9": 0.68, "10": 0.653, "11": 0.626, "12": 0.599}, "6.5": {"1": 0.878, "2": 0.85, "3": 0.824, "4": 0.799, "5": 0.774, "6": 0.751, "7": 0.723, "8": 0.694, "9": 0.667, "10": 0.64, "11": 0.613, "12": 0.586}, "6.0": {"1": 0.863, "2": 0.837, "3": 0.811, "4": 0.786, "5": 0.762, "6": 0.739, "7": 0.707, "8": 0.68, "9": 0.653, "10": 0.626, "11": 0.599, "12": 0.572}, "5.5": {"1": 0.85, "2": 0.824, "3": 0.799, "4": 0.774, "5": 0.751, "6": 0.723, "7": 0.694, "8": 0.667, "9": 0.64, "10": 0.613, "11": 0.586, "12": 0.559}, "5.0": {"1": 0.837, "2": 0.811, "3": 0.786, "4": 0.762, "5": 0.739, "6": 0.707, "7": 0.68, "8": 0.653, "9": 0.626, "10": 0.599, "11": 0.572, "12": 0.545}};
 
@@ -1806,19 +1828,102 @@
       };
     }
 
+    function parseStoredState(raw) {
+      const parsed = JSON.parse(raw);
+      const users = normalizeUsers(parsed.users || {});
+      const activeUserId = users[parsed.activeUserId] ? parsed.activeUserId : Object.keys(users)[0];
+      return { activeUserId, users };
+    }
+
+    function countStateData(snapshot = state) {
+      const users = Object.values(snapshot?.users || {});
+      return {
+        athletes: users.length,
+        logs: users.reduce((sum, user) => sum + (Array.isArray(user.logs) ? user.logs.length : 0), 0),
+        programRows: users.reduce((sum, user) => sum + (Array.isArray(user.program) ? user.program.length : 0), 0)
+      };
+    }
+
+    function makeLocalSnapshot(reason, snapshot = state) {
+      try {
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        localStorage.setItem(`${BACKUP_PREFIX}${reason}_${stamp}`, JSON.stringify(snapshot));
+      } catch (err) {
+        console.warn("Local safety snapshot failed:", err);
+      }
+    }
+
+    function logIdentity(row) {
+      if (row?.id) return String(row.id);
+      return [
+        row?.date || "",
+        row?.lift || "",
+        row?.variation || "",
+        row?.setType || "",
+        row?.reps || "",
+        row?.weight || "",
+        row?.rpe || "",
+        row?.order || ""
+      ].join("|");
+    }
+
+    function mergeLogs(localLogs = [], remoteLogs = []) {
+      const merged = new Map();
+      [...remoteLogs, ...localLogs].forEach((row) => {
+        if (!row) return;
+        const key = logIdentity(row);
+        merged.set(key, { ...(merged.get(key) || {}), ...row });
+      });
+      return Array.from(merged.values()).sort((a, b) => {
+        const dateCompare = String(a.date || "").localeCompare(String(b.date || ""));
+        if (dateCompare) return dateCompare;
+        return Number(a.order || 0) - Number(b.order || 0);
+      });
+    }
+
+    function chooseProgram(localProgram = [], remoteProgram = []) {
+      if (localProgram.length && !remoteProgram.length) return localProgram;
+      if (remoteProgram.length && !localProgram.length) return remoteProgram;
+      return localProgram.length >= remoteProgram.length ? localProgram : remoteProgram;
+    }
+
+    function preferSetting(localValue, remoteValue, fallbackValue) {
+      if (localValue !== undefined && localValue !== null && localValue !== "" && localValue !== fallbackValue) return localValue;
+      if (remoteValue !== undefined && remoteValue !== null && remoteValue !== "") return remoteValue;
+      return localValue ?? remoteValue ?? fallbackValue;
+    }
+
+    function mergeUserProfilesForSync(id, localProfile = {}, remoteProfile = {}) {
+      const fallback = createUserProfile(id, id === "u1" ? "User 1" : (id === "u2" ? "User 2" : "Athlete"), id === "u1" ? DEFAULT_PROGRAM_USER1 : []);
+      const localUser = normalizeUserProfile(id, localProfile, fallback);
+      const remoteUser = normalizeUserProfile(id, remoteProfile, fallback);
+      return {
+        id,
+        name: preferSetting(localProfile.name, remoteProfile.name, fallback.name),
+        roundingKg: Number(preferSetting(localProfile.roundingKg, remoteProfile.roundingKg, fallback.roundingKg)) || fallback.roundingKg,
+        fatigueDropPct: Number(preferSetting(localProfile.fatigueDropPct, remoteProfile.fatigueDropPct, fallback.fatigueDropPct)) || fallback.fatigueDropPct,
+        backoffBase: preferSetting(localProfile.backoffBase, remoteProfile.backoffBase, fallback.backoffBase),
+        program: chooseProgram(localUser.program, remoteUser.program),
+        logs: mergeLogs(localUser.logs, remoteUser.logs)
+      };
+    }
+
+    function mergeUsersForSync(localUsers = {}, remoteUsers = {}) {
+      const ids = new Set([...Object.keys(localUsers || {}), ...Object.keys(remoteUsers || {})]);
+      const merged = {};
+      ids.forEach((id) => {
+        merged[id] = mergeUserProfilesForSync(id, localUsers?.[id] || {}, remoteUsers?.[id] || {});
+      });
+      return normalizeUsers(merged);
+    }
+
     let state = loadState();
 
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return makeDefaultState();
-        const parsed = JSON.parse(raw);
-        const users = normalizeUsers(parsed.users || {});
-        const activeUserId = users[parsed.activeUserId] ? parsed.activeUserId : Object.keys(users)[0];
-        return {
-          activeUserId,
-          users
-        };
+        return parseStoredState(raw);
       } catch (err) {
         console.error(err);
         return makeDefaultState();
@@ -1828,6 +1933,8 @@
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       firebasePush();
+      if (!fbRef) updateSyncStatusText("Local saved");
+      renderRecoveryTools();
     }
 
     /* ── Firebase Cloud Sync ── */
@@ -1839,12 +1946,19 @@
     let fbSyncing = false; // guard to prevent echo loops
 
     function firebasePush() {
-      if (!fbRef || fbSyncing) return;
+      if (!fbRef || fbSyncing) {
+        if (!fbRef) updateSyncStatusText("Local saved");
+        return;
+      }
       // Push only the users object (activeUserId is local per device)
-      fbRef.set({ users: state.users }).catch((err) => {
-        console.error("Firebase push failed:", err);
-        updateFbStatus("bad", "Sync error");
-      });
+      updateSyncStatusText("Cloud syncing");
+      fbRef.set({ users: state.users })
+        .then(() => updateSyncStatusText("Cloud synced"))
+        .catch((err) => {
+          console.error("Firebase push failed:", err);
+          updateFbStatus("bad", "Sync error");
+          updateSyncStatusText("Cloud error");
+        });
     }
 
     function firebaseConnect(config) {
@@ -1857,6 +1971,7 @@
         fbRef = fbDb.ref("powerlifting_log");
 
         updateFbStatus("warn", "Connecting...");
+        updateSyncStatusText("Cloud connecting");
 
         // Listen for real-time changes
         fbListener = fbRef.on("value", (snapshot) => {
@@ -1865,11 +1980,14 @@
             // DB is empty — push our local state up
             firebasePush();
             updateFbStatus("ok", "Connected (initial push)");
+            updateSyncStatusText("Cloud synced");
             return;
           }
-          // Merge remote data into local state
+          // Never replace local browser data directly. Keep a local snapshot,
+          // then merge cloud and local logs so stale cloud data cannot hide sets.
+          makeLocalSnapshot("before_cloud_merge");
           fbSyncing = true;
-          state.users = normalizeUsers(data.users);
+          state.users = mergeUsersForSync(state.users, data.users);
           if (!state.users[state.activeUserId]) {
             state.activeUserId = Object.keys(state.users)[0];
           }
@@ -1877,7 +1995,8 @@
           refreshAll();
           fbSyncing = false;
           updateFbStatus("ok", "Synced");
-          updateSyncStatusText("synced");
+          updateSyncStatusText("Cloud synced");
+          firebasePush();
         });
 
         // Save config for auto-reconnect
@@ -1886,6 +2005,7 @@
       } catch (err) {
         console.error("Firebase connect failed:", err);
         updateFbStatus("bad", "Connection failed: " + err.message);
+        updateSyncStatusText("Local saved");
       }
     }
 
@@ -1902,7 +2022,7 @@
       }
       localStorage.removeItem(FB_CONFIG_KEY);
       updateFbStatus("warn", "Not connected");
-      updateSyncStatusText("offline");
+      updateSyncStatusText("Local saved");
     }
 
     function updateFbStatus(level, text) {
@@ -1915,6 +2035,100 @@
     function updateSyncStatusText(text) {
       const el = document.getElementById("syncStatusText");
       if (el) el.textContent = text;
+    }
+
+    function readStoredSnapshotByKey(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object" || !parsed.users) return null;
+        return parseStoredState(raw);
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function getLocalRecoveryOptions() {
+      const options = [];
+      try {
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          if (!key || key === STORAGE_KEY || key === FB_CONFIG_KEY || key === "powerlifting_theme") continue;
+          const lowerKey = key.toLowerCase();
+          if (!key.startsWith(BACKUP_PREFIX) && !lowerKey.includes("powerlifting")) continue;
+          const snapshot = readStoredSnapshotByKey(key);
+          if (!snapshot) continue;
+          const counts = countStateData(snapshot);
+          options.push({ key, counts });
+        }
+      } catch (err) {
+        console.warn("Local recovery scan failed:", err);
+      }
+      return options.sort((a, b) => {
+        const backupCompare = Number(b.key.startsWith(BACKUP_PREFIX)) - Number(a.key.startsWith(BACKUP_PREFIX));
+        if (backupCompare) return backupCompare;
+        return b.key.localeCompare(a.key);
+      });
+    }
+
+    function renderRecoveryTools() {
+      const statusEl = document.getElementById("storageStatus");
+      const selectEl = document.getElementById("localRecoverySelect");
+      const restoreBtn = document.getElementById("restoreLocalSnapshotBtn");
+      const hintEl = document.getElementById("localRecoveryHint");
+      const current = countStateData(state);
+
+      if (statusEl) {
+        statusEl.innerHTML = `Loaded now: ${current.logs} logged set${current.logs === 1 ? "" : "s"}, ${current.programRows} program row${current.programRows === 1 ? "" : "s"}, ${current.athletes} athlete${current.athletes === 1 ? "" : "s"}. Storage key: <span class="storage-key mono">${escapeHtml(STORAGE_KEY)}</span>`;
+      }
+      if (!selectEl || !restoreBtn || !hintEl) return;
+
+      const options = getLocalRecoveryOptions();
+      selectEl.innerHTML = "";
+      if (!options.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No same-page local snapshots found";
+        selectEl.appendChild(option);
+        selectEl.disabled = true;
+        restoreBtn.disabled = true;
+        hintEl.textContent = current.logs
+          ? "Cloud merges now create local safety snapshots before changing browser data."
+          : "If your older records were entered under another URL, open that exact URL in the same browser and export them from there.";
+        return;
+      }
+
+      options.slice(0, 12).forEach(({ key, counts }) => {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = `${counts.logs} sets / ${counts.programRows} program rows - ${key}`;
+        selectEl.appendChild(option);
+      });
+      selectEl.disabled = false;
+      restoreBtn.disabled = false;
+      hintEl.textContent = "Restore makes a safety snapshot of the currently loaded data first. It does not erase the source snapshot.";
+    }
+
+    function restoreSelectedLocalSnapshot() {
+      const selectEl = document.getElementById("localRecoverySelect");
+      const key = selectEl?.value;
+      if (!key) return;
+      const snapshot = readStoredSnapshotByKey(key);
+      if (!snapshot) {
+        alert("Could not read that local snapshot.");
+        renderRecoveryTools();
+        return;
+      }
+      const counts = countStateData(snapshot);
+      if (!confirm(`Restore ${counts.logs} logged set(s) and ${counts.programRows} program row(s) from this local snapshot?\n\nCurrent loaded data will be saved as a safety snapshot first.`)) return;
+      makeLocalSnapshot("before_restore");
+      state = snapshot;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      refreshAll();
+      firebasePush();
+      renderRecoveryTools();
+      alert("Local snapshot restored.");
     }
 
     function loadFbConfigUI() {
@@ -2571,6 +2785,7 @@
       renderMetrics();
       renderSessionLog();
       renderHistory();
+      renderRecoveryTools();
       syncAllSegmentedControls();
     }
 
@@ -3040,6 +3255,7 @@
     document.getElementById("exportAllBtn").addEventListener("click", exportAllToExcel);
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
+    document.getElementById("restoreLocalSnapshotBtn").addEventListener("click", restoreSelectedLocalSnapshot);
 
     document.getElementById("restoreProgramInput").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
