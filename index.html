@@ -1969,11 +1969,38 @@
 
     /* ── Firebase Cloud Sync ── */
     const FB_CONFIG_KEY = "powerlifting_firebase_config";
+    const FB_DEFAULT_DISABLED_KEY = "powerlifting_firebase_default_disabled";
+    const DEFAULT_FB_CONFIG = Object.freeze({
+      projectId: "powerlifting-log-f7235",
+      databaseURL: "https://powerlifting-log-f7235-default-rtdb.asia-southeast1.firebasedatabase.app"
+    });
     let fbApp = null;
     let fbDb = null;
     let fbRef = null;
     let fbListener = null;
     let fbSyncing = false; // guard to prevent echo loops
+
+    function cleanFirebaseConfig(config = {}) {
+      return Object.fromEntries(Object.entries(config).filter(([, value]) => value !== undefined && value !== null && value !== ""));
+    }
+
+    function readSavedFirebaseConfig() {
+      const saved = localStorage.getItem(FB_CONFIG_KEY);
+      if (!saved) return null;
+      try {
+        const config = cleanFirebaseConfig(JSON.parse(saved));
+        return config.databaseURL ? config : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function getEffectiveFirebaseConfig() {
+      const saved = readSavedFirebaseConfig();
+      if (saved) return saved;
+      if (localStorage.getItem(FB_DEFAULT_DISABLED_KEY) === "1") return null;
+      return { ...DEFAULT_FB_CONFIG };
+    }
 
     function firebasePush() {
       if (!fbRef || fbSyncing) {
@@ -1993,11 +2020,16 @@
 
     function firebaseConnect(config) {
       try {
+        const normalizedConfig = cleanFirebaseConfig(config);
+        if (!normalizedConfig.databaseURL) {
+          throw new Error("Firebase databaseURL is required.");
+        }
         // Clean up previous connection
         firebaseDisconnect({ forgetConfig: false });
-        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
+        localStorage.removeItem(FB_DEFAULT_DISABLED_KEY);
+        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(normalizedConfig));
 
-        fbApp = firebase.initializeApp(config, "plApp_" + Date.now());
+        fbApp = firebase.initializeApp(normalizedConfig, "plApp_" + Date.now());
         fbDb = fbApp.database();
         fbRef = fbDb.ref("powerlifting_log");
 
@@ -2036,13 +2068,14 @@
 
       } catch (err) {
         console.error("Firebase connect failed:", err);
-        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(config));
+        localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cleanFirebaseConfig(config)));
         updateFbStatus("bad", "Connection failed: " + err.message);
         updateSyncStatusText("Local saved");
       }
     }
 
     function firebaseDisconnect(options = {}) {
+      if (options && options.target) options = {};
       const forgetConfig = options.forgetConfig !== false;
       if (fbRef && fbListener) {
         fbRef.off("value", fbListener);
@@ -2054,7 +2087,10 @@
         fbDb = null;
         fbRef = null;
       }
-      if (forgetConfig) localStorage.removeItem(FB_CONFIG_KEY);
+      if (forgetConfig) {
+        localStorage.removeItem(FB_CONFIG_KEY);
+        if (options.disableDefault !== false) localStorage.setItem(FB_DEFAULT_DISABLED_KEY, "1");
+      }
       updateFbStatus("warn", "Not connected");
       updateSyncStatusText("Local saved");
     }
@@ -2166,10 +2202,9 @@
     }
 
     function loadFbConfigUI() {
-      const saved = localStorage.getItem(FB_CONFIG_KEY);
-      if (!saved) return;
+      const c = getEffectiveFirebaseConfig();
+      if (!c) return;
       try {
-        const c = JSON.parse(saved);
         document.getElementById("fbApiKey").value = c.apiKey || "";
         document.getElementById("fbAuthDomain").value = c.authDomain || "";
         document.getElementById("fbDatabaseURL").value = c.databaseURL || "";
@@ -2178,11 +2213,10 @@
     }
 
     function tryAutoReconnect() {
-      const saved = localStorage.getItem(FB_CONFIG_KEY);
-      if (!saved) return;
+      const config = getEffectiveFirebaseConfig();
+      if (!config) return;
       try {
-        const config = JSON.parse(saved);
-        if (config.apiKey && config.databaseURL) {
+        if (config.databaseURL) {
           firebaseConnect(config);
         }
       } catch (e) {}
@@ -3194,6 +3228,7 @@
       [FB_CONFIG_KEY, "powerlifting_theme"].forEach((key) => {
         if (typeof recoveryStorage[key] === "string") {
           localStorage.setItem(key, recoveryStorage[key]);
+          if (key === FB_CONFIG_KEY) localStorage.removeItem(FB_DEFAULT_DISABLED_KEY);
           restored.push(key);
         }
       });
@@ -3540,8 +3575,8 @@
         databaseURL: document.getElementById("fbDatabaseURL").value.trim(),
         projectId: document.getElementById("fbProjectId").value.trim()
       };
-      if (!config.apiKey || !config.databaseURL) {
-        alert("Please fill in at least apiKey and databaseURL.");
+      if (!config.databaseURL) {
+        alert("Please fill in the databaseURL.");
         return;
       }
       firebaseConnect(config);
