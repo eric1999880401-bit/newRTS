@@ -1420,7 +1420,7 @@
           <button class="danger" id="fbDisconnectBtn" type="button">Disconnect</button>
           <div id="fbStatusIndicator" class="status warn" style="margin-left:8px">Not connected</div>
         </div>
-        <div class="footer-note">Training data is saved only to Firebase. Config is kept for this page session only, so reconnect after a refresh.</div>
+        <div class="footer-note">Training data is saved only to Firebase. The app auto-connects to the default database; pasted custom config is kept for this page session only.</div>
       </section>
     </div>
 
@@ -1826,11 +1826,21 @@
     }
 
     /* ── Firebase Cloud Sync ── */
+    const DEFAULT_FB_CONFIG = Object.freeze({
+      projectId: "powerlifting-log-f7235",
+      databaseURL: "https://powerlifting-log-f7235-default-rtdb.asia-southeast1.firebasedatabase.app"
+    });
     let fbApp = null;
     let fbDb = null;
     let fbRef = null;
     let fbListener = null;
     let fbSyncing = false; // guard to prevent echo loops
+
+    function cleanFirebaseConfig(config = {}) {
+      return Object.fromEntries(
+        Object.entries(config).filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+      );
+    }
 
     function showToast(message, level = "ok") {
       const region = document.getElementById("toastRegion");
@@ -1840,6 +1850,14 @@
       toast.textContent = message;
       region.appendChild(toast);
       setTimeout(() => toast.remove(), 3200);
+    }
+
+    function clearFirebaseLocalCache() {
+      try {
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith("firebase:host:"))
+          .forEach((key) => localStorage.removeItem(key));
+      } catch (e) {}
     }
 
     function firebasePush(successMessage = "") {
@@ -1858,6 +1876,7 @@
       }).then(() => {
         updateFbStatus("ok", "Saved to Firebase");
         updateSyncStatusText("synced");
+        clearFirebaseLocalCache();
         if (successMessage) showToast(successMessage, "ok");
         return true;
       }).catch((err) => {
@@ -1875,16 +1894,22 @@
       return false;
     }
 
-    function firebaseConnect(config) {
+    function firebaseConnect(config = DEFAULT_FB_CONFIG) {
       try {
+        const normalizedConfig = cleanFirebaseConfig(config);
+        if (!normalizedConfig.databaseURL) {
+          throw new Error("Firebase databaseURL is required.");
+        }
         // Clean up previous connection
         firebaseDisconnect();
 
-        fbApp = firebase.initializeApp(config, "plApp_" + Date.now());
+        fbApp = firebase.initializeApp(normalizedConfig, "plApp_" + Date.now());
         fbDb = fbApp.database();
         fbRef = fbDb.ref("powerlifting_log");
+        clearFirebaseLocalCache();
 
         updateFbStatus("warn", "Connecting...");
+        updateSyncStatusText("Cloud connecting");
 
         // Listen for real-time changes
         fbListener = fbRef.on("value", (snapshot) => {
@@ -1907,11 +1932,20 @@
           fbSyncing = false;
           updateFbStatus("ok", "Synced");
           updateSyncStatusText("synced");
+          clearFirebaseLocalCache();
+        }, (err) => {
+          console.error("Firebase read failed:", err);
+          const denied = err?.code === "PERMISSION_DENIED";
+          updateFbStatus("bad", denied ? "Permission denied" : "Sync error");
+          updateSyncStatusText(denied ? "permission denied" : "sync error");
+          showToast(denied ? "Firebase rules blocked access to the Realtime Database." : "Firebase read failed. Check the databaseURL and rules.", "bad");
         });
 
       } catch (err) {
         console.error("Firebase connect failed:", err);
         updateFbStatus("bad", "Connection failed: " + err.message);
+        updateSyncStatusText("connection failed");
+        showToast("Firebase connection failed: " + err.message, "bad");
       }
     }
 
@@ -1926,6 +1960,7 @@
         fbDb = null;
         fbRef = null;
       }
+      clearFirebaseLocalCache();
       updateFbStatus("warn", "Not connected");
       updateSyncStatusText("offline");
     }
@@ -1940,6 +1975,17 @@
     function updateSyncStatusText(text) {
       const el = document.getElementById("syncStatusText");
       if (el) el.textContent = text;
+    }
+
+    function loadFbConfigUI() {
+      document.getElementById("fbApiKey").value = DEFAULT_FB_CONFIG.apiKey || "";
+      document.getElementById("fbAuthDomain").value = DEFAULT_FB_CONFIG.authDomain || "";
+      document.getElementById("fbDatabaseURL").value = DEFAULT_FB_CONFIG.databaseURL || "";
+      document.getElementById("fbProjectId").value = DEFAULT_FB_CONFIG.projectId || "";
+    }
+
+    function tryAutoReconnect() {
+      firebaseConnect(DEFAULT_FB_CONFIG);
     }
 
     function getActiveUser() {
@@ -3097,8 +3143,8 @@
         databaseURL: document.getElementById("fbDatabaseURL").value.trim(),
         projectId: document.getElementById("fbProjectId").value.trim()
       };
-      if (!config.apiKey || !config.databaseURL) {
-        alert("Please fill in at least apiKey and databaseURL.");
+      if (!config.databaseURL) {
+        alert("Please fill in the databaseURL.");
         return;
       }
       firebaseConnect(config);
@@ -3145,7 +3191,9 @@
     setupSegmentedControls();
     setupNumberSteppers();
     populateFixedSelectors();
+    loadFbConfigUI();
     refreshAll();
+    tryAutoReconnect();
   </script>
 </body>
 </html>

@@ -15,7 +15,7 @@ Powerlifting Log 是一個單頁式健力訓練紀錄工具，適合用來管理
 ## 快速開始
 
 1. 打開 `index.html`。
-2. 到 `Setup` 頁面貼上 Firebase config 並按 `Connect & Sync`。
+2. 打開 App 後會自動連到預設 Firebase Realtime Database；若要改用其他 Firebase 專案，可到 `Setup` 頁面貼上 config 並按 `Connect & Sync`。
 3. 選擇或新增 Athlete。
 4. 在 `Setup` 頁面匯入課表，或按 `Reload bundled sample program` 載入內建範例。
 5. 回到 `Today` 頁面選 Week / Day，輸入當日訓練組數。
@@ -53,15 +53,14 @@ App 內的 `Download Program Template` 會產生範本檔。
 
 ## Firebase 同步
 
-`Setup` 頁面可貼上 Firebase config，至少需要：
+App 會自動使用內建的預設 Firebase Realtime Database。`Setup` 頁面也可貼上自訂 Firebase config，至少需要：
 
-- `apiKey`
 - `databaseURL`
 
 注意事項：
 
 - 不要把任何私密金鑰、服務帳號 JSON 或含敏感資訊的 `.env` 檔提交到 GitHub。
-- Firebase config 只保留在目前頁面工作階段；重新整理後需要再次貼上並連線。
+- 自訂 Firebase config 只保留在目前頁面工作階段；重新整理後會回到預設 Firebase 連線。
 - 真正上線前，請確認 Realtime Database rules 有限制讀寫權限。
 
 ## 備份建議
