@@ -126,10 +126,13 @@ assert(grind.confidence > 0.7);
 assert(grind.why.some((item) => item.includes("slower") || item.includes("grind")));
 
 assert.strictEqual(api.safeFileName("bad/name?.mp4").includes("/"), false);
+assert.strictEqual(api.normalizeEmail(" USER@Example.COM "), "user@example.com");
+assert.strictEqual(api.emailEntitlementKey("user@example.com").includes("."), false);
 assert.strictEqual(api.entitlementIsActive({ status: "active", currentPeriodEnd: "2099-01-01T00:00:00.000Z" }), true);
 assert.strictEqual(api.entitlementIsActive({ status: "canceled", currentPeriodEnd: "2099-01-01T00:00:00.000Z" }), false);
 assert.strictEqual(api.entitlementIsActive({ status: "active", currentPeriodEnd: "2020-01-01T00:00:00.000Z" }), false);
 assert.strictEqual(api.summarizeEntitlement({ status: "active", plan: "beta_monthly_twd_300", currentPeriodEnd: "2099-01-01T00:00:00.000Z" }).active, true);
+assert(api.buildManualEntitlement({ adminUid: "admin", days: 3650 }).currentPeriodEndMs > Date.now());
 
 const legacyUser = {
   name: "Camel",

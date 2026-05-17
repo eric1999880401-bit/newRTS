@@ -2371,7 +2371,7 @@
             </div>
             <div class="field">
               <label for="adminGrantDays">開通天數</label>
-              <input id="adminGrantDays" type="number" min="1" max="366" value="31" />
+              <input id="adminGrantDays" type="number" min="1" max="3650" value="31" />
             </div>
             <div class="field">
               <label for="adminGrantNotes">備註</label>
@@ -2379,7 +2379,7 @@
             </div>
           </div>
           <div class="actions-inline">
-            <button class="primary" id="adminGrantBtn" type="button">開通 31 天</button>
+            <button class="primary" id="adminGrantBtn" type="button">開通/延長權限</button>
             <button id="adminLookupBtn" type="button">查詢使用者</button>
             <button class="danger" id="adminRevokeBtn" type="button">取消權限</button>
           </div>
@@ -8598,9 +8598,14 @@
         return;
       }
       const entitlement = data.entitlement || {};
+      const statusText = data.pending ? "等待首次登入" : (entitlement.status || "已更新");
+      const identity = data.email || data.targetUid || data.uid || "使用者";
+      const uidLine = data.uid || data.targetUid
+        ? `UID: ${escapeHtml(data.uid || data.targetUid || "")}`
+        : "尚未建立 Firebase 帳號；使用同一個 email 登入後會自動開通。";
       target.innerHTML = `
-        <div class="feature-title"><strong>${escapeHtml(data.email || data.targetUid || data.uid || "使用者")}</strong><span class="status ${entitlement.active ? "ok" : "warn"}">${escapeHtml(entitlement.status || "已更新")}</span></div>
-        <div class="compact-list">UID: ${escapeHtml(data.uid || data.targetUid || "")}</div>
+        <div class="feature-title"><strong>${escapeHtml(identity)}</strong><span class="status ${entitlement.active ? "ok" : "warn"}">${escapeHtml(statusText)}</span></div>
+        <div class="compact-list">${uidLine}</div>
         <div class="compact-list">方案：${escapeHtml(entitlement.plan || BETA_PLAN_ID)} | 可用到：${escapeHtml(entitlement.currentPeriodEnd || "--")}</div>
         ${data.counts ? `<div class="compact-list">紀錄 ${data.counts.logs || 0} | AI ${data.counts.aiCoachSessions || 0} | 影片 ${data.counts.videoReviews || 0} | 姿態分析 ${data.counts.videoAnalyses || 0}</div>` : ""}`;
     }
@@ -8610,7 +8615,7 @@
       try {
         const result = await callCloudFunction("grantManualEntitlement", collectAdminTarget());
         renderAdminOutput(result.data);
-        showToast("Beta 權限已開通。", "ok");
+        showToast(result.data?.pending ? "已建立待領取權限；對方用同一個 email 登入後會自動開通。" : "Beta 權限已開通。", "ok");
       } catch (err) {
         console.error("Grant failed:", err);
         showToast("開通失敗：" + (err.message || err.code), "bad");
@@ -8631,8 +8636,8 @@
     async function adminRevokeEntitlement() {
       if (!isAdminActive()) return showPaidFeatureLock("取消會員權限");
       const target = collectAdminTarget();
-      if (!target.targetUid) {
-        showToast("取消權限需要 UID。請先用 email 查詢，再複製 UID。", "warn");
+      if (!target.targetUid && !target.email) {
+        showToast("請輸入 UID 或 email。", "warn");
         return;
       }
       if (!confirm("要取消這位使用者的 Beta 權限嗎？取消後仍可讀取與匯出資料。")) return;

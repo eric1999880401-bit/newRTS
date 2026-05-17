@@ -100,6 +100,21 @@ function safeId(value, fallback = "item") {
   return id || fallback;
 }
 
+function normalizeEmail(value) {
+  return safeString(value, 200).toLowerCase();
+}
+
+function emailEntitlementKey(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return "";
+  return Buffer.from(normalized, "utf8")
+    .toString("base64")
+    .replace(/=+$/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .slice(0, 180);
+}
+
 function safeFileName(value) {
   const name = String(value || "training-video.mp4")
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
@@ -150,6 +165,22 @@ function summarizeEntitlement(entitlement = null) {
   };
 }
 
+function buildManualEntitlement({ adminUid, days = 31, notes = "", source = "manual_beta" }) {
+  const now = new Date();
+  const periodEnd = addDays(now, clamp(days, 1, 3650));
+  return {
+    status: "active",
+    plan: BETA_PLAN_ID,
+    currentPeriodEnd: periodEnd.toISOString(),
+    currentPeriodEndMs: periodEnd.getTime(),
+    trialEndsAt: "",
+    source,
+    updatedAt: now.toISOString(),
+    updatedBy: adminUid,
+    notes: safeString(notes || `Manual TWD ${BETA_PRICE_TWD}/month Beta access`, 500)
+  };
+}
+
 async function getAdmin(uid) {
   const snap = await admin.database().ref(`admins/${uid}`).get();
   return snap.exists() ? snap.val() : null;
@@ -172,6 +203,36 @@ async function assertAdmin(uid) {
 async function getEntitlement(uid) {
   const snap = await admin.database().ref(`entitlements/${uid}`).get();
   return snap.exists() ? snap.val() : null;
+}
+
+async function materializePendingEntitlement(uid, email) {
+  const emailKey = emailEntitlementKey(email);
+  if (!uid || !emailKey) return null;
+  const pendingRef = admin.database().ref(`pendingEntitlements/${emailKey}`);
+  const pendingSnap = await pendingRef.get();
+  if (!pendingSnap.exists()) return null;
+  const pending = pendingSnap.val() || {};
+  if (pending.active === false || !entitlementIsActive(pending)) return null;
+  const current = await getEntitlement(uid);
+  if (entitlementIsActive(current)) return current;
+  const entitlement = {
+    status: "active",
+    plan: safeString(pending.plan || BETA_PLAN_ID, 80),
+    currentPeriodEnd: safeString(pending.currentPeriodEnd || "", 80),
+    currentPeriodEndMs: safeNumber(pending.currentPeriodEndMs, Date.now()),
+    trialEndsAt: safeString(pending.trialEndsAt || "", 80),
+    source: "pending_email_beta",
+    updatedAt: new Date().toISOString(),
+    updatedBy: safeString(pending.updatedBy || "", 120),
+    notes: safeString(pending.notes || "Pending email entitlement claimed on first login.", 500)
+  };
+  await admin.database().ref().update({
+    [`entitlements/${uid}`]: entitlement,
+    [`pendingEntitlements/${emailKey}/active`]: false,
+    [`pendingEntitlements/${emailKey}/claimedAt`]: new Date().toISOString(),
+    [`pendingEntitlements/${emailKey}/claimedByUid`]: uid
+  });
+  return entitlement;
 }
 
 async function assertActiveEntitlement(uid, feature = "paid feature") {
@@ -627,6 +688,8 @@ async function assertMonthlyProjectLimit(feature, maxCount) {
 
 exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
+  const email = normalizeEmail(request.auth?.token?.email || "");
+  await materializePendingEntitlement(uid, email);
   const [entitlement, adminRecord, usageSnap] = await Promise.all([
     getEntitlement(uid),
     getAdmin(uid),
@@ -634,7 +697,7 @@ exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
   ]);
   return {
     uid,
-    email: safeString(request.auth?.token?.email || "", 200),
+    email,
     admin: adminIsActive(adminRecord) ? {
       role: safeString(adminRecord.role, 40),
       active: adminRecord.active !== false
@@ -653,6 +716,11 @@ exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
 
 exports.claimFirstAdmin = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
+  const currentAdmin = await getAdmin(uid);
+  if (adminIsActive(currentAdmin)) {
+    const entitlement = await getEntitlement(uid);
+    return { admin: currentAdmin, entitlement: summarizeEntitlement(entitlement), alreadyAdmin: true };
+  }
   const adminsSnap = await admin.database().ref("admins").limitToFirst(1).get();
   if (adminsSnap.exists()) {
     throw new HttpsError("failed-precondition", "An admin already exists.");
@@ -695,39 +763,71 @@ exports.claimFirstAdmin = onCall(CALLABLE_DEFAULTS, async (request) => {
 exports.grantManualEntitlement = onCall(CALLABLE_DEFAULTS, async (request) => {
   const adminUid = assertAuthed(request);
   await assertAdmin(adminUid);
-  const email = safeString(request.data?.email || "", 200);
+  const email = normalizeEmail(request.data?.email || "");
   let targetUid = safeId(request.data?.targetUid || "", "");
+  const days = clamp(request.data?.days || 31, 1, 3650);
+  const entitlement = buildManualEntitlement({
+    adminUid,
+    days,
+    notes: request.data?.notes,
+    source: "manual_beta"
+  });
   if (!targetUid && email) {
     try {
       targetUid = (await admin.auth().getUserByEmail(email)).uid;
     } catch (err) {
-      throw new HttpsError("not-found", "No Firebase Auth user was found for that email.");
+      const emailKey = emailEntitlementKey(email);
+      const pending = {
+        ...entitlement,
+        email,
+        active: true,
+        pending: true,
+        source: "pending_email_beta",
+        createdAt: new Date().toISOString()
+      };
+      await admin.database().ref(`pendingEntitlements/${emailKey}`).set(pending);
+      return {
+        email,
+        pending: true,
+        targetUid: "",
+        entitlement: summarizeEntitlement(pending),
+        message: "Pending Beta access saved. It will unlock automatically after this email signs in."
+      };
     }
   }
   if (!targetUid) throw new HttpsError("invalid-argument", "Provide a target uid or email.");
-  const days = clamp(request.data?.days || 31, 1, 366);
-  const now = new Date();
-  const periodEnd = addDays(now, days);
-  const entitlement = {
-    status: "active",
-    plan: BETA_PLAN_ID,
-    currentPeriodEnd: periodEnd.toISOString(),
-    currentPeriodEndMs: periodEnd.getTime(),
-    trialEndsAt: "",
-    source: "manual_beta",
-    updatedAt: now.toISOString(),
-    updatedBy: adminUid,
-    notes: safeString(request.data?.notes || `Manual TWD ${BETA_PRICE_TWD}/month Beta access`, 500)
-  };
   await admin.database().ref(`entitlements/${targetUid}`).set(entitlement);
-  return { targetUid, entitlement: summarizeEntitlement(entitlement) };
+  return { targetUid, email, pending: false, entitlement: summarizeEntitlement(entitlement) };
 });
 
 exports.revokeEntitlement = onCall(CALLABLE_DEFAULTS, async (request) => {
   const adminUid = assertAuthed(request);
   await assertAdmin(adminUid);
-  const targetUid = safeId(request.data?.targetUid || "", "");
-  if (!targetUid) throw new HttpsError("invalid-argument", "Provide a target uid.");
+  const email = normalizeEmail(request.data?.email || "");
+  let targetUid = safeId(request.data?.targetUid || "", "");
+  if (!targetUid && email) {
+    try {
+      targetUid = (await admin.auth().getUserByEmail(email)).uid;
+    } catch (err) {
+      const emailKey = emailEntitlementKey(email);
+      if (!emailKey) throw new HttpsError("invalid-argument", "Provide a target uid or email.");
+      await admin.database().ref(`pendingEntitlements/${emailKey}`).update({
+        active: false,
+        status: "canceled",
+        updatedAt: new Date().toISOString(),
+        updatedBy: adminUid,
+        source: "pending_email_cancel",
+        notes: safeString(request.data?.notes || "Pending access canceled by admin", 500)
+      });
+      return {
+        email,
+        pending: true,
+        targetUid: "",
+        entitlement: summarizeEntitlement({ status: "canceled", updatedAt: new Date().toISOString() })
+      };
+    }
+  }
+  if (!targetUid) throw new HttpsError("invalid-argument", "Provide a target uid or email.");
   const update = {
     status: "canceled",
     currentPeriodEnd: todayString(),
@@ -738,20 +838,32 @@ exports.revokeEntitlement = onCall(CALLABLE_DEFAULTS, async (request) => {
     notes: safeString(request.data?.notes || "Canceled by admin", 500)
   };
   await admin.database().ref(`entitlements/${targetUid}`).update(update);
-  return { targetUid, entitlement: summarizeEntitlement(update) };
+  return { targetUid, email, entitlement: summarizeEntitlement(update) };
 });
 
 exports.getAdminUserStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
   const adminUid = assertAuthed(request);
   await assertAdmin(adminUid);
-  const email = safeString(request.data?.email || "", 200);
+  const email = normalizeEmail(request.data?.email || "");
   let targetUid = safeId(request.data?.targetUid || "", "");
   let authRecord = null;
   if (targetUid) {
     authRecord = await admin.auth().getUser(targetUid);
   } else if (email) {
-    authRecord = await admin.auth().getUserByEmail(email);
-    targetUid = authRecord.uid;
+    try {
+      authRecord = await admin.auth().getUserByEmail(email);
+      targetUid = authRecord.uid;
+    } catch (err) {
+      const pendingSnap = await admin.database().ref(`pendingEntitlements/${emailEntitlementKey(email)}`).get();
+      return {
+        uid: "",
+        email,
+        pending: true,
+        entitlement: summarizeEntitlement(pendingSnap.exists() ? pendingSnap.val() : null),
+        usageLimits: {},
+        counts: { athletes: 0, logs: 0, aiCoachSessions: 0, videoReviews: 0, videoAnalyses: 0 }
+      };
+    }
   } else {
     throw new HttpsError("invalid-argument", "Provide a target uid or email.");
   }
@@ -964,8 +1076,11 @@ exports._test = {
   normalizeAiCoachSuggestion,
   estimateExperimentalRpe,
   safeFileName,
+  normalizeEmail,
+  emailEntitlementKey,
   entitlementIsActive,
   summarizeEntitlement,
+  buildManualEntitlement,
   countLegacyAthlete,
   buildScopedPayloadFromLegacyAthlete
 };
