@@ -3,13 +3,35 @@
     ".read": false,
     ".write": false,
     "powerlifting_log": {
-      ".read": "auth != null",
+      ".read": "auth != null && root.child('admins').child(auth.uid).child('active').val() !== false && (root.child('admins').child(auth.uid).child('role').val() === 'owner' || root.child('admins').child(auth.uid).child('role').val() === 'admin' || root.child('admins').child(auth.uid).child('role').val() === 'support')",
       ".write": false
+    },
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).child('active').val() !== false && root.child('admins').child(auth.uid).child('role').val() === 'owner'))",
+        ".write": false
+      }
+    },
+    "entitlements": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).child('active').val() !== false && (root.child('admins').child(auth.uid).child('role').val() === 'owner' || root.child('admins').child(auth.uid).child('role').val() === 'admin' || root.child('admins').child(auth.uid).child('role').val() === 'support')))",
+        ".write": false
+      }
+    },
+    "usageLimits": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (root.child('admins').child(auth.uid).child('active').val() !== false && (root.child('admins').child(auth.uid).child('role').val() === 'owner' || root.child('admins').child(auth.uid).child('role').val() === 'admin' || root.child('admins').child(auth.uid).child('role').val() === 'support')))",
+        ".write": false
+      },
+      "_project": {
+        ".read": "auth != null && root.child('admins').child(auth.uid).child('active').val() !== false && (root.child('admins').child(auth.uid).child('role').val() === 'owner' || root.child('admins').child(auth.uid).child('role').val() === 'admin' || root.child('admins').child(auth.uid).child('role').val() === 'support')",
+        ".write": false
+      }
     },
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && auth.uid === $uid && ((root.child('admins').child(auth.uid).child('active').val() !== false && (root.child('admins').child(auth.uid).child('role').val() === 'owner' || root.child('admins').child(auth.uid).child('role').val() === 'admin' || root.child('admins').child(auth.uid).child('role').val() === 'support')) || ((root.child('entitlements').child(auth.uid).child('status').val() === 'active' || root.child('entitlements').child(auth.uid).child('status').val() === 'trialing' || root.child('entitlements').child(auth.uid).child('status').val() === 'beta' || root.child('entitlements').child(auth.uid).child('status').val() === 'manual') && root.child('entitlements').child(auth.uid).child('currentPeriodEndMs').val() > now))"
       }
     },
     "migrationBackups": {

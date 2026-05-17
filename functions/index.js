@@ -13,8 +13,11 @@ const REGION = "asia-southeast1";
 const MAX_JSON_CHARS = 18000;
 const AI_DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 5);
 const AI_MONTHLY_PROJECT_LIMIT = Number(process.env.AI_MONTHLY_PROJECT_LIMIT || 150);
+const POSE_AI_DAILY_LIMIT = Number(process.env.POSE_AI_DAILY_LIMIT || 5);
 const VIDEO_REVIEW_DAILY_LIMIT = Number(process.env.VIDEO_REVIEW_DAILY_LIMIT || 40);
 const MAX_VIDEO_BYTES = 120 * 1024 * 1024;
+const BETA_PLAN_ID = "beta_monthly_twd_300";
+const BETA_PRICE_TWD = 300;
 const CALLABLE_DEFAULTS = {
   region: REGION,
   timeoutSeconds: 60,
@@ -110,6 +113,143 @@ function collectionValues(collection) {
   if (Array.isArray(collection)) return collection;
   if (typeof collection === "object") return Object.values(collection);
   return [];
+}
+
+function todayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDays(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function entitlementIsActive(entitlement = {}, nowMs = Date.now()) {
+  const status = safeString(entitlement.status, 40);
+  const allowed = ["active", "trialing", "beta", "manual"];
+  if (!allowed.includes(status)) return false;
+  const explicitEndMs = safeNumber(entitlement.currentPeriodEndMs);
+  if (explicitEndMs !== null) return explicitEndMs >= nowMs;
+  const currentPeriodEnd = Date.parse(entitlement.currentPeriodEnd || "");
+  const trialEndsAt = Date.parse(entitlement.trialEndsAt || "");
+  const effectiveEnd = Number.isFinite(currentPeriodEnd) ? currentPeriodEnd : trialEndsAt;
+  return !Number.isFinite(effectiveEnd) || effectiveEnd >= nowMs;
+}
+
+function summarizeEntitlement(entitlement = null) {
+  const data = entitlement || {};
+  return {
+    status: safeString(data.status || "none", 40),
+    plan: safeString(data.plan || "", 80),
+    currentPeriodEnd: safeString(data.currentPeriodEnd || "", 40),
+    currentPeriodEndMs: safeNumber(data.currentPeriodEndMs),
+    trialEndsAt: safeString(data.trialEndsAt || "", 40),
+    source: safeString(data.source || "", 80),
+    updatedAt: safeString(data.updatedAt || "", 40),
+    notes: safeString(data.notes || "", 500),
+    active: entitlementIsActive(data)
+  };
+}
+
+async function getAdmin(uid) {
+  const snap = await admin.database().ref(`admins/${uid}`).get();
+  return snap.exists() ? snap.val() : null;
+}
+
+function adminIsActive(record = null) {
+  if (!record) return false;
+  const role = safeString(record.role, 40);
+  return Boolean(record.active !== false && ["owner", "support", "admin"].includes(role));
+}
+
+async function assertAdmin(uid) {
+  const record = await getAdmin(uid);
+  if (!adminIsActive(record)) {
+    throw new HttpsError("permission-denied", "Admin access is required.");
+  }
+  return record;
+}
+
+async function getEntitlement(uid) {
+  const snap = await admin.database().ref(`entitlements/${uid}`).get();
+  return snap.exists() ? snap.val() : null;
+}
+
+async function assertActiveEntitlement(uid, feature = "paid feature") {
+  const [entitlement, adminRecord] = await Promise.all([getEntitlement(uid), getAdmin(uid)]);
+  if (adminIsActive(adminRecord) || entitlementIsActive(entitlement)) {
+    return { entitlement: summarizeEntitlement(entitlement), admin: adminRecord || null };
+  }
+  throw new HttpsError("failed-precondition", `${feature} requires an active Beta membership.`);
+}
+
+function countLegacyAthlete(user = {}) {
+  return {
+    athletes: user ? 1 : 0,
+    programRows: collectionValues(user.program).length,
+    logs: collectionValues(user.logs).length,
+    generatedPlans: collectionValues(user.generatedPlans).length,
+    readinessChecks: collectionValues(user.readinessChecks).length,
+    coachDecisions: collectionValues(user.coachDecisions).length,
+    aiCoachSessions: collectionValues(user.aiCoachSessions).length,
+    videoReviews: collectionValues(user.videoReviews).length,
+    videoAnalyses: collectionValues(user.videoAnalyses).length
+  };
+}
+
+function totalTrainingRecords(counts = {}) {
+  return ["programRows", "logs", "generatedPlans", "readinessChecks", "coachDecisions", "aiCoachSessions", "videoReviews", "videoAnalyses"]
+    .reduce((sum, key) => sum + (Number(counts[key]) || 0), 0);
+}
+
+function mapCollection(items, prefix) {
+  const out = {};
+  collectionValues(items).forEach((item, index) => {
+    const id = safeId(item.id || `${prefix}_${index + 1}`, `${prefix}_${index + 1}`);
+    out[id] = { ...item, id };
+  });
+  return out;
+}
+
+function buildScopedPayloadFromLegacyAthlete({ legacyUser, athleteId, uid, email }) {
+  const now = new Date().toISOString();
+  const athlete = {
+    id: athleteId,
+    legacyId: athleteId,
+    name: safeString(legacyUser.name || "Athlete", 120),
+    roundingKg: safeNumber(legacyUser.roundingKg, 2.5),
+    fatigueDropPct: safeNumber(legacyUser.fatigueDropPct, 5),
+    backoffBase: safeString(legacyUser.backoffBase || "latestTop", 80),
+    athleteProfile: legacyUser.athleteProfile || {},
+    personalCalibration: legacyUser.personalCalibration || null,
+    generatedPlans: collectionValues(legacyUser.generatedPlans),
+    activeGeneratedPlanId: safeString(legacyUser.activeGeneratedPlanId || "", 120)
+  };
+  return {
+    profile: {
+      uid,
+      email,
+      activeAthleteId: athleteId,
+      uiLanguage: legacyUser.uiLanguage === "zh" ? "zh" : "en",
+      schemaVersion: 2,
+      updatedAt: now
+    },
+    athletes: { [athleteId]: athlete },
+    programs: {
+      [athleteId]: {
+        id: athleteId,
+        athleteId,
+        rows: collectionValues(legacyUser.program),
+        updatedAt: now
+      }
+    },
+    logs: mapCollection(collectionValues(legacyUser.logs).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_log`),
+    readinessChecks: mapCollection(collectionValues(legacyUser.readinessChecks).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_ready`),
+    coachDecisions: mapCollection(collectionValues(legacyUser.coachDecisions).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_coach`),
+    videoReviews: mapCollection(collectionValues(legacyUser.videoReviews).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_video`),
+    videoAnalyses: mapCollection(collectionValues(legacyUser.videoAnalyses).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_pose`),
+    aiCoachRequests: mapCollection(collectionValues(legacyUser.aiCoachRequests).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_ai`),
+    aiCoachSessions: mapCollection(collectionValues(legacyUser.aiCoachSessions).map((row) => ({ ...row, athleteId, legacyAthleteId: athleteId })), `${athleteId}_ai_session`)
+  };
 }
 
 function summarizeLog(row) {
@@ -485,11 +625,220 @@ async function assertMonthlyProjectLimit(feature, maxCount) {
   }
 }
 
+exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
+  const uid = assertAuthed(request);
+  const [entitlement, adminRecord, usageSnap] = await Promise.all([
+    getEntitlement(uid),
+    getAdmin(uid),
+    admin.database().ref(`usageLimits/${uid}`).get()
+  ]);
+  return {
+    uid,
+    email: safeString(request.auth?.token?.email || "", 200),
+    admin: adminIsActive(adminRecord) ? {
+      role: safeString(adminRecord.role, 40),
+      active: adminRecord.active !== false
+    } : null,
+    entitlement: summarizeEntitlement(entitlement),
+    usageLimits: usageSnap.exists() ? usageSnap.val() : {},
+    beta: {
+      plan: BETA_PLAN_ID,
+      priceTwd: BETA_PRICE_TWD,
+      aiDailyLimit: AI_DAILY_LIMIT,
+      poseAiDailyLimit: POSE_AI_DAILY_LIMIT,
+      videoReviewDailyLimit: VIDEO_REVIEW_DAILY_LIMIT
+    }
+  };
+});
+
+exports.claimFirstAdmin = onCall(CALLABLE_DEFAULTS, async (request) => {
+  const uid = assertAuthed(request);
+  const adminsSnap = await admin.database().ref("admins").limitToFirst(1).get();
+  if (adminsSnap.exists()) {
+    throw new HttpsError("failed-precondition", "An admin already exists.");
+  }
+  const userSnap = await admin.database().ref(`users/${uid}`).get();
+  const userData = userSnap.val() || {};
+  const counts = {
+    athletes: Object.keys(userData.athletes || {}).length,
+    programRows: Object.values(userData.programs || {}).reduce((sum, program) => sum + collectionValues(program?.rows).length, 0),
+    logs: Object.keys(userData.logs || {}).length
+  };
+  if (!userData.migration?.completed || totalTrainingRecords({ ...counts }) === 0) {
+    throw new HttpsError("failed-precondition", "First admin bootstrap requires a migrated training account.");
+  }
+  const record = {
+    uid,
+    email: safeString(request.auth?.token?.email || "", 200),
+    role: "owner",
+    active: true,
+    createdAt: new Date().toISOString(),
+    source: "first-admin-bootstrap"
+  };
+  const entitlement = {
+    status: "active",
+    plan: BETA_PLAN_ID,
+    currentPeriodEnd: addDays(new Date(), 365).toISOString(),
+    currentPeriodEndMs: addDays(new Date(), 365).getTime(),
+    trialEndsAt: "",
+    source: "owner_bootstrap",
+    updatedAt: new Date().toISOString(),
+    notes: "Owner bootstrap access"
+  };
+  await admin.database().ref().update({
+    [`admins/${uid}`]: record,
+    [`entitlements/${uid}`]: entitlement
+  });
+  return { admin: record, entitlement: summarizeEntitlement(entitlement) };
+});
+
+exports.grantManualEntitlement = onCall(CALLABLE_DEFAULTS, async (request) => {
+  const adminUid = assertAuthed(request);
+  await assertAdmin(adminUid);
+  const email = safeString(request.data?.email || "", 200);
+  let targetUid = safeId(request.data?.targetUid || "", "");
+  if (!targetUid && email) {
+    try {
+      targetUid = (await admin.auth().getUserByEmail(email)).uid;
+    } catch (err) {
+      throw new HttpsError("not-found", "No Firebase Auth user was found for that email.");
+    }
+  }
+  if (!targetUid) throw new HttpsError("invalid-argument", "Provide a target uid or email.");
+  const days = clamp(request.data?.days || 31, 1, 366);
+  const now = new Date();
+  const periodEnd = addDays(now, days);
+  const entitlement = {
+    status: "active",
+    plan: BETA_PLAN_ID,
+    currentPeriodEnd: periodEnd.toISOString(),
+    currentPeriodEndMs: periodEnd.getTime(),
+    trialEndsAt: "",
+    source: "manual_beta",
+    updatedAt: now.toISOString(),
+    updatedBy: adminUid,
+    notes: safeString(request.data?.notes || `Manual TWD ${BETA_PRICE_TWD}/month Beta access`, 500)
+  };
+  await admin.database().ref(`entitlements/${targetUid}`).set(entitlement);
+  return { targetUid, entitlement: summarizeEntitlement(entitlement) };
+});
+
+exports.revokeEntitlement = onCall(CALLABLE_DEFAULTS, async (request) => {
+  const adminUid = assertAuthed(request);
+  await assertAdmin(adminUid);
+  const targetUid = safeId(request.data?.targetUid || "", "");
+  if (!targetUid) throw new HttpsError("invalid-argument", "Provide a target uid.");
+  const update = {
+    status: "canceled",
+    currentPeriodEnd: todayString(),
+    currentPeriodEndMs: Date.now(),
+    updatedAt: new Date().toISOString(),
+    updatedBy: adminUid,
+    source: "manual_cancel",
+    notes: safeString(request.data?.notes || "Canceled by admin", 500)
+  };
+  await admin.database().ref(`entitlements/${targetUid}`).update(update);
+  return { targetUid, entitlement: summarizeEntitlement(update) };
+});
+
+exports.getAdminUserStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
+  const adminUid = assertAuthed(request);
+  await assertAdmin(adminUid);
+  const email = safeString(request.data?.email || "", 200);
+  let targetUid = safeId(request.data?.targetUid || "", "");
+  let authRecord = null;
+  if (targetUid) {
+    authRecord = await admin.auth().getUser(targetUid);
+  } else if (email) {
+    authRecord = await admin.auth().getUserByEmail(email);
+    targetUid = authRecord.uid;
+  } else {
+    throw new HttpsError("invalid-argument", "Provide a target uid or email.");
+  }
+  const [entitlement, usageSnap, userSnap] = await Promise.all([
+    getEntitlement(targetUid),
+    admin.database().ref(`usageLimits/${targetUid}`).get(),
+    admin.database().ref(`users/${targetUid}`).get()
+  ]);
+  const userData = userSnap.val() || {};
+  return {
+    uid: targetUid,
+    email: safeString(authRecord.email || "", 200),
+    displayName: safeString(authRecord.displayName || "", 200),
+    entitlement: summarizeEntitlement(entitlement),
+    usageLimits: usageSnap.exists() ? usageSnap.val() : {},
+    counts: {
+      athletes: Object.keys(userData.athletes || {}).length,
+      logs: Object.keys(userData.logs || {}).length,
+      aiCoachSessions: Object.keys(userData.aiCoachSessions || {}).length,
+      videoReviews: Object.keys(userData.videoReviews || {}).length,
+      videoAnalyses: Object.keys(userData.videoAnalyses || {}).length
+    }
+  };
+});
+
+exports.getLegacyClaimPreview = onCall(CALLABLE_DEFAULTS, async (request) => {
+  assertAuthed(request);
+  const snap = await admin.database().ref("powerlifting_log/users").get();
+  const users = snap.val() || {};
+  const athletes = Object.entries(users).map(([id, user]) => ({
+    id: safeId(id, "legacy"),
+    name: safeString(user?.name || id, 120),
+    counts: countLegacyAthlete(user)
+  }));
+  return { athletes };
+});
+
+exports.claimLegacyAthlete = onCall(CALLABLE_DEFAULTS, async (request) => {
+  const uid = assertAuthed(request);
+  const athleteId = safeId(request.data?.athleteId || "", "");
+  if (!athleteId) throw new HttpsError("invalid-argument", "Choose a legacy athlete.");
+  const scopedSnap = await admin.database().ref(`users/${uid}/migration/completed`).get();
+  if (scopedSnap.val() === true) {
+    throw new HttpsError("failed-precondition", "This account has already claimed training data.");
+  }
+  const rootSnap = await admin.database().ref("powerlifting_log").get();
+  const legacyRoot = rootSnap.val() || {};
+  const legacyUser = legacyRoot.users?.[athleteId];
+  if (!legacyUser) throw new HttpsError("not-found", "Legacy athlete was not found.");
+  const backupId = new Date().toISOString().replace(/[:.]/g, "-");
+  const payload = buildScopedPayloadFromLegacyAthlete({
+    legacyUser,
+    athleteId,
+    uid,
+    email: safeString(request.auth?.token?.email || "", 200)
+  });
+  const legacyCounts = countLegacyAthlete(legacyUser);
+  payload.migration = {
+    completed: true,
+    completedAt: new Date().toISOString(),
+    sourcePath: "powerlifting_log",
+    backupPath: `migrationBackups/${uid}/${backupId}`,
+    claimedAthletes: [{ legacyId: athleteId, name: safeString(legacyUser.name || athleteId, 120) }],
+    legacyCounts
+  };
+  const updates = {
+    [`migrationBackups/${uid}/${backupId}`]: {
+      createdAt: new Date().toISOString(),
+      sourcePath: "powerlifting_log",
+      targetUid: uid,
+      counts: legacyCounts,
+      legacy: { users: { [athleteId]: legacyUser } }
+    },
+    [`users/${uid}`]: payload
+  };
+  await admin.database().ref().update(updates);
+  return { athleteId, counts: legacyCounts, backupId };
+});
+
 exports.createAiCoachSuggestion = onCall({ ...CALLABLE_DEFAULTS, secrets: [OPENAI_API_KEY] }, async (request) => {
   const uid = assertAuthed(request);
   const athleteId = safeId(request.data?.athleteId || "active-athlete", "active-athlete");
   const requestSummary = sanitizeRequestSummary(request.data?.requestSummary || {});
+  const focus = safeString(requestSummary.requestFocus || "", 80);
+  await assertActiveEntitlement(uid, focus.startsWith("pose-") ? "Pose AI" : "AI Coach");
   await assertDailyLimit(uid, "aiCoach", AI_DAILY_LIMIT);
+  if (focus.startsWith("pose-")) await assertDailyLimit(uid, "poseAi", POSE_AI_DAILY_LIMIT);
   await assertMonthlyProjectLimit("aiCoach", AI_MONTHLY_PROJECT_LIMIT);
   const responseJson = await callOpenAiCoach(requestSummary, OPENAI_API_KEY.value());
   const sessionId = `ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -514,6 +863,7 @@ exports.validateAiCoachResponse = onCall(CALLABLE_DEFAULTS, async (request) => {
 
 exports.createVideoUploadMetadata = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
+  await assertActiveEntitlement(uid, "Video upload");
   const reviewId = safeId(request.data?.reviewId || `video_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, "video");
   const fileName = safeFileName(request.data?.fileName);
   const contentType = safeString(request.data?.contentType || "", 100);
@@ -526,6 +876,7 @@ exports.createVideoUploadMetadata = onCall(CALLABLE_DEFAULTS, async (request) =>
 
 exports.saveVideoRpeEstimate = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
+  await assertActiveEntitlement(uid, "Video RPE");
   const data = request.data || {};
   const reviewId = safeId(data.reviewId || `video_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, "video");
   const storagePath = safeString(data.storagePath, 600);
@@ -612,5 +963,9 @@ exports._test = {
   validateAiCoachSuggestion,
   normalizeAiCoachSuggestion,
   estimateExperimentalRpe,
-  safeFileName
+  safeFileName,
+  entitlementIsActive,
+  summarizeEntitlement,
+  countLegacyAthlete,
+  buildScopedPayloadFromLegacyAthlete
 };

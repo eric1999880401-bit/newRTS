@@ -126,5 +126,25 @@ assert(grind.confidence > 0.7);
 assert(grind.why.some((item) => item.includes("slower") || item.includes("grind")));
 
 assert.strictEqual(api.safeFileName("bad/name?.mp4").includes("/"), false);
+assert.strictEqual(api.entitlementIsActive({ status: "active", currentPeriodEnd: "2099-01-01T00:00:00.000Z" }), true);
+assert.strictEqual(api.entitlementIsActive({ status: "canceled", currentPeriodEnd: "2099-01-01T00:00:00.000Z" }), false);
+assert.strictEqual(api.entitlementIsActive({ status: "active", currentPeriodEnd: "2020-01-01T00:00:00.000Z" }), false);
+assert.strictEqual(api.summarizeEntitlement({ status: "active", plan: "beta_monthly_twd_300", currentPeriodEnd: "2099-01-01T00:00:00.000Z" }).active, true);
+
+const legacyUser = {
+  name: "Camel",
+  program: [{ id: "p1", week: 1, day: 1 }],
+  logs: [{ id: "l1", date: "2026-05-17", lift: "Squat" }],
+  readinessChecks: [{ id: "r1" }],
+  coachDecisions: [{ id: "c1" }],
+  videoReviews: [{ id: "v1" }],
+  videoAnalyses: [{ id: "pa1" }],
+  aiCoachSessions: [{ id: "ai1" }]
+};
+assert.strictEqual(api.countLegacyAthlete(legacyUser).logs, 1);
+const scoped = api.buildScopedPayloadFromLegacyAthlete({ legacyUser, athleteId: "u1", uid: "uid1", email: "x@example.com" });
+assert.strictEqual(scoped.profile.activeAthleteId, "u1");
+assert.strictEqual(Object.keys(scoped.logs).length, 1);
+assert.strictEqual(scoped.athletes.u1.name, "Camel");
 
 console.log("functions ai/video smoke ok");

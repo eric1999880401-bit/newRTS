@@ -4,6 +4,8 @@
 
 This branch adds the next product layer. Production is deployed on Firebase Blaze with Cloud Functions secrets and Firebase Storage rules.
 
+- Paid Beta v1 adds manual TWD 300/month entitlement controls. Users can still sign in, read, and export after access expires, but new training writes, plan generation, AI, Pose AI, and video saving are locked until access is active.
+- Public product wording should avoid using RTS as a brand or authorization claim. The product is positioned as an RPE/autoregulation powerlifting decision system.
 - AI Coach v1 lives behind Firebase Callable Functions. The OpenAI API key stays server-side in `OPENAI_API_KEY`; it is never placed in `index.html`.
 - AI requests use anonymous training summaries and return structured suggestions only. Suggestions are saved as `aiCoachSessions` and require a manual Apply before changing today's log form or coach decision history.
 - Video RPE v1 stores video files in Firebase Storage and saves only metadata/results in Realtime Database. The RPE estimate is experimental and must not replace manual RPE.
@@ -17,7 +19,7 @@ Powerlifting Log 是一個單頁式健力訓練紀錄工具，適合用來管理
 
 - 多位運動員 profile：每個人都有獨立名稱、課表、訓練紀錄、四捨五入重量與疲勞門檻。
 - 今日訓練儀表板：快速看到目前運動員、今日組數、今日最高 e1RM、課表列數與 back-off 計算基準。
-- RTS Plan Builder v2：用不靠 AI 的 RTS-style 規則引擎產生 4-12 週課表草稿，包含 protocol library、stress index、central/peripheral stress、TTP/response profile 與每堂課的可解釋規則。
+- RPE Plan Builder v2：用不靠 AI 的自動調節規則引擎產生 4-12 週課表草稿，包含 protocol library、stress index、central/peripheral stress、TTP/response profile 與每堂課的可解釋規則。
 - Readiness Coach：記錄睡眠、壓力、痠痛、疼痛、動機與上一堂完成度，產生當日現場調整建議。
 - Coach Decision：可將規則式建議手動套用到 log form，例如降 RPE、減 back-off、deload 或停止重訓主項。
 - Progress Dashboard：彙整近 28 天訓練量、e1RM、readiness 與教練決策。
@@ -124,7 +126,7 @@ node tests/rts-engine-smoke.js
 - Demo Athlete 測試入口
 - 多使用者資料結構與 Firebase 同步合併邏輯更新
 - Firebase-only schema v2：plan drafts、readiness、coach decisions、AI packets、video review notes
-- RTS Plan Builder v2：deterministic RTS-style rules engine，不靠 AI 產生課表，輸出 protocol / stress / TTP / response explanations
+- RPE Plan Builder v2：deterministic autoregulation rules engine，不靠 AI 產生課表，輸出 protocol / stress / TTP / response explanations
 - Readiness Coach v1：睡眠/壓力/痠痛/疼痛/上一堂完成度的當日調整
 - Progress Dashboard v1
 - 匿名 AI coach packet 產生器

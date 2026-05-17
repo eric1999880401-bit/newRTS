@@ -1559,6 +1559,57 @@
     .migration-panel.locked {
       border-left-color: var(--brick);
     }
+    .paywall-panel {
+      border-left: 6px solid var(--terra);
+      background: var(--paper-warm);
+    }
+    .paywall-grid,
+    .onboarding-grid,
+    .admin-grid,
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .value-card {
+      border: 1px solid var(--rule);
+      background: var(--ivory);
+      border-radius: var(--radius);
+      padding: 12px;
+      min-height: 92px;
+    }
+    .value-card strong {
+      display: block;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 17px;
+      line-height: 1.25;
+    }
+    .value-card span {
+      display: block;
+      color: var(--pencil);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 5px;
+    }
+    .lock-banner {
+      border: 1px solid rgba(163,80,60,.42);
+      border-left: 5px solid var(--brick);
+      background: color-mix(in srgb, var(--paper-warm) 76%, var(--brick) 7%);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      color: var(--ink-base);
+      margin: 12px 0;
+    }
+    .lock-banner strong {
+      display: block;
+      font-family: var(--font-display);
+      margin-bottom: 3px;
+    }
+    .admin-panel.locked {
+      opacity: .64;
+    }
     .program-preview {
       display: grid;
       gap: 10px;
@@ -2023,6 +2074,10 @@
       .data-actions-grid { grid-template-columns: 1fr; }
       .compact-grid,
       .control-row,
+      .paywall-grid,
+      .onboarding-grid,
+      .admin-grid,
+      .weekly-grid,
       .metric-strip { grid-template-columns: 1fr; }
       .metric-strip .metric { border-right: none; border-bottom: 1px solid var(--rule); }
       .metric-strip .metric:last-child { border-bottom: none; }
@@ -2070,6 +2125,23 @@
       <div class="login-mini-status">
         <span id="loginCalloutStatus">Sign in required</span>
         <span id="loginCalloutTarget">Sync off</span>
+      </div>
+    </section>
+
+    <section class="panel paywall-panel" id="membershipPanel" aria-label="Membership status">
+      <div class="feature-title">
+        <strong id="membershipTitle">RPE 自動調節健力訓練系統</strong>
+        <span class="status warn" id="membershipStatus">Beta access required</span>
+      </div>
+      <div class="compact-list" id="membershipCopy">每月 TWD 300，包含課表生成、AI Coach、Pose AI、個人化 RPE 校準、週報與 Excel 匯出。付費 Beta 先採手動收款與人工開通。</div>
+      <div class="paywall-grid">
+        <div class="value-card"><strong>決策中心</strong><span>用 e1RM、RPE、fatigue drop 與 readiness 決定今天怎麼練。</span></div>
+        <div class="value-card"><strong>AI + 影片輔助</strong><span>AI 只讀匿名摘要；影片分析只做教練輔助，不取代人工 RPE。</span></div>
+        <div class="value-card"><strong>資料可帶走</strong><span>到期後仍可登入、查看與匯出，不會把訓練紀錄鎖死。</span></div>
+      </div>
+      <div class="actions-inline">
+        <button class="primary" id="membershipSetupBtn" type="button">查看會員/付款狀態</button>
+        <button id="membershipTermsBtn" type="button">條款與 Beta 限制</button>
       </div>
     </section>
 
@@ -2150,7 +2222,7 @@
 
         <section class="panel">
           <h2>Program import</h2>
-          <div class="hint">Import one program file for the active user. The parser is aligned to the RTS-style workbook format that contains a <span class="mono">Schedule_12w</span> sheet.</div>
+          <div class="hint">Import one program file for the active user. The parser expects a practical RPE/autoregulation workbook with a <span class="mono">Schedule_12w</span> sheet.</div>
           <div class="grid grid-2">
             <div class="field">
               <label for="programImport">Import program (.xlsx, .xls, .csv)</label>
@@ -2171,7 +2243,7 @@
           <details style="margin-top:12px">
             <summary>Method used in this app</summary>
             <div class="inline-note" style="margin-top:10px">
-              e1RM is calculated from load / %1RM. The %1RM is taken from an RTS-style reps x RPE table. Back-off recommendations multiply the selected e1RM by the target table percentage, then round to the user's chosen plate increment. Fatigue drop is computed as:
+              e1RM is calculated from load / %1RM. The %1RM is taken from a reps x RPE table. Back-off recommendations multiply the selected e1RM by the target table percentage, then round to the user's chosen plate increment. Fatigue drop is computed as:
               <span class="mono">(reference e1RM - current e1RM) / reference e1RM x 100</span>.
             </div>
           </details>
@@ -2262,8 +2334,68 @@
             <button id="refreshMigrationPreviewBtn" type="button">Refresh preview</button>
             <button id="backupLegacyBtn" type="button">Create migration backup</button>
             <button class="primary" id="claimLegacyBtn" type="button">Claim selected athlete</button>
+            <button id="startFreshAccountBtn" type="button">Start fresh account</button>
           </div>
           <div class="footer-note" id="migrationTargetLabel">Sign in before claiming legacy data.</div>
+        </div>
+        <div class="feature-band paywall-panel" id="membershipSettingsPanel">
+          <div class="feature-title">
+            <strong>付費 Beta 權限</strong>
+            <span class="status warn" id="settingsMembershipStatus">未開通</span>
+          </div>
+          <div class="compact-list" id="settingsMembershipCopy">TWD 300/月，手動收款後由管理員開通。到期後仍可讀取與匯出資料，但新增紀錄、課表生成、AI 與影片儲存會上鎖。</div>
+          <div class="auth-status-grid">
+            <div class="migration-count"><div class="k">方案</div><div class="v" id="entitlementPlanLabel">—</div></div>
+            <div class="migration-count"><div class="k">可用到</div><div class="v" id="entitlementUntilLabel">—</div></div>
+            <div class="migration-count"><div class="k">管理員</div><div class="v" id="adminRoleLabel">否</div></div>
+          </div>
+          <div class="actions-inline">
+            <button id="refreshAccountStatusBtn" type="button">重新整理權限</button>
+            <button id="claimFirstAdminBtn" type="button">成為第一位管理員</button>
+          </div>
+        </div>
+        <div class="feature-band admin-panel locked" id="adminPanel">
+          <div class="feature-title">
+            <strong>Beta 會員開通工具</strong>
+            <span class="status warn" id="adminPanelStatus">限管理員</span>
+          </div>
+          <div class="compact-list">手動收款後，用 email 或 uid 開通 31 天 Beta。這裡不處理刷卡，只負責權限。</div>
+          <div class="admin-grid">
+            <div class="field">
+              <label for="adminTargetEmail">使用者 Email</label>
+              <input id="adminTargetEmail" type="email" placeholder="athlete@example.com" />
+            </div>
+            <div class="field">
+              <label for="adminTargetUid">或 Firebase UID</label>
+              <input id="adminTargetUid" type="text" placeholder="Firebase uid" />
+            </div>
+            <div class="field">
+              <label for="adminGrantDays">開通天數</label>
+              <input id="adminGrantDays" type="number" min="1" max="366" value="31" />
+            </div>
+            <div class="field">
+              <label for="adminGrantNotes">備註</label>
+              <input id="adminGrantNotes" type="text" placeholder="手動收款、退款或客服備註" />
+            </div>
+          </div>
+          <div class="actions-inline">
+            <button class="primary" id="adminGrantBtn" type="button">開通 31 天</button>
+            <button id="adminLookupBtn" type="button">查詢使用者</button>
+            <button class="danger" id="adminRevokeBtn" type="button">取消權限</button>
+          </div>
+          <div id="adminOutput" class="feature-band"></div>
+        </div>
+        <div class="feature-band" id="termsPanel">
+          <div class="feature-title">
+            <strong>條款、退款與安全邊界</strong>
+            <span class="status warn">Beta</span>
+          </div>
+          <div class="paywall-grid">
+            <div class="value-card"><strong>7 天退款</strong><span>付費 Beta 期間，開通後 7 天內可人工退款並取消權限。</span></div>
+            <div class="value-card"><strong>不是醫療診斷</strong><span>疼痛/受傷只做訓練調整與紅旗提醒；嚴重症狀請停止並找專業人員。</span></div>
+            <div class="value-card"><strong>不是授權 RTS</strong><span>本產品不使用 RTS 作品牌授權主張；訓練邏輯基於 RPE、自動調節與你的資料。</span></div>
+            <div class="value-card"><strong>資料權利</strong><span>你可以隨時 Export All。原始影片預設不永久保存，選存影片也只保留 30 天。</span></div>
+          </div>
         </div>
         <div class="footer-note">Training data writes require Firebase Auth after this migration update. The app still reads legacy data for preview and recovery, but new saves go only to the signed-in user's scoped path.</div>
       </section>
@@ -2487,10 +2619,59 @@
 
     <!-- PAGE 3: Plan Builder -->
     <div id="page-planner" class="page-content">
+      <section class="panel paywall-panel" id="onboardingPanel" style="margin-bottom:16px">
+        <div class="feature-title">
+          <strong>10 分鐘建立第一份訓練 block</strong>
+          <span class="status warn" id="onboardingStatus">Onboarding</span>
+        </div>
+        <div class="compact-list">填入三項 e1RM、目標與弱點後，系統會把資料帶入 Plan Builder。這不是 RTS 授權模板，而是可解釋的 RPE 自動調節規則引擎。</div>
+        <div class="onboarding-grid">
+          <div class="field">
+            <label for="onboardMeetDate">目標/測驗日期</label>
+            <input id="onboardMeetDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="onboardDays">每週訓練天數</label>
+            <select id="onboardDays"><option value="3">3 天</option><option value="4" selected>4 天</option><option value="5">5 天</option></select>
+          </div>
+          <div class="field">
+            <label for="onboardExperience">訓練年資</label>
+            <select id="onboardExperience"><option value="novice">新手</option><option value="intermediate" selected>中階</option><option value="advanced">進階</option></select>
+          </div>
+          <div class="field">
+            <label for="onboardWeakness">主要弱點</label>
+            <select id="onboardWeakness"><option value="squat-control">深度/控制</option><option value="bench-pause">臥推停頓</option><option value="deadlift-floor">硬舉離地</option><option value="lockout">鎖定</option><option value="recovery" selected>恢復管理</option></select>
+          </div>
+          <div class="field">
+            <label for="onboardSquat">Squat e1RM kg</label>
+            <input id="onboardSquat" type="number" min="0" step="0.5" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label for="onboardBench">Bench e1RM kg</label>
+            <input id="onboardBench" type="number" min="0" step="0.5" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label for="onboardDeadlift">Deadlift e1RM kg</label>
+            <input id="onboardDeadlift" type="number" min="0" step="0.5" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label for="onboardFatigue">疲勞耐受度</label>
+            <select id="onboardFatigue"><option value="conservative" selected>保守</option><option value="moderate">中等</option><option value="aggressive">高</option></select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label for="onboardEquipment">器材 / 限制</label>
+          <textarea id="onboardEquipment" placeholder="例：只有一般槓、護腕，臥推手腕不舒服，每次 90 分鐘內。"></textarea>
+        </div>
+        <div class="actions-inline">
+          <button class="primary" id="onboardGenerateBtn" type="button">套用並產生第一份 block</button>
+          <button id="onboardFillBtn" type="button">只填入 Plan Builder</button>
+        </div>
+      </section>
       <div class="product-grid wide-left">
         <section class="panel">
-          <h2>RTS Plan Builder</h2>
-          <div class="hint">Generate an editable plan with deterministic rules. The engine uses your recent logs, selected constraints, and RPE/fatigue targets.</div>
+          <h2>RPE Plan Builder</h2>
+          <div class="hint">Generate an editable powerlifting plan with deterministic RPE/autoregulation rules. The engine uses your recent logs, selected constraints, and fatigue targets.</div>
           <div class="grid grid-3">
             <div class="field">
               <label for="builderWeeks">Block length</label>
@@ -2519,9 +2700,9 @@
               </select>
             </div>
             <div class="field">
-              <label for="builderStrategy">RTS strategy model</label>
+              <label for="builderStrategy">Planning model</label>
               <select id="builderStrategy">
-                <option value="emerging" selected>Emerging Strategies response model</option>
+                <option value="emerging" selected>Athlete response model</option>
                 <option value="generalized">Generalized Intermediate inspired</option>
                 <option value="meet">Meet prep / TTP peak</option>
               </select>
@@ -2568,7 +2749,7 @@
             </div>
           </div>
           <div class="actions-inline">
-            <button class="primary" id="generatePlanBtn" type="button">Generate RTS Plan</button>
+            <button class="primary" id="generatePlanBtn" type="button">Generate RPE Plan</button>
             <button id="savePlanDraftBtn" type="button">Save draft edits</button>
             <button id="applyGeneratedPlanBtn" type="button">Apply to active program</button>
           </div>
@@ -2799,6 +2980,14 @@
         <div class="hint">A quick product-grade view of the last 28 days: e1RM, training volume, readiness, and coach interventions.</div>
         <div id="progressOverview" class="metric-strip"></div>
         <div id="dashboardLanes" class="dashboard-lanes"></div>
+      </section>
+      <section class="panel" style="margin-top:16px">
+        <div class="feature-title">
+          <strong>Weekly Review</strong>
+          <span class="status warn" id="weeklyReviewStatus">Last 7 days</span>
+        </div>
+        <div class="hint">每週回顧完成率、e1RM 趨勢、RPE 校準與疲勞警訊，讓使用者看得出每月付費的訓練決策價值。</div>
+        <div id="weeklyReviewOutput" class="weekly-grid"></div>
       </section>
     </div>
 
@@ -3129,9 +3318,18 @@
     let authUser = null;
     let authUnsubscribe = null;
     let legacyDataCache = null;
+    let legacyClaimPreview = [];
     let scopedDataCache = null;
     let migrationBackupCache = null;
     let lastScopedCounts = null;
+    let entitlementRef = null;
+    let entitlementListener = null;
+    let adminRef = null;
+    let adminListener = null;
+    let entitlementData = null;
+    let adminData = null;
+    const BETA_PLAN_ID = "beta_monthly_twd_300";
+    const BETA_PRICE_TWD = 300;
 
     function cleanFirebaseConfig(config = {}) {
       return Object.fromEntries(
@@ -3208,7 +3406,8 @@
     }
 
     function getLegacyAthleteEntries(legacyData = legacyDataCache) {
-      return Object.entries(normalizeUsers(legacyData?.users || {}));
+      if (legacyData?.users) return Object.entries(normalizeUsers(legacyData.users));
+      return legacyClaimPreview.map((item) => [item.id, { name: item.name, counts: item.counts }]);
     }
 
     function getLegacyAthleteLabel(athleteId, athlete) {
@@ -3222,6 +3421,13 @@
         || (legacyDataCache?.activeUserId && entries.some(([id]) => id === legacyDataCache.activeUserId) ? legacyDataCache.activeUserId : "")
         || entries[0]?.[0]
         || "";
+    }
+
+    function getLegacyPreviewCounts(athleteId) {
+      const preview = legacyClaimPreview.find((item) => item.id === athleteId);
+      if (preview?.counts) return preview.counts;
+      const selectedLegacyState = legacyDataForAthlete(athleteId);
+      return selectedLegacyState ? countLegacyData(selectedLegacyState) : countLegacyData();
     }
 
     function populateLegacyClaimAthleteSelect() {
@@ -3527,6 +3733,120 @@
       if (googleBtn) googleBtn.disabled = !fbAuth;
     }
 
+    function isAdminActive() {
+      const role = String(adminData?.role || "");
+      return Boolean(adminData && adminData.active !== false && ["owner", "admin", "support"].includes(role));
+    }
+
+    function isEntitlementActive(data = entitlementData) {
+      if (isAdminActive()) return true;
+      const status = String(data?.status || "");
+      if (!["active", "trialing", "beta", "manual"].includes(status)) return false;
+      const endMs = Number(data?.currentPeriodEndMs);
+      if (Number.isFinite(endMs)) return endMs >= Date.now();
+      const end = Date.parse(data?.currentPeriodEnd || data?.trialEndsAt || "");
+      return !Number.isFinite(end) || end >= Date.now();
+    }
+
+    function getAccessState() {
+      if (!authUser) return { active: false, level: "warn", label: "需要登入", detail: "登入後才能確認付費 Beta 權限。" };
+      if (!isScopedMigrationComplete()) return { active: false, level: "warn", label: "尚未匯入資料", detail: "先 Claim 或建立個人資料，再開通付費 Beta。" };
+      if (isAdminActive()) return { active: true, level: "ok", label: "管理員已解鎖", detail: "管理員帳號已解鎖 Beta 功能。" };
+      if (isEntitlementActive()) {
+        const end = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : "未設定到期日";
+        return { active: true, level: "ok", label: "Beta 已開通", detail: `TWD ${BETA_PRICE_TWD}/月 Beta 已開通，到期日 ${end}。` };
+      }
+      return { active: false, level: "bad", label: "Beta 未開通", detail: "你仍可讀取與匯出資料；新增紀錄、課表生成、AI 與影片儲存需要開通。" };
+    }
+
+    function renderMembershipStatus() {
+      const access = getAccessState();
+      const statusEls = [document.getElementById("membershipStatus"), document.getElementById("settingsMembershipStatus")].filter(Boolean);
+      statusEls.forEach((el) => {
+        el.className = "status " + access.level;
+        el.textContent = access.label;
+      });
+      const membershipCopy = document.getElementById("membershipCopy");
+      if (membershipCopy) membershipCopy.textContent = access.detail;
+      const settingsCopy = document.getElementById("settingsMembershipCopy");
+      if (settingsCopy) settingsCopy.textContent = access.detail;
+      const planLabel = document.getElementById("entitlementPlanLabel");
+      if (planLabel) planLabel.textContent = entitlementData?.plan || (isAdminActive() ? "管理員" : "—");
+      const untilLabel = document.getElementById("entitlementUntilLabel");
+      if (untilLabel) untilLabel.textContent = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? "管理員" : "—");
+      const adminLabel = document.getElementById("adminRoleLabel");
+      if (adminLabel) adminLabel.textContent = isAdminActive() ? (adminData.role || "管理員") : "否";
+      const adminPanel = document.getElementById("adminPanel");
+      const adminStatus = document.getElementById("adminPanelStatus");
+      if (adminPanel) adminPanel.classList.toggle("locked", !isAdminActive());
+      if (adminStatus) {
+        adminStatus.className = "status " + (isAdminActive() ? "ok" : "warn");
+        adminStatus.textContent = isAdminActive() ? "管理員可用" : "限管理員";
+      }
+    }
+
+    function showPaidFeatureLock(feature = "此功能") {
+      const access = getAccessState();
+      showToast(`${feature} 需要付費 Beta 權限。你仍可查看與匯出既有資料。`, "bad");
+      const panel = document.getElementById("membershipPanel");
+      if (panel) {
+        panel.scrollIntoView({ behavior: "smooth", block: "center" });
+        panel.classList.add("bad");
+        window.setTimeout(() => panel.classList.remove("bad"), 1800);
+      }
+      return access;
+    }
+
+    function attachAccountAccessListeners() {
+      if (entitlementRef && entitlementListener) entitlementRef.off("value", entitlementListener);
+      if (adminRef && adminListener) adminRef.off("value", adminListener);
+      entitlementRef = null;
+      entitlementListener = null;
+      adminRef = null;
+      adminListener = null;
+      entitlementData = null;
+      adminData = null;
+      if (!fbDb || !authUser) {
+        renderMembershipStatus();
+        return;
+      }
+      entitlementRef = fbDb.ref(`entitlements/${authUser.uid}`);
+      entitlementListener = entitlementRef.on("value", (snapshot) => {
+        entitlementData = snapshot.val() || null;
+        renderMembershipStatus();
+      }, () => {
+        entitlementData = null;
+        renderMembershipStatus();
+      });
+      adminRef = fbDb.ref(`admins/${authUser.uid}`);
+      adminListener = adminRef.on("value", (snapshot) => {
+        adminData = snapshot.val() || null;
+        renderMembershipStatus();
+      }, () => {
+        adminData = null;
+        renderMembershipStatus();
+      });
+      refreshAccountStatus().catch(() => {});
+    }
+
+    async function refreshAccountStatus() {
+      if (!authUser || !fbFunctions) {
+        renderMembershipStatus();
+        return null;
+      }
+      try {
+        const result = await callCloudFunction("getAccountStatus", {});
+        if (result.data?.entitlement) entitlementData = result.data.entitlement;
+        if (result.data?.admin) adminData = result.data.admin;
+        renderMembershipStatus();
+        return result.data;
+      } catch (err) {
+        console.warn("Account status refresh failed:", err);
+        renderMembershipStatus();
+        return null;
+      }
+    }
+
     function renderAuthMigrationStatus() {
       const authStatus = document.getElementById("authStatus");
       const authUserLabel = document.getElementById("authUserLabel");
@@ -3537,8 +3857,9 @@
       const migrationPanel = document.getElementById("migrationPanel");
       const selectedLegacyAthleteId = populateLegacyClaimAthleteSelect();
       const selectedLegacyState = legacyDataForAthlete(selectedLegacyAthleteId);
-      const counts = selectedLegacyState ? countLegacyData(selectedLegacyState) : countLegacyData();
-      const selectedLegacyName = selectedLegacyState?.users?.[selectedLegacyAthleteId]?.name || selectedLegacyAthleteId || "selected athlete";
+      const counts = getLegacyPreviewCounts(selectedLegacyAthleteId);
+      const selectedPreview = legacyClaimPreview.find((item) => item.id === selectedLegacyAthleteId);
+      const selectedLegacyName = selectedLegacyState?.users?.[selectedLegacyAthleteId]?.name || selectedPreview?.name || selectedLegacyAthleteId || "selected athlete";
       renderLoginCallout(selectedLegacyName);
       renderCountGrid("migrationPreviewCounts", counts);
       if (authStatus) {
@@ -3559,6 +3880,7 @@
           : "Sign in before claiming legacy data.";
       }
       if (migrationPanel) migrationPanel.classList.toggle("locked", !scopedReady);
+      renderMembershipStatus();
     }
 
     function firebasePush(successMessage = "") {
@@ -3567,6 +3889,12 @@
         updateFbStatus("bad", "Auth migration required");
         updateSyncStatusText("writes locked");
         showToast("Sign in and claim existing training data before saving. Legacy data was not changed.", "bad");
+        return Promise.resolve(false);
+      }
+      if (!isEntitlementActive()) {
+        updateFbStatus("bad", "Beta access required");
+        updateSyncStatusText("writes locked");
+        showPaidFeatureLock("儲存訓練資料");
         return Promise.resolve(false);
       }
       const scopedPayload = buildScopedDataFromState(state, authUser.uid, authUser.email || "");
@@ -3601,7 +3929,11 @@
     }
 
     function canWriteFirebase() {
-      if (authUser && scopedRef && isScopedMigrationComplete()) return true;
+      if (authUser && scopedRef && isScopedMigrationComplete() && isEntitlementActive()) return true;
+      if (authUser && scopedRef && isScopedMigrationComplete() && !isEntitlementActive()) {
+        showPaidFeatureLock("新增或修改資料");
+        return false;
+      }
       firebasePush();
       return false;
     }
@@ -3610,6 +3942,14 @@
       if (scopedRef && scopedListener) {
         scopedRef.off("value", scopedListener);
         scopedListener = null;
+      }
+      if (entitlementRef && entitlementListener) {
+        entitlementRef.off("value", entitlementListener);
+        entitlementListener = null;
+      }
+      if (adminRef && adminListener) {
+        adminRef.off("value", adminListener);
+        adminListener = null;
       }
       scopedRef = null;
       fbRef = null;
@@ -3736,6 +4076,24 @@
       return migrationBackupCache;
     }
 
+    async function refreshLegacyClaimPreview() {
+      if (!authUser || !fbFunctions) {
+        renderAuthMigrationStatus();
+        return [];
+      }
+      try {
+        const result = await callCloudFunction("getLegacyClaimPreview", {});
+        legacyClaimPreview = Array.isArray(result.data?.athletes) ? result.data.athletes : [];
+        renderAuthMigrationStatus();
+        return legacyClaimPreview;
+      } catch (err) {
+        console.warn("Legacy claim preview unavailable:", err);
+        legacyClaimPreview = [];
+        renderAuthMigrationStatus();
+        return [];
+      }
+    }
+
     function assertMigrationCountsMatch(legacyCounts, scopedCounts) {
       const keys = ["athletes", "programRows", "logs", "generatedPlans", "readinessChecks", "coachDecisions", "aiCoachSessions", "videoReviews", "videoAnalyses"];
       return keys.every((key) => Number(legacyCounts[key] || 0) === Number(scopedCounts[key] || 0));
@@ -3746,10 +4104,6 @@
         showToast("Sign in before claiming existing training data.", "bad");
         return;
       }
-      if (!legacyDataCache?.users) {
-        showToast("No legacy training data found to claim.", "bad");
-        return;
-      }
       const existing = scopedDataCache;
       if (isScopedMigrationComplete(existing)) {
         showToast("This account has already claimed training data.", "warn");
@@ -3757,40 +4111,55 @@
       }
       const selectedLegacyAthleteId = getSelectedLegacyAthleteId();
       const selectedLegacyState = legacyDataForAthlete(selectedLegacyAthleteId);
-      const selectedLegacyUser = selectedLegacyState?.users?.[selectedLegacyAthleteId];
-      if (!selectedLegacyState || !selectedLegacyUser) {
+      const selectedPreview = legacyClaimPreview.find((item) => item.id === selectedLegacyAthleteId);
+      const selectedLegacyUser = selectedLegacyState?.users?.[selectedLegacyAthleteId] || selectedPreview;
+      if (!selectedLegacyUser) {
         showToast("Choose a legacy athlete before claiming data.", "bad");
         return;
       }
       const selectedLegacyName = selectedLegacyUser.name || selectedLegacyAthleteId;
-      const legacyCounts = countLegacyData(selectedLegacyState);
-      const fullLegacyCounts = countLegacyData(legacyDataCache);
+      const legacyCounts = selectedPreview?.counts || countLegacyData(selectedLegacyState);
       if (!confirm(`Claim ${selectedLegacyName} into this signed-in account?\n\nAthletes: ${legacyCounts.athletes}\nLogs: ${legacyCounts.logs}\nProgram rows: ${legacyCounts.programRows}\nCoach decisions: ${legacyCounts.coachDecisions}\n\nPig and the rest of powerlifting_log will NOT be deleted or changed.`)) return;
-      const backup = await createMigrationBackup();
-      if (!backup) return;
-      const scopedPayload = buildScopedDataFromState(selectedLegacyState, authUser.uid, authUser.email || "", { athleteIds: [selectedLegacyAthleteId] });
-      scopedPayload.migration = {
-        completed: true,
-        completedAt: new Date().toISOString(),
-        sourcePath: "powerlifting_log",
-        backupPath: `migrationBackups/${authUser.uid}/${backup.id}`,
-        claimedAthletes: [{ legacyId: selectedLegacyAthleteId, name: selectedLegacyName }],
-        fullLegacyCounts,
-        legacyCounts
-      };
-      const scopedCounts = countScopedData(scopedPayload);
-      if (!assertMigrationCountsMatch(legacyCounts, scopedCounts)) {
-        showToast("Migration blocked: preview counts did not match copied data.", "bad");
-        return;
-      }
-      await scopedRef.update(scopedPayload);
-      scopedDataCache = { ...(scopedDataCache || {}), ...scopedPayload };
-      lastScopedCounts = scopedCounts;
-      state = hydrateStateFromScopedData(scopedDataCache);
-      fbRef = scopedRef;
+      const result = await callCloudFunction("claimLegacyAthlete", { athleteId: selectedLegacyAthleteId });
+      const serverCounts = result.data?.counts || legacyCounts;
+      lastScopedCounts = serverCounts;
+      await refreshAccountStatus();
       refreshAll();
       showToast(`${selectedLegacyName} claimed. Legacy data remains untouched.`, "ok");
       renderAuthMigrationStatus();
+    }
+
+    async function startFreshTrainingAccount() {
+      if (!authUser || !scopedRef) {
+        showToast("Sign in before starting a fresh account.", "bad");
+        return;
+      }
+      if (!isEntitlementActive()) {
+        showPaidFeatureLock("建立新訓練帳號");
+        return;
+      }
+      if (isScopedMigrationComplete(scopedDataCache)) {
+        showToast("This account already has training data.", "warn");
+        return;
+      }
+      if (!confirm("Start a fresh Beta training account for this login? This will not delete legacy Camel/Pig data.")) return;
+      const fresh = makeDefaultState();
+      fresh.activeUserId = "u1";
+      fresh.users.u1.name = authUser.displayName || authUser.email?.split("@")[0] || "Athlete";
+      const scopedPayload = buildScopedDataFromState(fresh, authUser.uid, authUser.email || "", { athleteIds: ["u1"] });
+      scopedPayload.migration = {
+        completed: true,
+        completedAt: new Date().toISOString(),
+        sourcePath: "fresh_beta_account",
+        claimedAthletes: [{ legacyId: "u1", name: fresh.users.u1.name }],
+        legacyCounts: countTrainingDataFromUsers({ u1: fresh.users.u1 })
+      };
+      await scopedRef.update(scopedPayload);
+      scopedDataCache = { ...(scopedDataCache || {}), ...scopedPayload };
+      state = hydrateStateFromScopedData(scopedDataCache);
+      fbRef = scopedRef;
+      refreshAll();
+      showToast("Fresh Beta training account created.", "ok");
     }
 
     function firebaseConnect(config = DEFAULT_FB_CONFIG) {
@@ -3842,23 +4211,34 @@
         }, (err) => {
           console.error("Firebase read failed:", err);
           const denied = err?.code === "PERMISSION_DENIED";
-          updateFbStatus("bad", denied ? "Permission denied" : "Sync error");
-          updateSyncStatusText(denied ? "permission denied" : "sync error");
-          showToast(denied ? "Firebase rules blocked access to the Realtime Database." : "Firebase read failed. Check the databaseURL and rules.", "bad");
+          if (denied) {
+            legacyDataCache = null;
+            updateFbStatus("warn", authUser ? "Legacy sealed" : "Sign in required");
+            updateSyncStatusText(authUser ? "claim required" : "sign in");
+            if (authUser) refreshLegacyClaimPreview().catch(() => {});
+          } else {
+            updateFbStatus("bad", denied ? "Permission denied" : "Sync error");
+            updateSyncStatusText(denied ? "permission denied" : "sync error");
+            showToast(denied ? "Firebase rules blocked access to the Realtime Database." : "Firebase read failed. Check the databaseURL and rules.", "bad");
+          }
         });
 
         if (normalizedConfig.apiKey && normalizedConfig.authDomain && firebase.auth) {
           fbAuth = fbApp.auth();
           authUnsubscribe = fbAuth.onAuthStateChanged((user) => {
             authUser = user || null;
+            attachAccountAccessListeners();
             attachScopedUserListener();
+            if (authUser) refreshLegacyClaimPreview().catch(() => {});
             renderAuthMigrationStatus();
           });
           fbAuth.getRedirectResult().then((result) => {
             if (result?.user) {
               authUser = result.user;
               showToast("Signed in with Google.", "ok");
+              attachAccountAccessListeners();
               attachScopedUserListener();
+              refreshLegacyClaimPreview().catch(() => {});
               renderAuthMigrationStatus();
             }
           }).catch((err) => {
@@ -3910,6 +4290,10 @@
         scopedRef = null;
         fbAuth = null;
         authUser = null;
+        entitlementRef = null;
+        adminRef = null;
+        entitlementData = null;
+        adminData = null;
         scopedDataCache = null;
       }
       clearFirebaseLocalCache();
@@ -4357,18 +4741,18 @@
       });
       if (lang === "zh") {
         setText("#page-workout h2", "今日課表");
-        setText("#page-planner h2", "RTS 課表產生器");
+        setText("#page-planner h2", "RPE 課表產生器");
         setText("#page-coach h2", "Readiness 檢查");
         setText("#page-dashboard h2", "進度儀表板");
       }
       if (lang === "zh") {
         setText("#page-workout h2", "今日課表");
-        setText("#page-planner h2", "RTS 課表產生");
+        setText("#page-planner h2", "RPE 課表產生");
         setText("#page-coach h2", "Readiness 檢查");
         setText("#page-dashboard h2", "進度儀表板");
       } else {
         setText("#page-workout h2", "Today's schedule");
-        setText("#page-planner h2", "RTS Plan Builder");
+        setText("#page-planner h2", "RPE Plan Builder");
         setText("#page-coach h2", "Readiness check");
         setText("#page-dashboard h2", "Progress Dashboard");
       }
@@ -5612,7 +5996,7 @@
 
     function savePersonalCalibrationSnapshot(user = getActiveUser()) {
       user.personalCalibration = computePersonalCalibration(user);
-      if (!authUser || !scopedRef || !isScopedMigrationComplete()) return Promise.resolve(false);
+      if (!authUser || !scopedRef || !isScopedMigrationComplete() || !isEntitlementActive()) return Promise.resolve(false);
       return scopedRef.child("athletes").child(user.id).child("personalCalibration").set(user.personalCalibration)
         .then(() => true)
         .catch((err) => {
@@ -7069,6 +7453,7 @@
         <div class="dashboard-lane"><h3>Video RPE calibration</h3>${videoHtml}</div>
         <div class="dashboard-lane"><h3>Pose analysis</h3>${poseHtml}</div>
       `;
+      renderWeeklyReview();
     }
 
     function renderMetrics() {
@@ -7786,7 +8171,7 @@
       const plan = generateRTSPlan(input, user);
       user.generatedPlans = [...(user.generatedPlans || []), plan].slice(-8);
       user.activeGeneratedPlanId = plan.id;
-      const saved = await saveState("RTS plan draft generated and saved.");
+      const saved = await saveState("RPE plan draft generated and saved.");
       if (saved) {
         renderPlanner();
         renderProgressDashboard();
@@ -8104,6 +8489,163 @@
       }
     }
 
+    function applyOnboardingToBuilder() {
+      const values = {
+        builderMeetDate: document.getElementById("onboardMeetDate")?.value || "",
+        builderDays: document.getElementById("onboardDays")?.value || "4",
+        builderExperience: document.getElementById("onboardExperience")?.value || "intermediate",
+        builderWeakness: document.getElementById("onboardWeakness")?.value || "recovery",
+        builderStressBudget: document.getElementById("onboardFatigue")?.value || "conservative",
+        builderEquipment: document.getElementById("onboardEquipment")?.value || ""
+      };
+      Object.entries(values).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+      });
+      const user = getActiveUser();
+      user.athleteProfile = normalizeAthleteProfile({
+        ...user.athleteProfile,
+        trainingAge: values.builderExperience,
+        weeklyTrainingDays: Number(values.builderDays),
+        primaryWeakPoint: values.builderWeakness,
+        stressBudget: values.builderStressBudget,
+        equipment: values.builderEquipment,
+        currentE1Rms: {
+          squat: Number(document.getElementById("onboardSquat")?.value) || null,
+          bench: Number(document.getElementById("onboardBench")?.value) || null,
+          deadlift: Number(document.getElementById("onboardDeadlift")?.value) || null
+        }
+      });
+      showToast("Onboarding 已帶入 Plan Builder。", "ok");
+    }
+
+    async function generateFromOnboarding() {
+      if (!canWriteFirebase()) return;
+      applyOnboardingToBuilder();
+      await handleGeneratePlan();
+      document.getElementById("generatedPlanPreview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function buildWeeklyReview(user = getActiveUser()) {
+      const since = new Date();
+      since.setDate(since.getDate() - 7);
+      const sinceText = since.toISOString().slice(0, 10);
+      const weekLogs = (user.logs || []).filter((row) => String(row.date || "") >= sinceText);
+      const plannedDays = new Set((user.program || []).slice(0, 7).map((row) => `${row.week}-${row.day}`));
+      const trainedDays = new Set(weekLogs.map((row) => row.date));
+      const e1rms = weekLogs.map((row) => Number(row.e1rm)).filter(Number.isFinite);
+      const rpes = weekLogs.map((row) => Number(row.rpe)).filter(Number.isFinite);
+      const readiness = (user.readinessChecks || []).filter((row) => String(row.date || "") >= sinceText);
+      const painFlags = readiness.filter((row) => Number(row.pain) >= 4).length;
+      const highRpe = rpes.filter((rpe) => rpe >= 9).length;
+      const calibration = computePersonalCalibration(user);
+      const completion = plannedDays.size ? Math.min(100, Math.round((trainedDays.size / plannedDays.size) * 100)) : (trainedDays.size ? 100 : 0);
+      const avgRpe = rpes.length ? rpes.reduce((sum, value) => sum + value, 0) / rpes.length : null;
+      const avgE1rm = e1rms.length ? e1rms.reduce((sum, value) => sum + value, 0) / e1rms.length : null;
+      const warnings = [];
+      if (painFlags) warnings.push(`${painFlags} 天疼痛 >= 4/10`);
+      if (highRpe >= 2) warnings.push(`${highRpe} 組 RPE 9+，下週保守一點`);
+      if (calibration.avgAbsRpeError !== null && calibration.avgAbsRpeError > 1) warnings.push("RPE 估算誤差偏大，繼續人工標註");
+      if (!warnings.length) warnings.push("本週沒有明顯紅旗，維持可恢復訓練量");
+      return { weekLogs, completion, avgRpe, avgE1rm, calibration, warnings };
+    }
+
+    function renderWeeklyReview() {
+      const target = document.getElementById("weeklyReviewOutput");
+      if (!target) return;
+      const review = buildWeeklyReview();
+      const bias = review.calibration.signedRpeBias;
+      target.innerHTML = `
+        <div class="value-card"><strong>${review.weekLogs.length}</strong><span>本週已記錄組數</span></div>
+        <div class="value-card"><strong>${review.completion}%</strong><span>預估完成率</span></div>
+        <div class="value-card"><strong>${review.avgRpe === null ? "--" : formatNumber(review.avgRpe, 1)}</strong><span>平均 RPE</span></div>
+        <div class="value-card"><strong>${review.avgE1rm === null ? "--" : formatNumber(review.avgE1rm, 1) + " kg"}</strong><span>本週平均 e1RM</span></div>
+        <div class="value-card"><strong>${bias === null ? "--" : `${bias > 0 ? "+" : ""}${formatNumber(bias, 1)}`}</strong><span>個人 RPE 偏差</span></div>
+        <div class="value-card"><strong>下週提醒</strong><span>${review.warnings.map(escapeHtml).join(" / ")}</span></div>`;
+    }
+
+    async function claimFirstAdmin() {
+      if (!authUser) {
+        showToast("Sign in before claiming first admin.", "bad");
+        return;
+      }
+      try {
+        const result = await callCloudFunction("claimFirstAdmin", {});
+        adminData = result.data?.admin || adminData;
+        entitlementData = result.data?.entitlement || entitlementData;
+        renderMembershipStatus();
+        showToast("First admin enabled for this account.", "ok");
+      } catch (err) {
+        console.error("First admin claim failed:", err);
+        showToast("First admin claim failed: " + (err.message || err.code), "bad");
+      }
+    }
+
+    function collectAdminTarget() {
+      return {
+        email: document.getElementById("adminTargetEmail")?.value.trim() || "",
+        targetUid: document.getElementById("adminTargetUid")?.value.trim() || "",
+        days: Number(document.getElementById("adminGrantDays")?.value) || 31,
+        notes: document.getElementById("adminGrantNotes")?.value.trim() || ""
+      };
+    }
+
+    function renderAdminOutput(data) {
+      const target = document.getElementById("adminOutput");
+      if (!target) return;
+      if (!data) {
+        target.innerHTML = `<div class="empty">尚未執行管理操作。</div>`;
+        return;
+      }
+      const entitlement = data.entitlement || {};
+      target.innerHTML = `
+        <div class="feature-title"><strong>${escapeHtml(data.email || data.targetUid || data.uid || "使用者")}</strong><span class="status ${entitlement.active ? "ok" : "warn"}">${escapeHtml(entitlement.status || "已更新")}</span></div>
+        <div class="compact-list">UID: ${escapeHtml(data.uid || data.targetUid || "")}</div>
+        <div class="compact-list">方案：${escapeHtml(entitlement.plan || BETA_PLAN_ID)} | 可用到：${escapeHtml(entitlement.currentPeriodEnd || "--")}</div>
+        ${data.counts ? `<div class="compact-list">紀錄 ${data.counts.logs || 0} | AI ${data.counts.aiCoachSessions || 0} | 影片 ${data.counts.videoReviews || 0} | 姿態分析 ${data.counts.videoAnalyses || 0}</div>` : ""}`;
+    }
+
+    async function adminGrantEntitlement() {
+      if (!isAdminActive()) return showPaidFeatureLock("Beta 會員開通工具");
+      try {
+        const result = await callCloudFunction("grantManualEntitlement", collectAdminTarget());
+        renderAdminOutput(result.data);
+        showToast("Beta 權限已開通。", "ok");
+      } catch (err) {
+        console.error("Grant failed:", err);
+        showToast("開通失敗：" + (err.message || err.code), "bad");
+      }
+    }
+
+    async function adminLookupUser() {
+      if (!isAdminActive()) return showPaidFeatureLock("管理員查詢工具");
+      try {
+        const result = await callCloudFunction("getAdminUserStatus", collectAdminTarget());
+        renderAdminOutput(result.data);
+      } catch (err) {
+        console.error("Lookup failed:", err);
+        showToast("查詢失敗：" + (err.message || err.code), "bad");
+      }
+    }
+
+    async function adminRevokeEntitlement() {
+      if (!isAdminActive()) return showPaidFeatureLock("取消會員權限");
+      const target = collectAdminTarget();
+      if (!target.targetUid) {
+        showToast("取消權限需要 UID。請先用 email 查詢，再複製 UID。", "warn");
+        return;
+      }
+      if (!confirm("要取消這位使用者的 Beta 權限嗎？取消後仍可讀取與匯出資料。")) return;
+      try {
+        const result = await callCloudFunction("revokeEntitlement", target);
+        renderAdminOutput(result.data);
+        showToast("Beta 權限已取消。", "ok");
+      } catch (err) {
+        console.error("Cancel failed:", err);
+        showToast("取消失敗：" + (err.message || err.code), "bad");
+      }
+    }
+
     /* ── Event listeners ── */
     document.getElementById("addUserBtn").addEventListener("click", openUserModal);
     document.getElementById("closeUserModalBtn").addEventListener("click", closeUserModal);
@@ -8182,6 +8724,14 @@
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
     document.getElementById("languageToggleBtn").addEventListener("click", toggleLanguage);
+    document.getElementById("membershipSetupBtn").addEventListener("click", () => {
+      switchPage("settings");
+      document.getElementById("membershipSettingsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    document.getElementById("membershipTermsBtn").addEventListener("click", () => {
+      switchPage("settings");
+      document.getElementById("termsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
 
     document.getElementById("restoreProgramInput").addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
@@ -8200,6 +8750,8 @@
     });
 
     document.getElementById("generatePlanBtn").addEventListener("click", handleGeneratePlan);
+    document.getElementById("onboardFillBtn").addEventListener("click", applyOnboardingToBuilder);
+    document.getElementById("onboardGenerateBtn").addEventListener("click", generateFromOnboarding);
     document.getElementById("savePlanDraftBtn").addEventListener("click", savePlanDraftEdits);
     document.getElementById("applyGeneratedPlanBtn").addEventListener("click", applyGeneratedPlan);
     document.getElementById("saveReadinessBtn").addEventListener("click", saveReadinessCheck);
@@ -8305,7 +8857,14 @@
       }, 0);
     });
     document.getElementById("signOutBtn").addEventListener("click", signOutAuth);
-    document.getElementById("refreshMigrationPreviewBtn").addEventListener("click", renderAuthMigrationStatus);
+    document.getElementById("refreshMigrationPreviewBtn").addEventListener("click", () => {
+      refreshLegacyClaimPreview().catch(() => renderAuthMigrationStatus());
+    });
+    document.getElementById("refreshAccountStatusBtn").addEventListener("click", () => refreshAccountStatus());
+    document.getElementById("claimFirstAdminBtn").addEventListener("click", claimFirstAdmin);
+    document.getElementById("adminGrantBtn").addEventListener("click", adminGrantEntitlement);
+    document.getElementById("adminLookupBtn").addEventListener("click", adminLookupUser);
+    document.getElementById("adminRevokeBtn").addEventListener("click", adminRevokeEntitlement);
     document.getElementById("claimLegacyAthlete").addEventListener("change", renderAuthMigrationStatus);
     document.getElementById("backupLegacyBtn").addEventListener("click", () => {
       createMigrationBackup().catch((err) => {
@@ -8317,6 +8876,12 @@
       claimLegacyTrainingData().catch((err) => {
         console.error("Claim legacy failed:", err);
         showToast("Claim failed. Legacy data was not changed.", "bad");
+      });
+    });
+    document.getElementById("startFreshAccountBtn").addEventListener("click", () => {
+      startFreshTrainingAccount().catch((err) => {
+        console.error("Fresh account failed:", err);
+        showToast("Fresh account setup failed. No legacy data was changed.", "bad");
       });
     });
 
