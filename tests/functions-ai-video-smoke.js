@@ -41,7 +41,21 @@ const sanitized = api.sanitizeRequestSummary({
     ],
     latestVideoAnalyses: [
       { date: "2026-05-16", lift: "Squat", viewAngle: "side", confidence: 0.73, avgConcentricSeconds: 1.4, velocityDropPct: 35, barDriftPct: 4.2, flags: ["Velocity dropped sharply."] }
-    ]
+    ],
+    personalCalibration: {
+      version: "personal-calibration-v1",
+      sampleCount: 7,
+      poseSampleCount: 5,
+      linkedPoseSampleCount: 3,
+      signedRpeBias: 0.4,
+      avgAbsRpeError: 0.6,
+      recommendedRpeOffset: 0.4,
+      confidence: 0.62,
+      confidenceLabel: "useful",
+      byLift: [{ lift: "Squat", samples: 4, bias: 0.5, avgError: 0.7 }],
+      velocityByRpe: [{ rpe: 8, samples: 2, avgVelocityDropPct: 28, avgConcentricSeconds: 1.3 }],
+      commonWeakPoints: [{ label: "Velocity dropped sharply.", count: 3 }]
+    }
   },
   requestFocus: "pose-rpe",
   poseAnalysis: {
@@ -50,6 +64,9 @@ const sanitized = api.sanitizeRequestSummary({
     lift: "Squat",
     setType: "Top",
     viewAngle: "side",
+    manualRpe: 8,
+    manualReps: 2,
+    manualWeight: 180,
     confidence: 0.73,
     confidenceLabel: "high",
     repPhases: [{ rep: 1 }, { rep: 2 }],
@@ -68,8 +85,12 @@ assert.strictEqual(sanitized.today.readiness.freeText.includes("wrist"), true);
 assert.strictEqual(JSON.stringify(sanitized).includes("should-not-survive"), false);
 assert.strictEqual(sanitized.recentTraining.latestVideoAnalyses[0].viewAngle, "side");
 assert.strictEqual(sanitized.recentTraining.latestVideoAnalyses[0].flags[0].includes("Velocity"), true);
+assert.strictEqual(sanitized.recentTraining.personalCalibration.sampleCount, 7);
+assert.strictEqual(sanitized.recentTraining.personalCalibration.byLift[0].lift, "Squat");
+assert.strictEqual(sanitized.recentTraining.personalCalibration.commonWeakPoints[0].count, 3);
 assert.strictEqual(sanitized.requestFocus, "pose-rpe");
 assert.strictEqual(sanitized.poseAnalysis.repCount, 2);
+assert.strictEqual(sanitized.poseAnalysis.manualRpe, 8);
 assert.strictEqual(sanitized.poseAnalysis.velocity.velocityDropPct, 35);
 assert.strictEqual(sanitized.poseAnalysis.flags[0].includes("Velocity"), true);
 

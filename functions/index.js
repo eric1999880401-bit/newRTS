@@ -87,6 +87,11 @@ function safeString(value, max = 1600) {
   return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
+function safeNumber(value, fallback = null) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
 function safeId(value, fallback = "item") {
   const id = String(value || "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80);
   return id || fallback;
@@ -192,7 +197,34 @@ function sanitizeRequestSummary(input = {}) {
         velocityDropPct: Number(analysis.velocityDropPct) || null,
         barDriftPct: Number(analysis.barDriftPct) || null,
         flags: collectionValues(analysis.flags).map((item) => safeString(item, 180)).slice(0, 5)
-      }))
+      })),
+      personalCalibration: recent.personalCalibration ? {
+        version: safeString(recent.personalCalibration.version, 80),
+        sampleCount: Number(recent.personalCalibration.sampleCount) || 0,
+        poseSampleCount: Number(recent.personalCalibration.poseSampleCount) || 0,
+        linkedPoseSampleCount: Number(recent.personalCalibration.linkedPoseSampleCount) || 0,
+        signedRpeBias: safeNumber(recent.personalCalibration.signedRpeBias),
+        avgAbsRpeError: safeNumber(recent.personalCalibration.avgAbsRpeError),
+        recommendedRpeOffset: safeNumber(recent.personalCalibration.recommendedRpeOffset, 0),
+        confidence: Number(recent.personalCalibration.confidence) || 0,
+        confidenceLabel: safeString(recent.personalCalibration.confidenceLabel, 40),
+        byLift: collectionValues(recent.personalCalibration.byLift).slice(0, 3).map((row) => ({
+          lift: safeString(row.lift, 40),
+          samples: Number(row.samples) || 0,
+          bias: safeNumber(row.bias),
+          avgError: safeNumber(row.avgError)
+        })),
+        velocityByRpe: collectionValues(recent.personalCalibration.velocityByRpe).slice(0, 5).map((row) => ({
+          rpe: safeNumber(row.rpe),
+          samples: Number(row.samples) || 0,
+          avgVelocityDropPct: safeNumber(row.avgVelocityDropPct),
+          avgConcentricSeconds: safeNumber(row.avgConcentricSeconds)
+        })),
+        commonWeakPoints: collectionValues(recent.personalCalibration.commonWeakPoints).slice(0, 5).map((row) => ({
+          label: safeString(row.label, 160),
+          count: Number(row.count) || 0
+        }))
+      } : null
     },
     poseAnalysis: input.poseAnalysis ? {
       id: safeString(input.poseAnalysis.id, 100),
@@ -200,6 +232,9 @@ function sanitizeRequestSummary(input = {}) {
       lift: safeString(input.poseAnalysis.lift, 80),
       setType: safeString(input.poseAnalysis.setType, 80),
       viewAngle: safeString(input.poseAnalysis.viewAngle, 40),
+      manualRpe: Number(input.poseAnalysis.manualRpe) || null,
+      manualReps: Number(input.poseAnalysis.manualReps) || null,
+      manualWeight: Number(input.poseAnalysis.manualWeight) || null,
       confidence: Number(input.poseAnalysis.confidence) || 0,
       confidenceLabel: safeString(input.poseAnalysis.confidenceLabel, 40),
       repCount: collectionValues(input.poseAnalysis.repPhases).length,
@@ -320,6 +355,7 @@ async function callOpenAiCoach(requestSummary, apiKey) {
                 "You are not a medical professional and must not diagnose injuries.",
                 "If requestFocus is pose-weakness, focus on technique weak points, likely constraints, and 1-3 practical cues from pose metrics only.",
                 "If requestFocus is pose-rpe, provide an RPE second opinion range from velocity drop, concentric time, manual context, and pose confidence.",
+                "Use recentTraining.personalCalibration as athlete-specific context for RPE bias and recurring weak points, but do not claim the model has been trained.",
                 "Prefer conservative, explainable changes when pain, poor sleep, missed reps, or high RPE are present.",
                 "Return only the requested JSON shape. Any suggested change must require manual user approval."
               ].join(" ")

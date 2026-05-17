@@ -1911,6 +1911,41 @@
       color: var(--ink-soft);
       line-height: 1.5;
     }
+    .calibration-summary {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .calibration-signal {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .calibration-signal .metric {
+      border: 1px solid var(--rule);
+      background: var(--ivory-soft);
+      border-radius: var(--radius);
+      padding: 10px;
+    }
+    .calibration-signal .k {
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .calibration-signal .v {
+      margin-top: 4px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .calibration-note {
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
     .pose-chart {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1959,7 +1994,8 @@
       .video-quick-card,
       .dashboard-lanes { grid-template-columns: 1fr; }
       .pose-setup-strip,
-      .filming-guide-grid { grid-template-columns: 1fr; }
+      .filming-guide-grid,
+      .calibration-signal { grid-template-columns: 1fr; }
       .span-2, .span-4 { grid-column: 1 / -1; }
     }
     @media (max-width: 760px) {
@@ -2703,6 +2739,7 @@
             <div id="videoEstimateOutput"></div>
           </div>
         </details>
+        <div id="personalCalibrationPanel" class="feature-band calibration-summary"></div>
         <div class="feature-band" style="margin-top:14px">
           <div class="feature-title">
             <strong data-i18n="poseAnalysisTitle">Pose analysis</strong>
@@ -3003,6 +3040,7 @@
         aiCoachSessions: [],
         videoReviews: [],
         videoAnalyses: [],
+        personalCalibration: null,
         program,
         logs: []
       };
@@ -3024,6 +3062,7 @@
         aiCoachSessions: normalizeArray(source.aiCoachSessions, fallback.aiCoachSessions),
         videoReviews: normalizeArray(source.videoReviews, fallback.videoReviews),
         videoAnalyses: normalizeArray(source.videoAnalyses, fallback.videoAnalyses),
+        personalCalibration: source.personalCalibration || fallback.personalCalibration || null,
         program: normalizeArray(source.program, fallback.program),
         logs: normalizeArray(source.logs, fallback.logs)
       };
@@ -3297,6 +3336,7 @@
           fatigueDropPct: user.fatigueDropPct,
           backoffBase: user.backoffBase,
           athleteProfile: user.athleteProfile || defaultAthleteProfile(),
+          personalCalibration: computePersonalCalibration(user),
           generatedPlans: user.generatedPlans || [],
           activeGeneratedPlanId: user.activeGeneratedPlanId || ""
         };
@@ -3327,6 +3367,7 @@
         profile.fatigueDropPct = Number(athlete.fatigueDropPct) || profile.fatigueDropPct;
         profile.backoffBase = athlete.backoffBase || profile.backoffBase;
         profile.athleteProfile = normalizeAthleteProfile(athlete.athleteProfile || {});
+        profile.personalCalibration = athlete.personalCalibration || null;
         profile.generatedPlans = normalizeArray(athlete.generatedPlans, []);
         profile.activeGeneratedPlanId = String(athlete.activeGeneratedPlanId || "");
         profile.program = collectionValues(scopedData?.programs?.[athleteId]?.rows);
@@ -4044,6 +4085,22 @@
       aiCoachPacket: "AI coach packet",
       buildAnonymousPacket: "Build anonymous packet",
       copyPacket: "Copy packet",
+      personalCalibrationTitle: "Personal calibration",
+      personalCalibrationStatusNew: "Needs samples",
+      personalCalibrationStatusLearning: "Learning",
+      personalCalibrationStatusUseful: "Useful",
+      personalCalibrationStatusStrong: "Strong",
+      calibrationSamples: "Samples",
+      rpeBias: "RPE bias",
+      rpeError: "Avg error",
+      poseLinks: "Pose links",
+      updateCalibration: "Update calibration",
+      calibrationEmpty: "Save a few manual RPE reviews to start calibrating your estimate. Manual RPE remains the source of truth.",
+      calibrationBiasHigh: "Your manual RPE usually comes in higher than the estimate. The app should bias future RPE hints upward.",
+      calibrationBiasLow: "Your manual RPE usually comes in lower than the estimate. The app should bias future RPE hints downward.",
+      calibrationBiasNeutral: "Manual RPE and estimated RPE are currently close. Keep adding labels to tighten confidence.",
+      calibrationWeakPoints: "Common weak points",
+      calibrationAiNote: "AI Coach reads this summary as personal context. It does not train a model automatically.",
       videoAnalysisTitle: "Video analysis",
       videoAnalysisHint: "Load a fixed-angle training video, run local pose analysis, then optionally ask AI for weak points or an RPE second opinion.",
       filmingGuideButton: "Filming guide",
@@ -4177,6 +4234,22 @@
       aiCoachPacket: "AI 教練摘要包",
       buildAnonymousPacket: "產生匿名摘要",
       copyPacket: "複製摘要",
+      personalCalibrationTitle: "個人化校準",
+      personalCalibrationStatusNew: "需要樣本",
+      personalCalibrationStatusLearning: "學習中",
+      personalCalibrationStatusUseful: "可參考",
+      personalCalibrationStatusStrong: "較穩定",
+      calibrationSamples: "樣本",
+      rpeBias: "RPE 偏差",
+      rpeError: "平均誤差",
+      poseLinks: "Pose 連結",
+      updateCalibration: "更新校準",
+      calibrationEmpty: "先儲存幾筆人工 RPE，系統才會開始校準估算；人工 RPE 仍是最重要基準。",
+      calibrationBiasHigh: "你的人工 RPE 通常高於估算值，之後 RPE 提示應該往上修正。",
+      calibrationBiasLow: "你的人工 RPE 通常低於估算值，之後 RPE 提示應該往下修正。",
+      calibrationBiasNeutral: "人工 RPE 和估算值目前接近，繼續累積標註可提高信心。",
+      calibrationWeakPoints: "常見弱點",
+      calibrationAiNote: "AI 教練會讀取這份個人摘要作為背景；目前不會自動訓練模型。",
       videoAnalysisTitle: "影片分析",
       videoAnalysisHint: "載入固定角度訓練影片，在本機做姿態分析，再選擇是否交給 AI 判讀弱點或 RPE 參考。",
       filmingGuideButton: "拍攝教學",
@@ -5414,6 +5487,140 @@
       };
     }
 
+    function average(values) {
+      const clean = values.map(Number).filter(Number.isFinite);
+      return clean.length ? clean.reduce((sum, value) => sum + value, 0) / clean.length : null;
+    }
+
+    function summarizeFrequency(items, limit = 4) {
+      const counts = {};
+      items.filter(Boolean).forEach((item) => {
+        const key = String(item).trim();
+        if (!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, limit)
+        .map(([label, count]) => ({ label, count }));
+    }
+
+    function computePersonalCalibration(user = getActiveUser()) {
+      const reviews = (user.videoReviews || [])
+        .filter((review) => Number.isFinite(Number(review.manualRpe)) && Number.isFinite(Number(review.estimatedRpe)));
+      const reviewDeltas = reviews.map((review) => Number(review.manualRpe) - Number(review.estimatedRpe));
+      const poseSamples = (user.videoAnalyses || [])
+        .filter((analysis) => Number.isFinite(Number(analysis.manualRpe)) || Number.isFinite(Number(analysis.velocityCurveSummary?.velocityDropPct)));
+      const linkedPoseSamples = poseSamples.filter((analysis) => Number.isFinite(Number(analysis.manualRpe)) && Number.isFinite(Number(analysis.velocityCurveSummary?.velocityDropPct)));
+      const byLift = ["Squat", "Bench", "Deadlift"].map((lift) => {
+        const rows = reviews.filter((review) => liftFamily(review.lift) === lift);
+        const deltas = rows.map((review) => Number(review.manualRpe) - Number(review.estimatedRpe));
+        return {
+          lift,
+          samples: rows.length,
+          bias: average(deltas),
+          avgError: average(deltas.map(Math.abs))
+        };
+      }).filter((row) => row.samples);
+      const velocityByRpe = [6, 7, 8, 9, 10].map((bucket) => {
+        const rows = linkedPoseSamples.filter((analysis) => {
+          const rpe = Number(analysis.manualRpe);
+          return rpe >= bucket - 0.5 && rpe < bucket + 0.5;
+        });
+        return {
+          rpe: bucket,
+          samples: rows.length,
+          avgVelocityDropPct: average(rows.map((analysis) => Number(analysis.velocityCurveSummary?.velocityDropPct))),
+          avgConcentricSeconds: average(rows.map((analysis) => Number(analysis.velocityCurveSummary?.avgConcentricSeconds)))
+        };
+      }).filter((row) => row.samples);
+      const commonWeakPoints = summarizeFrequency((user.videoAnalyses || []).flatMap((analysis) => [
+        ...(analysis.techniqueFlags || []),
+        ...(analysis.asymmetryFlags || []),
+        ...(analysis.coachCues || [])
+      ]));
+      const sampleCount = reviews.length;
+      const signedBias = average(reviewDeltas);
+      const avgAbsError = average(reviewDeltas.map(Math.abs));
+      const confidence = sampleCount >= 12 ? 0.82 : sampleCount >= 6 ? 0.62 : sampleCount >= 3 ? 0.42 : sampleCount > 0 ? 0.22 : 0.08;
+      return {
+        version: "personal-calibration-v1",
+        updatedAt: new Date().toISOString(),
+        sampleCount,
+        poseSampleCount: poseSamples.length,
+        linkedPoseSampleCount: linkedPoseSamples.length,
+        signedRpeBias: signedBias === null ? null : Number(signedBias.toFixed(2)),
+        avgAbsRpeError: avgAbsError === null ? null : Number(avgAbsError.toFixed(2)),
+        recommendedRpeOffset: sampleCount >= 3 && signedBias !== null ? Number(signedBias.toFixed(1)) : 0,
+        confidence,
+        confidenceLabel: sampleCount >= 12 ? "strong" : sampleCount >= 6 ? "useful" : sampleCount >= 3 ? "learning" : "new",
+        byLift: byLift.map((row) => ({
+          ...row,
+          bias: row.bias === null ? null : Number(row.bias.toFixed(2)),
+          avgError: row.avgError === null ? null : Number(row.avgError.toFixed(2))
+        })),
+        velocityByRpe: velocityByRpe.map((row) => ({
+          ...row,
+          avgVelocityDropPct: row.avgVelocityDropPct === null ? null : Number(row.avgVelocityDropPct.toFixed(1)),
+          avgConcentricSeconds: row.avgConcentricSeconds === null ? null : Number(row.avgConcentricSeconds.toFixed(2))
+        })),
+        commonWeakPoints
+      };
+    }
+
+    function calibrationStatusKey(label) {
+      return label === "strong" ? "personalCalibrationStatusStrong"
+        : label === "useful" ? "personalCalibrationStatusUseful"
+          : label === "learning" ? "personalCalibrationStatusLearning"
+            : "personalCalibrationStatusNew";
+    }
+
+    function describeCalibrationBias(calibration) {
+      const bias = Number(calibration.signedRpeBias);
+      if (!Number.isFinite(bias) || Math.abs(bias) < 0.25) return t("calibrationBiasNeutral");
+      return bias > 0 ? t("calibrationBiasHigh") : t("calibrationBiasLow");
+    }
+
+    function renderPersonalCalibration() {
+      const user = getActiveUser();
+      const target = document.getElementById("personalCalibrationPanel");
+      if (!target) return;
+      const calibration = computePersonalCalibration(user);
+      user.personalCalibration = calibration;
+      const zh = currentLanguage() === "zh";
+      const level = calibration.confidence >= 0.6 ? "ok" : calibration.confidence >= 0.3 ? "warn" : "bad";
+      const biasText = calibration.signedRpeBias === null ? "--" : `${calibration.signedRpeBias > 0 ? "+" : ""}${formatNumber(calibration.signedRpeBias, 1)}`;
+      const weakPoints = calibration.commonWeakPoints.length
+        ? calibration.commonWeakPoints.map((item) => `<li>${escapeHtml(item.label)} (${item.count})</li>`).join("")
+        : `<li>${zh ? "尚未累積穩定弱點標籤" : "No stable weak-point labels yet"}</li>`;
+      target.className = `feature-band calibration-summary ${level === "bad" ? "bad" : level === "warn" ? "warn" : ""}`.trim();
+      target.innerHTML = `
+        <div class="feature-title">
+          <strong>${t("personalCalibrationTitle")}</strong>
+          <span class="status ${level}">${t(calibrationStatusKey(calibration.confidenceLabel))}</span>
+        </div>
+        <div class="calibration-signal">
+          <div class="metric"><div class="k">${t("calibrationSamples")}</div><div class="v">${calibration.sampleCount}</div></div>
+          <div class="metric"><div class="k">${t("rpeBias")}</div><div class="v">${biasText}</div></div>
+          <div class="metric"><div class="k">${t("rpeError")}</div><div class="v">${calibration.avgAbsRpeError === null ? "--" : formatNumber(calibration.avgAbsRpeError, 1)}</div></div>
+          <div class="metric"><div class="k">${t("poseLinks")}</div><div class="v">${calibration.linkedPoseSampleCount}</div></div>
+        </div>
+        <div class="calibration-note">${calibration.sampleCount ? escapeHtml(describeCalibrationBias(calibration)) : escapeHtml(t("calibrationEmpty"))}</div>
+        <div><strong>${t("calibrationWeakPoints")}</strong><ul class="reason-list">${weakPoints}</ul></div>
+        <div class="footer-note">${t("calibrationAiNote")}</div>`;
+    }
+
+    function savePersonalCalibrationSnapshot(user = getActiveUser()) {
+      user.personalCalibration = computePersonalCalibration(user);
+      if (!authUser || !scopedRef || !isScopedMigrationComplete()) return Promise.resolve(false);
+      return scopedRef.child("athletes").child(user.id).child("personalCalibration").set(user.personalCalibration)
+        .then(() => true)
+        .catch((err) => {
+          console.warn("Personal calibration save failed:", err);
+          return false;
+        });
+    }
+
     function summarizeRecentTraining(user) {
       const logs = getRecentLogs(user, 28);
       const byLift = { Squat: [], Bench: [], Deadlift: [] };
@@ -5436,6 +5643,7 @@
         liftSummaries,
         latestReadiness: getLatestReadiness(user),
         latestDecision: getLatestCoachDecision(user),
+        personalCalibration: computePersonalCalibration(user),
         latestVideoAnalyses: [...(user.videoAnalyses || [])]
           .sort((a, b) => String(b.savedAt || b.createdAt || b.date).localeCompare(String(a.savedAt || a.createdAt || a.date)))
           .slice(0, 4)
@@ -6432,7 +6640,12 @@
         calibrationMode,
         pixelToMeter,
         realDistanceMeters: usesMetricCalibration && realDistance ? realDistance : null,
-        pixelDistance: usesMetricCalibration && pixelDistance ? pixelDistance : null
+        pixelDistance: usesMetricCalibration && pixelDistance ? pixelDistance : null,
+        manualRpe: Number(document.getElementById("videoRpe")?.value) || null,
+        reps: Number(document.getElementById("videoReps")?.value) || null,
+        weight: Number(document.getElementById("videoWeight")?.value) || null,
+        barSpeed: document.getElementById("videoSpeed")?.value || "",
+        manualCue: document.getElementById("videoCue")?.value?.trim() || ""
       };
     }
 
@@ -6591,6 +6804,11 @@
           fileName: file.name,
           fileSize: file.size,
           rawVideoSaved: false,
+          manualRpe: options.manualRpe,
+          manualReps: options.reps,
+          manualWeight: options.weight,
+          manualBarSpeed: options.barSpeed,
+          manualCue: options.manualCue,
           ...window.newRtsVideoAnalysis.analyzeLandmarkFrames(frames, options)
         };
         renderPoseAnalysisSummary(lastPoseAnalysis);
@@ -6636,10 +6854,12 @@
           analysis.rawVideoExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         }
         user.videoAnalyses = [...(user.videoAnalyses || []).filter((item) => item.id !== analysis.id), analysis].slice(-80);
+        user.personalCalibration = computePersonalCalibration(user);
         lastPoseAnalysis = analysis;
         const saved = await saveState("Pose analysis summary saved.");
         if (saved) {
           renderPoseAnalysisSummary(analysis);
+          renderPersonalCalibration();
           renderVideoReviews();
           renderProgressDashboard();
         }
@@ -6788,6 +7008,7 @@
       const videoReviews = user.videoReviews || [];
       const videoWithEstimate = videoReviews.filter((review) => Number.isFinite(Number(review.estimatedRpe)));
       const videoAnalyses = user.videoAnalyses || [];
+      const calibration = computePersonalCalibration(user);
       overview.innerHTML = `
         <div class="metric"><div class="k">28-day sets</div><div class="v">${recent.length}</div></div>
         <div class="metric"><div class="k">Latest readiness</div><div class="v">${latestReadiness ? readinessScore.score : "—"}</div></div>
@@ -6825,9 +7046,11 @@
         .filter((review) => Number.isFinite(Number(review.manualRpe)))
         .map((review) => Math.abs(Number(review.estimatedRpe) - Number(review.manualRpe)));
       const avgDelta = videoDelta.length ? videoDelta.reduce((sum, value) => sum + value, 0) / videoDelta.length : null;
+      const calibrationBiasText = calibration.signedRpeBias === null ? "--" : `${calibration.signedRpeBias > 0 ? "+" : ""}${formatNumber(calibration.signedRpeBias, 1)}`;
       const videoHtml = videoReviews.length
         ? `<div class="metric"><div class="k">Video notes</div><div class="v">${videoReviews.length}</div></div>
-           <div class="metric"><div class="k">Avg RPE gap</div><div class="v">${avgDelta === null ? "—" : formatNumber(avgDelta, 1)}</div></div>`
+           <div class="metric"><div class="k">Avg RPE gap</div><div class="v">${avgDelta === null ? "--" : formatNumber(avgDelta, 1)}</div></div>
+           <div class="metric"><div class="k">Personal bias</div><div class="v">${calibrationBiasText}</div></div>`
         : `<div class="empty">No video RPE reviews yet.</div>`;
       const concentricValues = videoAnalyses.map((analysis) => Number(analysis.velocityCurveSummary?.avgConcentricSeconds)).filter(Number.isFinite);
       const velocityDrops = videoAnalyses.map((analysis) => Number(analysis.velocityCurveSummary?.velocityDropPct)).filter(Number.isFinite);
@@ -7054,6 +7277,7 @@
       renderCoachDecision();
       renderAiCoachSession();
       renderAiPacket();
+      renderPersonalCalibration();
       renderVideoReviews();
       renderProgressDashboard();
       renderMetrics();
@@ -7294,22 +7518,29 @@
     function exportAllToExcel() {
       const wb = XLSX.utils.book_new();
 
-      const profiles = Object.values(state.users).map((u) => ({
-        userId: u.id, name: u.name, roundingKg: u.roundingKg,
-        fatigueDropPct: u.fatigueDropPct, backoffBase: u.backoffBase,
-        trainingAge: u.athleteProfile?.trainingAge || "",
-        weeklyTrainingDays: u.athleteProfile?.weeklyTrainingDays || "",
-        primaryWeakPoint: u.athleteProfile?.primaryWeakPoint || "",
-        strategyModel: u.athleteProfile?.strategyModel || "",
-        stressBudget: u.athleteProfile?.stressBudget || "",
-        programRows: u.program.length, loggedSets: u.logs.length,
-        generatedPlans: (u.generatedPlans || []).length,
-        readinessChecks: (u.readinessChecks || []).length,
-        coachDecisions: (u.coachDecisions || []).length,
-        aiCoachSessions: (u.aiCoachSessions || []).length,
-        videoReviews: (u.videoReviews || []).length,
-        videoAnalyses: (u.videoAnalyses || []).length
-      }));
+      const profiles = Object.values(state.users).map((user) => {
+        const calibration = computePersonalCalibration(user);
+        return {
+          userId: user.id, name: user.name, roundingKg: user.roundingKg,
+          fatigueDropPct: user.fatigueDropPct, backoffBase: user.backoffBase,
+          trainingAge: user.athleteProfile?.trainingAge || "",
+          weeklyTrainingDays: user.athleteProfile?.weeklyTrainingDays || "",
+          primaryWeakPoint: user.athleteProfile?.primaryWeakPoint || "",
+          strategyModel: user.athleteProfile?.strategyModel || "",
+          stressBudget: user.athleteProfile?.stressBudget || "",
+          programRows: user.program.length, loggedSets: user.logs.length,
+          generatedPlans: (user.generatedPlans || []).length,
+          readinessChecks: (user.readinessChecks || []).length,
+          coachDecisions: (user.coachDecisions || []).length,
+          aiCoachSessions: (user.aiCoachSessions || []).length,
+          videoReviews: (user.videoReviews || []).length,
+          videoAnalyses: (user.videoAnalyses || []).length,
+          calibrationSamples: calibration.sampleCount,
+          calibrationBias: calibration.signedRpeBias ?? "",
+          calibrationAvgError: calibration.avgAbsRpeError ?? "",
+          calibrationConfidence: calibration.confidenceLabel
+        };
+      });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profiles), "Profiles");
 
       Object.values(state.users).forEach((u) => {
@@ -7840,9 +8071,11 @@
         await fbStorage.ref(storagePath).put(file, { contentType: file.type });
         const review = await saveVideoEstimateToCloud(collectVideoReviewInput(reviewId, storagePath, file.name));
         user.videoReviews = [...(user.videoReviews || []).filter((item) => item.id !== review.id), review].slice(-80);
+        await savePersonalCalibrationSnapshot(user);
         if (fileInput) fileInput.value = "";
         document.getElementById("videoCue").value = "";
         renderVideoEstimate(review);
+        renderPersonalCalibration();
         renderVideoReviews();
         renderProgressDashboard();
         showToast("Video uploaded and experimental RPE estimate saved.", "ok");
@@ -7858,8 +8091,10 @@
       try {
         const review = await saveVideoEstimateToCloud(collectVideoReviewInput(crypto.randomUUID(), "", ""));
         user.videoReviews = [...(user.videoReviews || []).filter((item) => item.id !== review.id), review].slice(-80);
+        await savePersonalCalibrationSnapshot(user);
         document.getElementById("videoCue").value = "";
         renderVideoEstimate(review);
+        renderPersonalCalibration();
         renderVideoReviews();
         renderProgressDashboard();
         showToast("Video note and experimental RPE estimate saved.", "ok");
