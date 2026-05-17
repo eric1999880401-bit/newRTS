@@ -10,7 +10,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b2419'/%3E%3Cpath d='M15 28h34v8H15zM8 24h6v16H8zM50 24h6v16h-6zM25 17h14v7H25zM25 40h14v7H25z' fill='%23fbf6ea'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     // Apply theme BEFORE first paint to avoid flash
     (function () {
@@ -82,6 +82,23 @@
       --font-body:     'Crimson Pro', 'Noto Serif TC', Georgia, serif;
       --font-label:    'Cormorant Garamond', 'Noto Serif TC', Georgia, serif;
       --tracking-wide: .14em;
+    }
+    html[lang="zh-Hant"] {
+      --font-display:  'Noto Serif TC', 'Noto Sans TC', 'Microsoft JhengHei', serif;
+      --font-body:     'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      --font-label:    'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      --tracking-wide: .08em;
+    }
+    html[lang="zh-Hant"] h1,
+    html[lang="zh-Hant"] h2,
+    html[lang="zh-Hant"] h3 {
+      font-style: normal;
+      letter-spacing: 0;
+      line-height: 1.2;
+    }
+    html[lang="zh-Hant"] body {
+      font-size: 16px;
+      line-height: 1.65;
     }
     /* === Dark theme — aged leather + candlelight === */
     [data-theme="dark"] {
@@ -550,6 +567,7 @@
     }
     .panel.subtle { background: var(--ivory-soft); box-shadow: none; }
     .field { display: flex; flex-direction: column; gap: 8px; }
+    .field.is-hidden { display: none; }
     label {
       font-family: var(--font-label);
       font-size: 11px;
@@ -2537,80 +2555,80 @@
     <div id="page-coach" class="page-content">
       <div class="product-grid">
         <section class="panel">
-          <h2>Readiness check</h2>
-          <div class="hint">Record the daily context before heavy work. The coach rules adjust training without making medical claims.</div>
+          <h2 data-i18n="readinessCheckTitle">Readiness check</h2>
+          <div class="hint" data-i18n="readinessCheckHint">Record the daily context before heavy work. The coach rules adjust training without making medical claims.</div>
           <div class="grid grid-3">
             <div class="field">
-              <label for="readySleep">Sleep hours</label>
+              <label for="readySleep" data-i18n="sleepHours">Sleep hours</label>
               <input id="readySleep" type="number" min="0" max="14" step="0.5" value="7" />
             </div>
             <div class="field">
-              <label for="readyStress">Stress 1-5</label>
+              <label for="readyStress" data-i18n="stress15">Stress 1-5</label>
               <select id="readyStress">
-                <option value="1">1 low</option><option value="2">2</option><option value="3" selected>3 moderate</option><option value="4">4</option><option value="5">5 high</option>
+                <option value="1" data-i18n="readyLow">1 low</option><option value="2">2</option><option value="3" selected data-i18n="readyModerate">3 moderate</option><option value="4">4</option><option value="5" data-i18n="readyHigh">5 high</option>
               </select>
             </div>
             <div class="field">
-              <label for="readySoreness">Soreness 1-5</label>
+              <label for="readySoreness" data-i18n="soreness15">Soreness 1-5</label>
               <select id="readySoreness">
-                <option value="1">1 fresh</option><option value="2">2</option><option value="3" selected>3 normal</option><option value="4">4</option><option value="5">5 very sore</option>
+                <option value="1" data-i18n="readyFresh">1 fresh</option><option value="2">2</option><option value="3" selected data-i18n="readyNormal">3 normal</option><option value="4">4</option><option value="5" data-i18n="readyVerySore">5 very sore</option>
               </select>
             </div>
             <div class="field">
-              <label for="readyPain">Pain 0-10</label>
+              <label for="readyPain" data-i18n="pain010">Pain 0-10</label>
               <input id="readyPain" type="number" min="0" max="10" step="1" value="0" />
             </div>
             <div class="field">
-              <label for="readyMotivation">Motivation 1-5</label>
+              <label for="readyMotivation" data-i18n="motivation15">Motivation 1-5</label>
               <select id="readyMotivation">
-                <option value="1">1 very low</option><option value="2">2</option><option value="3" selected>3 ok</option><option value="4">4</option><option value="5">5 high</option>
+                <option value="1" data-i18n="readyVeryLow">1 very low</option><option value="2">2</option><option value="3" selected data-i18n="readyOk">3 ok</option><option value="4">4</option><option value="5" data-i18n="readyHigh">5 high</option>
               </select>
             </div>
             <div class="field">
-              <label for="readyCompletion">Previous session</label>
+              <label for="readyCompletion" data-i18n="previousSession">Previous session</label>
               <select id="readyCompletion">
-                <option value="completed" selected>Completed as planned</option>
-                <option value="overshot">Overshot RPE</option>
-                <option value="missed">Missed reps / skipped work</option>
-                <option value="deloaded">Already deloaded</option>
+                <option value="completed" selected data-i18n="completedAsPlanned">Completed as planned</option>
+                <option value="overshot" data-i18n="overshotRpe">Overshot RPE</option>
+                <option value="missed" data-i18n="missedWork">Missed reps / skipped work</option>
+                <option value="deloaded" data-i18n="alreadyDeloaded">Already deloaded</option>
               </select>
             </div>
           </div>
           <div class="field" style="margin-top:14px">
-            <label for="readyNotes">Pain location / context</label>
-            <textarea id="readyNotes" placeholder="Example: left wrist tight on bench, low back pump, poor sleep after night shift..."></textarea>
+            <label for="readyNotes" data-i18n="painContext">Pain location / context</label>
+            <textarea id="readyNotes" placeholder="Example: left wrist tight on bench, low back pump, poor sleep after night shift..." data-i18n-placeholder="painContextPlaceholder"></textarea>
           </div>
           <div class="actions-inline">
-            <button class="primary" id="saveReadinessBtn" type="button">Save readiness</button>
-            <button id="buildDecisionBtn" type="button">Build coach decision</button>
-            <button id="applyDecisionBtn" type="button">Apply decision to log form</button>
+            <button class="primary" id="saveReadinessBtn" type="button" data-i18n="saveReadiness">Save readiness</button>
+            <button id="buildDecisionBtn" type="button" data-i18n="buildCoachDecision">Build coach decision</button>
+            <button id="applyDecisionBtn" type="button" data-i18n="applyDecisionToLog">Apply decision to log form</button>
           </div>
           <div id="readinessSummary" class="feature-band"></div>
         </section>
 
         <section class="panel">
-          <h2>Coach decision</h2>
-          <div class="hint">A rules-first adjustment for today. It can reduce load, cut volume, switch emphasis, or stop the main lift when risk is high.</div>
+          <h2 data-i18n="coachDecisionTitle">Coach decision</h2>
+          <div class="hint" data-i18n="coachDecisionHint">A rules-first adjustment for today. It can reduce load, cut volume, switch emphasis, or stop the main lift when risk is high.</div>
           <div id="coachDecisionOutput" class="decision-panel"></div>
           <div class="feature-band" style="margin-top:14px">
             <div class="feature-title">
-              <strong>AI second opinion</strong>
-              <span class="status warn" id="aiCoachStatus">Manual apply only</span>
+              <strong data-i18n="aiSecondOpinion">AI second opinion</strong>
+              <span class="status warn" id="aiCoachStatus" data-i18n="manualApplyOnly">Manual apply only</span>
             </div>
-            <div class="compact-list">AI reads an anonymous training summary and returns suggestions you must review before applying.</div>
+            <div class="compact-list" data-i18n="aiSecondOpinionHint">AI reads an anonymous training summary and returns suggestions you must review before applying.</div>
             <div class="actions-inline">
-              <button class="primary" id="askAiCoachBtn" type="button">Ask AI Coach</button>
-              <button id="applyAiCoachBtn" type="button">Apply AI suggestion</button>
+              <button class="primary" id="askAiCoachBtn" type="button" data-i18n="askAiCoach">Ask AI Coach</button>
+              <button id="applyAiCoachBtn" type="button" data-i18n="applyAiSuggestion">Apply AI suggestion</button>
             </div>
             <div id="aiCoachOutput"></div>
           </div>
           <details style="margin-top:14px">
-            <summary>AI coach packet</summary>
+            <summary data-i18n="aiCoachPacket">AI coach packet</summary>
             <div class="footer-note" id="aiPacketHelp">This is an anonymized JSON summary. It is usable now as a manual copy/paste packet, but it is not connected to an AI API and it will never change Firebase automatically.</div>
             <textarea id="aiCoachPacket" class="prompt-box" readonly></textarea>
             <div class="actions-inline">
-              <button id="buildAiPacketBtn" type="button">Build anonymous packet</button>
-              <button id="copyAiPacketBtn" type="button">Copy packet</button>
+              <button id="buildAiPacketBtn" type="button" data-i18n="buildAnonymousPacket">Build anonymous packet</button>
+              <button id="copyAiPacketBtn" type="button" data-i18n="copyPacket">Copy packet</button>
             </div>
           </details>
         </section>
@@ -2619,22 +2637,22 @@
       <section class="panel" style="margin-top:16px">
         <div class="video-section-head">
           <div>
-            <h2>Video analysis</h2>
-            <div class="hint">Load a fixed-angle training video, run local pose analysis, then optionally ask AI for weak points or an RPE second opinion.</div>
+            <h2 data-i18n="videoAnalysisTitle">Video analysis</h2>
+            <div class="hint" data-i18n="videoAnalysisHint">Load a fixed-angle training video, run local pose analysis, then optionally ask AI for weak points or an RPE second opinion.</div>
           </div>
-          <button id="openFilmingGuideBtn" type="button">Filming guide</button>
+          <button id="openFilmingGuideBtn" type="button" data-i18n="filmingGuideButton">Filming guide</button>
         </div>
         <div class="video-quick-card">
           <div class="field">
-            <label for="videoLift">Lift</label>
+            <label for="videoLift" data-i18n="lift">Lift</label>
             <select id="videoLift"><option>Squat</option><option>Bench</option><option>Deadlift</option></select>
           </div>
           <div class="field">
-            <label for="videoRpe">Manual RPE</label>
+            <label for="videoRpe" data-i18n="manualRpe">Manual RPE</label>
             <input id="videoRpe" type="number" min="1" max="10" step="0.5" value="8" />
           </div>
           <div class="field">
-            <label for="videoFile">Video file</label>
+            <label for="videoFile" data-i18n="videoFile">Video file</label>
             <input id="videoFile" type="file" accept="video/*" />
           </div>
         </div>
@@ -2642,84 +2660,85 @@
         <details class="annotation-drawer" id="manualAnnotationPanel">
           <summary>
             <span>
-              <strong>Optional manual annotation</strong>
-              <small>For calibration later: reps, set type, speed feel, and one coaching note.</small>
+              <strong data-i18n="optionalAnnotationTitle">Optional manual annotation</strong>
+              <small data-i18n="optionalAnnotationHint">For calibration later: reps, set type, speed feel, and one coaching note.</small>
             </span>
-            <span class="drawer-chip">optional</span>
+            <span class="drawer-chip" data-i18n="optional">optional</span>
           </summary>
           <div class="annotation-body">
             <div class="grid grid-4">
               <div class="field">
-                <label for="videoSetType">Set type</label>
+                <label for="videoSetType" data-i18n="setType">Set type</label>
                 <select id="videoSetType"><option>Top</option><option>Back off</option><option>Secondary</option><option>Other</option></select>
               </div>
               <div class="field">
-                <label for="videoReps">Reps</label>
+                <label for="videoReps" data-i18n="reps">Reps</label>
                 <input id="videoReps" type="number" min="1" max="12" step="1" value="1" />
               </div>
               <div class="field">
-                <label for="videoWeight">Weight kg</label>
+                <label for="videoWeight" data-i18n="weightKg">Weight kg</label>
                 <input id="videoWeight" type="number" min="0" step="0.5" placeholder="Optional" />
               </div>
               <div class="field">
-                <label for="videoSpeed">Bar speed feel</label>
+                <label for="videoSpeed" data-i18n="barSpeedFeel">Bar speed feel</label>
                 <select id="videoSpeed"><option>Fast</option><option selected>Normal</option><option>Slow</option><option>Grind</option></select>
               </div>
               <div class="field">
-                <label for="videoFirstRepSeconds">First rep seconds</label>
+                <label for="videoFirstRepSeconds" data-i18n="firstRepSeconds">First rep seconds</label>
                 <input id="videoFirstRepSeconds" type="number" min="0" step="0.1" placeholder="Optional" />
               </div>
               <div class="field">
-                <label for="videoLastRepSeconds">Last rep seconds</label>
+                <label for="videoLastRepSeconds" data-i18n="lastRepSeconds">Last rep seconds</label>
                 <input id="videoLastRepSeconds" type="number" min="0" step="0.1" placeholder="Optional" />
               </div>
             </div>
             <div class="field">
-              <label for="videoCue">Coach cue / technique note</label>
-              <input id="videoCue" type="text" placeholder="Depth, pause, lockout, bar path..." />
+              <label for="videoCue" data-i18n="coachCueNote">Coach cue / technique note</label>
+              <input id="videoCue" type="text" placeholder="Depth, pause, lockout, bar path..." data-i18n-placeholder="coachCuePlaceholder" />
             </div>
             <div class="actions-inline">
-              <button class="primary" id="uploadVideoReviewBtn" type="button">Upload + estimate RPE</button>
-              <button id="saveVideoReviewBtn" type="button">Save note only</button>
+              <button class="primary" id="uploadVideoReviewBtn" type="button" data-i18n="uploadEstimateRpe">Upload + estimate RPE</button>
+              <button id="saveVideoReviewBtn" type="button" data-i18n="saveNoteOnly">Save note only</button>
             </div>
             <div id="videoEstimateOutput"></div>
           </div>
         </details>
         <div class="feature-band" style="margin-top:14px">
           <div class="feature-title">
-            <strong>Pose analysis</strong>
-            <span class="status warn" id="poseAnalysisStatus">Local only</span>
+            <strong data-i18n="poseAnalysisTitle">Pose analysis</strong>
+            <span class="status warn" id="poseAnalysisStatus" data-i18n="localOnly">Local only</span>
           </div>
-          <div class="pose-setup-strip" aria-label="Fixed filming setup">
-            <div class="pose-setup-card"><strong>Distance</strong>2.5-4 m from the lifter.</div>
-            <div class="pose-setup-card"><strong>Height</strong>Hip to lower-chest height.</div>
-            <div class="pose-setup-card"><strong>Frame</strong>Whole body, bar, and plates visible.</div>
-            <div class="pose-setup-card"><strong>Stability</strong>No hand shake, zoom, or moving camera.</div>
+          <div class="pose-setup-strip" aria-label="Fixed filming setup" data-i18n-aria-label="fixedFilmingSetup">
+            <div class="pose-setup-card"><strong data-i18n="distance">Distance</strong><span data-i18n="distanceHint">2.5-4 m from the lifter.</span></div>
+            <div class="pose-setup-card"><strong data-i18n="height">Height</strong><span data-i18n="heightHint">Hip to lower-chest height.</span></div>
+            <div class="pose-setup-card"><strong data-i18n="frame">Frame</strong><span data-i18n="frameHint">Whole body, bar, and plates visible.</span></div>
+            <div class="pose-setup-card"><strong data-i18n="stability">Stability</strong><span data-i18n="stabilityHint">No hand shake, zoom, or moving camera.</span></div>
           </div>
           <div class="grid grid-4">
             <div class="field">
-              <label for="poseViewAngle">View angle</label>
-              <select id="poseViewAngle"><option value="side">Side view</option><option value="front">Front view</option></select>
+              <label for="poseViewAngle" data-i18n="viewAngle">View angle</label>
+              <select id="poseViewAngle"><option value="side" data-i18n="sideView">Side view</option><option value="front" data-i18n="frontView">Front view</option></select>
             </div>
             <div class="field">
-              <label for="poseCalibrationMode">Calibration</label>
-              <select id="poseCalibrationMode"><option value="relative">Relative only</option><option value="plate">Plate diameter</option><option value="custom">Known distance</option></select>
+              <label for="poseCalibrationMode" data-i18n="calibration">Calibration</label>
+              <select id="poseCalibrationMode"><option value="relative" data-i18n="relativeOnly">Relative only</option><option value="plate" data-i18n="plateDiameter">Plate diameter</option><option value="custom" data-i18n="knownDistance">Known distance</option></select>
             </div>
-            <div class="field">
-              <label for="poseRealDistance">Known meters</label>
+            <div class="field" id="poseRealDistanceField">
+              <label for="poseRealDistance" id="poseRealDistanceLabel" data-i18n="knownMeters">Known meters</label>
               <input id="poseRealDistance" type="number" min="0" step="0.01" value="0.45" />
             </div>
-            <div class="field">
-              <label for="posePixelDistance">Pixel distance</label>
+            <div class="field" id="posePixelDistanceField">
+              <label for="posePixelDistance" id="posePixelDistanceLabel" data-i18n="pixelDistance">Pixel distance</label>
               <input id="posePixelDistance" type="number" min="0" step="1" placeholder="Optional" />
             </div>
           </div>
+          <div id="poseCalibrationHelp" class="footer-note"></div>
           <div class="actions-inline">
-            <label class="compact-list"><input id="poseSaveRawVideo" type="checkbox" /> Keep raw video for 30 days</label>
-            <button class="primary" id="analyzePoseBtn" type="button">Analyze locally</button>
-            <button id="savePoseAnalysisBtn" type="button" disabled>Save analysis summary</button>
-            <button id="askPoseWeaknessBtn" type="button" disabled>AI weak points</button>
-            <button id="askPoseRpeBtn" type="button" disabled>AI RPE opinion</button>
+            <label class="compact-list"><input id="poseSaveRawVideo" type="checkbox" /> <span data-i18n="keepRawVideo">Keep raw video for 30 days</span></label>
+            <button class="primary" id="analyzePoseBtn" type="button" data-i18n="analyzeLocally">Analyze locally</button>
+            <button id="savePoseAnalysisBtn" type="button" disabled data-i18n="saveAnalysisSummary">Save analysis summary</button>
+            <button id="askPoseWeaknessBtn" type="button" disabled data-i18n="aiWeakPoints">AI weak points</button>
+            <button id="askPoseRpeBtn" type="button" disabled data-i18n="aiRpeOpinion">AI RPE opinion</button>
           </div>
           <div class="pose-analysis-stage">
             <div class="pose-preview-shell">
@@ -2727,7 +2746,7 @@
               <canvas id="poseOverlayCanvas"></canvas>
             </div>
             <div id="poseAnalysisOutput" class="pose-analysis-card">
-              <div class="empty">No pose analysis yet.</div>
+              <div class="empty" data-i18n="noPoseAnalysis">No pose analysis yet.</div>
             </div>
           </div>
           <div id="poseAiOutput"></div>
@@ -2787,48 +2806,48 @@
   <div id="filmingGuideModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="filmingGuideTitle">
     <div class="panel modal-card filming-guide-card">
       <div class="row" style="margin-bottom:10px">
-        <h2 id="filmingGuideTitle">Fixed-angle filming guide</h2>
+        <h2 id="filmingGuideTitle" data-i18n="filmingGuideTitle">Fixed-angle filming guide</h2>
         <div class="spacer"></div>
-        <button class="ghost" type="button" id="closeFilmingGuideBtn">Close</button>
+        <button class="ghost" type="button" id="closeFilmingGuideBtn" data-i18n="close">Close</button>
       </div>
-      <div class="hint">Use the same setup every time. Consistency matters more than a perfect camera.</div>
+      <div class="hint" data-i18n="filmingGuideIntro">Use the same setup every time. Consistency matters more than a perfect camera.</div>
       <div class="filming-guide-grid">
         <div class="filming-card">
-          <h3>Side view</h3>
+          <h3 data-i18n="sideView">Side view</h3>
           <ul>
-            <li>Camera 2.5-4 m from the lifter, exactly from the side, not 45 degrees.</li>
-            <li>Lens height around hip to lower chest.</li>
-            <li>Keep the whole body, bar, and plates visible from start to lockout.</li>
-            <li>Best for depth, torso angle, hip/knee timing, tempo, bar path, and velocity curve.</li>
+            <li data-i18n="sideGuide1">Camera 2.5-4 m from the lifter, exactly from the side, not 45 degrees.</li>
+            <li data-i18n="sideGuide2">Lens height around hip to lower chest.</li>
+            <li data-i18n="sideGuide3">Keep the whole body, bar, and plates visible from start to lockout.</li>
+            <li data-i18n="sideGuide4">Best for depth, torso angle, hip/knee timing, tempo, bar path, and velocity curve.</li>
           </ul>
         </div>
         <div class="filming-card">
-          <h3>Front view</h3>
+          <h3 data-i18n="frontView">Front view</h3>
           <ul>
-            <li>Camera 2.5-4 m in front or behind, centered on the lifter.</li>
-            <li>Both shoulders, hips, knees, and feet must stay in frame.</li>
-            <li>Avoid rack uprights blocking knees or hips.</li>
-            <li>Best for left-right shift, knee cave proxy, shoulder/hip height difference, and stance balance.</li>
+            <li data-i18n="frontGuide1">Camera 2.5-4 m in front or behind, centered on the lifter.</li>
+            <li data-i18n="frontGuide2">Both shoulders, hips, knees, and feet must stay in frame.</li>
+            <li data-i18n="frontGuide3">Avoid rack uprights blocking knees or hips.</li>
+            <li data-i18n="frontGuide4">Best for left-right shift, knee cave proxy, shoulder/hip height difference, and stance balance.</li>
           </ul>
         </div>
         <div class="filming-card">
-          <h3>Bench press</h3>
+          <h3 data-i18n="benchPress">Bench press</h3>
           <ul>
-            <li>Side view should show bar, wrist, elbow, chest touch, and plates.</li>
-            <li>Keep the camera still and do not zoom during the set.</li>
-            <li>If checking uneven lockout, add a front or foot-end video later.</li>
+            <li data-i18n="benchGuide1">Side view should show bar, wrist, elbow, chest touch, and plates.</li>
+            <li data-i18n="benchGuide2">Keep the camera still and do not zoom during the set.</li>
+            <li data-i18n="benchGuide3">If checking uneven lockout, add a front or foot-end video later.</li>
           </ul>
         </div>
         <div class="filming-card">
-          <h3>Calibration</h3>
+          <h3 data-i18n="calibration">Calibration</h3>
           <ul>
-            <li>Plate diameter mode uses 0.45 m as the default reference.</li>
-            <li>If you know another distance, choose Known distance and enter meters + pixel distance.</li>
-            <li>If unsure, use Relative only. The app will still track trends, but not true m/s.</li>
+            <li data-i18n="calGuide1">Plate diameter mode uses 0.45 m as the default reference.</li>
+            <li data-i18n="calGuide2">If you know another distance, choose Known distance and enter meters + pixel distance.</li>
+            <li data-i18n="calGuide3">If unsure, use Relative only. The app will still track trends, but not true m/s.</li>
           </ul>
         </div>
       </div>
-      <div class="filming-warning">
+      <div class="filming-warning" data-i18n="filmingQuickRule">
         Quick rule: one lifter in frame, bright room, fixed phone/tripod, 30-60 fps, no mirror angle, no moving camera. If confidence is low, treat AI/RPE output as a hint only.
       </div>
     </div>
@@ -3988,6 +4007,246 @@
       }
     };
 
+    Object.assign(UI_TEXT.en, {
+      languageButton: "中文",
+      readinessCheckTitle: "Readiness check",
+      readinessCheckHint: "Record the daily context before heavy work. The coach rules adjust training without making medical claims.",
+      sleepHours: "Sleep hours",
+      stress15: "Stress 1-5",
+      soreness15: "Soreness 1-5",
+      pain010: "Pain 0-10",
+      motivation15: "Motivation 1-5",
+      previousSession: "Previous session",
+      readyLow: "1 low",
+      readyModerate: "3 moderate",
+      readyHigh: "5 high",
+      readyFresh: "1 fresh",
+      readyNormal: "3 normal",
+      readyVerySore: "5 very sore",
+      readyVeryLow: "1 very low",
+      readyOk: "3 ok",
+      completedAsPlanned: "Completed as planned",
+      overshotRpe: "Overshot RPE",
+      missedWork: "Missed reps / skipped work",
+      alreadyDeloaded: "Already deloaded",
+      painContext: "Pain location / context",
+      painContextPlaceholder: "Example: left wrist tight on bench, low back pump, poor sleep after night shift...",
+      saveReadiness: "Save readiness",
+      buildCoachDecision: "Build coach decision",
+      applyDecisionToLog: "Apply decision to log form",
+      coachDecisionTitle: "Coach decision",
+      coachDecisionHint: "A rules-first adjustment for today. It can reduce load, cut volume, switch emphasis, or stop the main lift when risk is high.",
+      aiSecondOpinion: "AI second opinion",
+      manualApplyOnly: "Manual apply only",
+      aiSecondOpinionHint: "AI reads an anonymous training summary and returns suggestions you must review before applying.",
+      askAiCoach: "Ask AI Coach",
+      applyAiSuggestion: "Apply AI suggestion",
+      aiCoachPacket: "AI coach packet",
+      buildAnonymousPacket: "Build anonymous packet",
+      copyPacket: "Copy packet",
+      videoAnalysisTitle: "Video analysis",
+      videoAnalysisHint: "Load a fixed-angle training video, run local pose analysis, then optionally ask AI for weak points or an RPE second opinion.",
+      filmingGuideButton: "Filming guide",
+      lift: "Lift",
+      manualRpe: "Manual RPE",
+      videoFile: "Video file",
+      optionalAnnotationTitle: "Optional manual annotation",
+      optionalAnnotationHint: "For calibration later: reps, set type, speed feel, and one coaching note.",
+      optional: "optional",
+      setType: "Set type",
+      reps: "Reps",
+      weightKg: "Weight kg",
+      barSpeedFeel: "Bar speed feel",
+      firstRepSeconds: "First rep seconds",
+      lastRepSeconds: "Last rep seconds",
+      coachCueNote: "Coach cue / technique note",
+      coachCuePlaceholder: "Depth, pause, lockout, bar path...",
+      uploadEstimateRpe: "Upload + estimate RPE",
+      saveNoteOnly: "Save note only",
+      poseAnalysisTitle: "Pose analysis",
+      localOnly: "Local only",
+      fixedFilmingSetup: "Fixed filming setup",
+      distance: "Distance",
+      distanceHint: "2.5-4 m from the lifter.",
+      height: "Height",
+      heightHint: "Hip to lower-chest height.",
+      frame: "Frame",
+      frameHint: "Whole body, bar, and plates visible.",
+      stability: "Stability",
+      stabilityHint: "No hand shake, zoom, or moving camera.",
+      viewAngle: "View angle",
+      sideView: "Side view",
+      frontView: "Front view",
+      calibration: "Calibration",
+      relativeOnly: "Relative only",
+      plateDiameter: "Plate diameter",
+      knownDistance: "Known distance",
+      knownMeters: "Known meters",
+      pixelDistance: "Pixel distance",
+      platePixels: "Plate pixels",
+      keepRawVideo: "Keep raw video for 30 days",
+      analyzeLocally: "Analyze locally",
+      saveAnalysisSummary: "Save analysis summary",
+      aiWeakPoints: "AI weak points",
+      aiRpeOpinion: "AI RPE opinion",
+      noPoseAnalysis: "No pose analysis yet.",
+      poseRelativeHelp: "Relative only: no calibration needed. Use this when you only want relative tempo, drift, and trend data.",
+      posePlateHelp: "Plate diameter: enter the real plate diameter and its size in pixels if you want estimated m/s.",
+      poseKnownHelp: "Known distance: enter a real-world distance and how many pixels it spans in the video.",
+      filmingGuideTitle: "Fixed-angle filming guide",
+      close: "Close",
+      filmingGuideIntro: "Use the same setup every time. Consistency matters more than a perfect camera.",
+      sideGuide1: "Camera 2.5-4 m from the lifter, exactly from the side, not 45 degrees.",
+      sideGuide2: "Lens height around hip to lower chest.",
+      sideGuide3: "Keep the whole body, bar, and plates visible from start to lockout.",
+      sideGuide4: "Best for depth, torso angle, hip/knee timing, tempo, bar path, and velocity curve.",
+      frontGuide1: "Camera 2.5-4 m in front or behind, centered on the lifter.",
+      frontGuide2: "Both shoulders, hips, knees, and feet must stay in frame.",
+      frontGuide3: "Avoid rack uprights blocking knees or hips.",
+      frontGuide4: "Best for left-right shift, knee cave proxy, shoulder/hip height difference, and stance balance.",
+      benchPress: "Bench press",
+      benchGuide1: "Side view should show bar, wrist, elbow, chest touch, and plates.",
+      benchGuide2: "Keep the camera still and do not zoom during the set.",
+      benchGuide3: "If checking uneven lockout, add a front or foot-end video later.",
+      calGuide1: "Plate diameter mode uses 0.45 m as the default reference.",
+      calGuide2: "If you know another distance, choose Known distance and enter meters + pixel distance.",
+      calGuide3: "If unsure, use Relative only. The app will still track trends, but not true m/s.",
+      filmingQuickRule: "Quick rule: one lifter in frame, bright room, fixed phone/tripod, 30-60 fps, no mirror angle, no moving camera. If confidence is low, treat AI/RPE output as a hint only."
+    });
+
+    Object.assign(UI_TEXT.zh, {
+      appTitle: "健力訓練記錄",
+      appSub: "今日訓練指揮中心：課表、紀錄、e1RM、退階重量與疲勞下降。",
+      languageButton: "EN",
+      addAthlete: "新增選手",
+      navToday: "今日",
+      navPlanner: "課表產生",
+      navCoach: "教練",
+      navDashboard: "儀表板",
+      navHistory: "紀錄",
+      navSetup: "設定",
+      todayPlan: "今日課表",
+      coachAdjusted: "教練已調整",
+      sessionFocus: "本堂重點",
+      mainLift: "主項",
+      topSet: "頂組",
+      backoff: "退階組",
+      protocol: "訓練協議",
+      secondary: "副項",
+      prescription: "處方",
+      accessories: "輔助 / 備註",
+      ruleExplanation: "規則說明",
+      planTarget: "課表疲勞上限",
+      setupTarget: "設定目標",
+      editableRows: "可編輯課表",
+      showAll: "顯示全部課表",
+      showLess: "只顯示第一週",
+      aiHelp: "AI coach packet 是匿名訓練摘要；AI 建議只供參考，必須手動套用才會改資料。",
+      readinessCheckTitle: "Readiness 檢查",
+      readinessCheckHint: "重訓前先記錄今天狀態；規則教練只做訓練調整，不做醫療診斷。",
+      sleepHours: "睡眠時數",
+      stress15: "壓力 1-5",
+      soreness15: "痠痛 1-5",
+      pain010: "疼痛 0-10",
+      motivation15: "動機 1-5",
+      previousSession: "上一堂完成度",
+      readyLow: "1 低",
+      readyModerate: "3 中等",
+      readyHigh: "5 高",
+      readyFresh: "1 很新鮮",
+      readyNormal: "3 正常",
+      readyVerySore: "5 很痠",
+      readyVeryLow: "1 很低",
+      readyOk: "3 尚可",
+      completedAsPlanned: "照計畫完成",
+      overshotRpe: "RPE 超標",
+      missedWork: "掉 reps / 漏做",
+      alreadyDeloaded: "已經降載",
+      painContext: "疼痛位置 / 情境",
+      painContextPlaceholder: "例：臥推左手腕緊、下背充血、夜班後睡不好...",
+      saveReadiness: "儲存狀態",
+      buildCoachDecision: "產生教練調整",
+      applyDecisionToLog: "套用到今日紀錄",
+      coachDecisionTitle: "教練調整",
+      coachDecisionHint: "先用規則做今日調整：降重量、減量、改重點，或風險高時停止主項。",
+      aiSecondOpinion: "AI 第二意見",
+      manualApplyOnly: "手動套用",
+      aiSecondOpinionHint: "AI 只讀匿名訓練摘要；建議必須由你確認後才會套用。",
+      askAiCoach: "詢問 AI 教練",
+      applyAiSuggestion: "套用 AI 建議",
+      aiCoachPacket: "AI 教練摘要包",
+      buildAnonymousPacket: "產生匿名摘要",
+      copyPacket: "複製摘要",
+      videoAnalysisTitle: "影片分析",
+      videoAnalysisHint: "載入固定角度訓練影片，在本機做姿態分析，再選擇是否交給 AI 判讀弱點或 RPE 參考。",
+      filmingGuideButton: "拍攝教學",
+      lift: "動作",
+      manualRpe: "人工 RPE",
+      videoFile: "影片檔案",
+      optionalAnnotationTitle: "選填人工標註",
+      optionalAnnotationHint: "之後校準用：次數、組別、速度感與一句教練備註。",
+      optional: "選填",
+      setType: "組別",
+      reps: "次數",
+      weightKg: "重量 kg",
+      barSpeedFeel: "槓速感受",
+      firstRepSeconds: "第一下秒數",
+      lastRepSeconds: "最後一下秒數",
+      coachCueNote: "教練提示 / 技術備註",
+      coachCuePlaceholder: "深度、停頓、鎖定、槓路...",
+      uploadEstimateRpe: "上傳並估算 RPE",
+      saveNoteOnly: "只儲存備註",
+      poseAnalysisTitle: "姿態分析",
+      localOnly: "本機分析",
+      fixedFilmingSetup: "固定拍攝設定",
+      distance: "距離",
+      distanceHint: "離選手約 2.5-4 公尺。",
+      height: "高度",
+      heightHint: "鏡頭約髖部到下胸高度。",
+      frame: "取景",
+      frameHint: "全身、槓鈴與槓片都要入鏡。",
+      stability: "穩定",
+      stabilityHint: "不要手震、縮放或移動鏡頭。",
+      viewAngle: "拍攝角度",
+      sideView: "側面",
+      frontView: "正面",
+      calibration: "校正方式",
+      relativeOnly: "相對分析",
+      plateDiameter: "槓片直徑",
+      knownDistance: "已知距離",
+      knownMeters: "已知公尺",
+      pixelDistance: "像素距離",
+      platePixels: "槓片像素",
+      keepRawVideo: "原始影片保留 30 天",
+      analyzeLocally: "本機分析",
+      saveAnalysisSummary: "儲存分析摘要",
+      aiWeakPoints: "AI 弱點分析",
+      aiRpeOpinion: "AI RPE 參考",
+      noPoseAnalysis: "尚未產生姿態分析。",
+      poseRelativeHelp: "相對分析：不需要填公尺或像素。適合先看節奏、槓路漂移與長期趨勢，但不會是真實 m/s。",
+      posePlateHelp: "槓片直徑：預設 0.45 m。若要估算 m/s，請填槓片在畫面中的像素寬度。",
+      poseKnownHelp: "已知距離：用任何你知道的實際距離做校正，填入公尺與它在影片中的像素距離。",
+      filmingGuideTitle: "固定角度拍攝教學",
+      close: "關閉",
+      filmingGuideIntro: "每次盡量用同一個拍攝設定；一致性比完美攝影更重要。",
+      sideGuide1: "鏡頭離選手 2.5-4 公尺，正側面拍攝，不要 45 度斜拍。",
+      sideGuide2: "鏡頭高度約髖部到下胸。",
+      sideGuide3: "從開始到鎖定，全身、槓鈴與槓片都要在畫面內。",
+      sideGuide4: "最適合看深度、軀幹角度、髖膝時序、節奏、槓路與速度曲線。",
+      frontGuide1: "鏡頭在正前或正後方 2.5-4 公尺，對準選手中心。",
+      frontGuide2: "肩、髖、膝、腳都要完整入鏡。",
+      frontGuide3: "避免深蹲架柱子擋住膝蓋或髖部。",
+      frontGuide4: "最適合看左右偏移、膝內夾 proxy、肩髖高度差與站距平衡。",
+      benchPress: "臥推",
+      benchGuide1: "側面要拍到槓、手腕、手肘、觸胸點與槓片。",
+      benchGuide2: "訓練組中不要移動鏡頭或縮放。",
+      benchGuide3: "若要看左右鎖定不平均，之後再補正面或腳端角度。",
+      calGuide1: "槓片直徑模式預設使用 0.45 m 作為參考。",
+      calGuide2: "如果你知道其他距離，選已知距離並填公尺與像素距離。",
+      calGuide3: "不確定就選相對分析；仍可追蹤趨勢，但不會是真實 m/s。",
+      filmingQuickRule: "快速原則：畫面中只留一位選手、光線夠亮、手機固定、30-60 fps、不要鏡子角度、不要移動鏡頭。信心低時，AI/RPE 只當提示。"
+    });
+
     function currentLanguage() {
       return state.uiLanguage === "zh" ? "zh" : "en";
     }
@@ -4010,6 +4269,15 @@
       setText("#languageToggleBtn", t("languageButton"));
       setText("#addUserBtn", t("addAthlete"));
       setText("#aiPacketHelp", t("aiHelp"));
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+        el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+      });
+      document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+        el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
+      });
       const navKeys = ["navToday", "navPlanner", "navCoach", "navDashboard", "navHistory", "navSetup"];
       document.querySelectorAll(".page-tab").forEach((button, index) => {
         if (navKeys[index]) button.textContent = t(navKeys[index]);
@@ -4020,6 +4288,18 @@
         setText("#page-coach h2", "Readiness 檢查");
         setText("#page-dashboard h2", "進度儀表板");
       }
+      if (lang === "zh") {
+        setText("#page-workout h2", "今日課表");
+        setText("#page-planner h2", "RTS 課表產生");
+        setText("#page-coach h2", "Readiness 檢查");
+        setText("#page-dashboard h2", "進度儀表板");
+      } else {
+        setText("#page-workout h2", "Today's schedule");
+        setText("#page-planner h2", "RTS Plan Builder");
+        setText("#page-coach h2", "Readiness check");
+        setText("#page-dashboard h2", "Progress Dashboard");
+      }
+      updatePoseCalibrationUi();
     }
 
     async function toggleLanguage() {
@@ -5314,6 +5594,31 @@
       document.getElementById("filmingGuideModal").classList.remove("open");
     }
 
+    function updatePoseCalibrationUi() {
+      const mode = document.getElementById("poseCalibrationMode")?.value || "relative";
+      const realField = document.getElementById("poseRealDistanceField");
+      const pixelField = document.getElementById("posePixelDistanceField");
+      const realLabel = document.getElementById("poseRealDistanceLabel");
+      const pixelLabel = document.getElementById("posePixelDistanceLabel");
+      const realInput = document.getElementById("poseRealDistance");
+      const pixelInput = document.getElementById("posePixelDistance");
+      const help = document.getElementById("poseCalibrationHelp");
+      const isRelative = mode === "relative";
+      if (realField) realField.classList.toggle("is-hidden", isRelative);
+      if (pixelField) pixelField.classList.toggle("is-hidden", isRelative);
+      if (help) help.textContent = t(mode === "plate" ? "posePlateHelp" : mode === "custom" ? "poseKnownHelp" : "poseRelativeHelp");
+      if (!isRelative && realLabel && pixelLabel) {
+        realLabel.textContent = t(mode === "plate" ? "plateDiameter" : "knownMeters");
+        pixelLabel.textContent = t(mode === "plate" ? "platePixels" : "pixelDistance");
+      }
+      if (mode === "plate" && realInput && (!Number(realInput.value) || Number(realInput.value) <= 0)) {
+        realInput.value = "0.45";
+      }
+      if (pixelInput) {
+        pixelInput.placeholder = isRelative ? "" : t("optional");
+      }
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -5955,10 +6260,11 @@
       const target = document.getElementById("readinessSummary");
       if (!target) return;
       if (!check) {
+        const zh = currentLanguage() === "zh";
         target.className = "feature-band warn";
         target.innerHTML = `
-          <div class="feature-title"><strong>No readiness check saved</strong><span class="status warn">Before lifting</span></div>
-          <div class="compact-list">Save sleep, stress, soreness, pain, and motivation before building a coach decision.</div>`;
+          <div class="feature-title"><strong>${zh ? "尚未儲存今日狀態" : "No readiness check saved"}</strong><span class="status warn">${zh ? "訓練前" : "Before lifting"}</span></div>
+          <div class="compact-list">${zh ? "先儲存睡眠、壓力、痠痛、疼痛與動機，再產生教練調整。" : "Save sleep, stress, soreness, pain, and motivation before building a coach decision."}</div>`;
         return;
       }
       const score = scoreReadiness(check);
@@ -5977,10 +6283,11 @@
       const output = document.getElementById("coachDecisionOutput");
       if (!output) return;
       if (!decision) {
+        const zh = currentLanguage() === "zh";
         output.innerHTML = `
           <div class="feature-band warn">
-            <div class="feature-title"><strong>No coach decision yet</strong><span class="status warn">Rules ready</span></div>
-            <div class="compact-list">Save readiness, then build a decision for the selected date/week/day.</div>
+            <div class="feature-title"><strong>${zh ? "尚未產生教練調整" : "No coach decision yet"}</strong><span class="status warn">${zh ? "規則待命" : "Rules ready"}</span></div>
+            <div class="compact-list">${zh ? "先儲存狀態，再針對目前日期 / 週 / 日產生調整。" : "Save readiness, then build a decision for the selected date/week/day."}</div>
           </div>`;
         return;
       }
@@ -6018,8 +6325,8 @@
       if (!output) return;
       const session = getLatestAiCoachSession(user) || [...(user.aiCoachSessions || [])].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0];
       if (!session) {
-        output.innerHTML = `<div class="empty">No AI coach suggestion yet.</div>`;
-        if (status) status.textContent = "Manual apply only";
+        output.innerHTML = `<div class="empty">${currentLanguage() === "zh" ? "尚未產生 AI 教練建議。" : "No AI coach suggestion yet."}</div>`;
+        if (status) status.textContent = t("manualApplyOnly");
         if (applyBtn) applyBtn.disabled = true;
         return;
       }
@@ -6114,7 +6421,8 @@
       const calibrationMode = document.getElementById("poseCalibrationMode")?.value || "relative";
       const realDistance = Number(document.getElementById("poseRealDistance")?.value) || 0;
       const pixelDistance = Number(document.getElementById("posePixelDistance")?.value) || 0;
-      const pixelToMeter = calibrationMode !== "relative" && realDistance > 0 && pixelDistance > 0 && video?.videoHeight
+      const usesMetricCalibration = calibrationMode !== "relative";
+      const pixelToMeter = usesMetricCalibration && realDistance > 0 && pixelDistance > 0 && video?.videoHeight
         ? realDistance * video.videoHeight / pixelDistance
         : 0;
       return {
@@ -6123,8 +6431,8 @@
         viewAngle: document.getElementById("poseViewAngle")?.value || "side",
         calibrationMode,
         pixelToMeter,
-        realDistanceMeters: realDistance || null,
-        pixelDistance: pixelDistance || null
+        realDistanceMeters: usesMetricCalibration && realDistance ? realDistance : null,
+        pixelDistance: usesMetricCalibration && pixelDistance ? pixelDistance : null
       };
     }
 
@@ -6158,7 +6466,7 @@
       if (!target) return;
       if (!analysis) {
         target.className = "pose-analysis-card";
-        target.innerHTML = `<div class="empty">No pose analysis yet.</div>`;
+        target.innerHTML = `<div class="empty">${escapeHtml(t("noPoseAnalysis"))}</div>`;
         if (saveBtn) saveBtn.disabled = true;
         if (weakBtn) weakBtn.disabled = true;
         if (rpeBtn) rpeBtn.disabled = true;
@@ -6167,25 +6475,26 @@
       const level = analysis.confidence >= 0.72 ? "ok" : analysis.confidence >= 0.45 ? "warn" : "bad";
       const flags = [...(analysis.techniqueFlags || []), ...(analysis.asymmetryFlags || [])];
       const curve = analysis.curvePreview || [];
+      const zh = currentLanguage() === "zh";
       target.className = `pose-analysis-card ${level === "ok" ? "" : level}`.trim();
       target.innerHTML = `
         <div class="feature-title">
-          <strong>${escapeHtml(analysis.viewAngle)} pose analysis</strong>
-          <span class="status ${level}">${Math.round(Number(analysis.confidence || 0) * 100)}% confidence</span>
+          <strong>${escapeHtml(analysis.viewAngle === "front" ? (zh ? "正面姿態分析" : "Front pose analysis") : (zh ? "側面姿態分析" : "Side pose analysis"))}</strong>
+          <span class="status ${level}">${Math.round(Number(analysis.confidence || 0) * 100)}% ${zh ? "信心" : "confidence"}</span>
         </div>
         <div class="metric-strip">
-          <div class="metric"><div class="k">Reps</div><div class="v">${(analysis.repPhases || []).length}</div></div>
-          <div class="metric"><div class="k">Concentric</div><div class="v">${analysis.velocityCurveSummary?.avgConcentricSeconds ?? "--"}s</div></div>
-          <div class="metric"><div class="k">Velocity drop</div><div class="v">${analysis.velocityCurveSummary?.velocityDropPct ?? "--"}%</div></div>
+          <div class="metric"><div class="k">${zh ? "次數" : "Reps"}</div><div class="v">${(analysis.repPhases || []).length}</div></div>
+          <div class="metric"><div class="k">${zh ? "向心秒數" : "Concentric"}</div><div class="v">${analysis.velocityCurveSummary?.avgConcentricSeconds ?? "--"}s</div></div>
+          <div class="metric"><div class="k">${zh ? "速度下降" : "Velocity drop"}</div><div class="v">${analysis.velocityCurveSummary?.velocityDropPct ?? "--"}%</div></div>
         </div>
         <div class="pose-chart">
-          ${renderSparkline("Hip angle", curve, "hip")}
-          ${renderSparkline("Knee angle", curve, "knee")}
-          ${renderSparkline("Bar path Y", curve, "barY")}
+          ${renderSparkline(zh ? "髖角度" : "Hip angle", curve, "hip")}
+          ${renderSparkline(zh ? "膝角度" : "Knee angle", curve, "knee")}
+          ${renderSparkline(zh ? "槓路 Y" : "Bar path Y", curve, "barY")}
         </div>
-        <div class="compact-list">Bar path drift ${analysis.barPathSummary?.horizontalDriftPct ?? "--"}% | ${escapeHtml(analysis.velocityCurveSummary?.unit || "relative")}</div>
-        ${flags.length ? `<div><strong>Flags</strong><ul class="reason-list">${flags.map((flag) => `<li>${escapeHtml(flag)}</li>`).join("")}</ul></div>` : ""}
-        ${(analysis.coachCues || []).length ? `<div><strong>Coach cues</strong><ul class="reason-list">${analysis.coachCues.map((cue) => `<li>${escapeHtml(cue)}</li>`).join("")}</ul></div>` : ""}
+        <div class="compact-list">${zh ? "槓路漂移" : "Bar path drift"} ${analysis.barPathSummary?.horizontalDriftPct ?? "--"}% | ${escapeHtml(analysis.velocityCurveSummary?.unit || "relative")}</div>
+        ${flags.length ? `<div><strong>${zh ? "提醒" : "Flags"}</strong><ul class="reason-list">${flags.map((flag) => `<li>${escapeHtml(flag)}</li>`).join("")}</ul></div>` : ""}
+        ${(analysis.coachCues || []).length ? `<div><strong>${zh ? "建議提示" : "Coach cues"}</strong><ul class="reason-list">${analysis.coachCues.map((cue) => `<li>${escapeHtml(cue)}</li>`).join("")}</ul></div>` : ""}
         <div class="footer-note">${(analysis.limitations || []).map(escapeHtml).join(" | ")}</div>`;
       if (saveBtn) saveBtn.disabled = false;
       if (weakBtn) weakBtn.disabled = false;
@@ -6287,8 +6596,8 @@
         renderPoseAnalysisSummary(lastPoseAnalysis);
         await seekVideo(video, Number(lastPoseAnalysis.keyFrames?.bottomTime) || 0);
         drawPoseOverlay(lastPoseAnalysis);
-        setPoseStatus("Ready to save", lastPoseAnalysis.confidence >= 0.45 ? "ok" : "bad");
-        showToast("Pose analysis finished locally.", "ok");
+        setPoseStatus(currentLanguage() === "zh" ? "可以儲存" : "Ready to save", lastPoseAnalysis.confidence >= 0.45 ? "ok" : "bad");
+        showToast(currentLanguage() === "zh" ? "已完成本機姿態分析。" : "Pose analysis finished locally.", "ok");
       } catch (err) {
         console.error("Pose analysis failed:", err);
         setPoseStatus("Analysis failed", "bad");
@@ -6398,7 +6707,7 @@
       if (!canWriteFirebase()) return;
       const analysis = getCurrentPoseAnalysisForAi();
       if (!analysis) {
-        showToast("Run Pose Analysis first.", "warn");
+        showToast(currentLanguage() === "zh" ? "請先產生姿態分析。" : "Run Pose Analysis first.", "warn");
         return;
       }
       const button = document.getElementById(mode === "rpe" ? "askPoseRpeBtn" : "askPoseWeaknessBtn");
@@ -6420,7 +6729,9 @@
         renderPoseAiSuggestion(session);
         renderAiCoachSession();
         renderProgressDashboard();
-        showToast(mode === "rpe" ? "AI RPE second opinion is ready." : "AI weak point analysis is ready.", "ok");
+        showToast(mode === "rpe"
+          ? (currentLanguage() === "zh" ? "AI RPE 參考已完成。" : "AI RPE second opinion is ready.")
+          : (currentLanguage() === "zh" ? "AI 弱點分析已完成。" : "AI weak point analysis is ready."), "ok");
       } catch (err) {
         console.error("Pose AI failed:", err);
         showToast("Pose AI request failed. Nothing was changed.", "bad");
@@ -7669,6 +7980,7 @@
     document.getElementById("savePoseAnalysisBtn").addEventListener("click", savePoseAnalysisSummary);
     document.getElementById("askPoseWeaknessBtn").addEventListener("click", () => askPoseAi("weakness"));
     document.getElementById("askPoseRpeBtn").addEventListener("click", () => askPoseAi("rpe"));
+    document.getElementById("poseCalibrationMode").addEventListener("change", updatePoseCalibrationUi);
 
     document.getElementById("usePlanForLogBtn").addEventListener("click", () => {
       const week = Number(document.getElementById("filterWeek").value) || 1;
