@@ -943,6 +943,58 @@
       letter-spacing: .08em;
       text-transform: uppercase;
     }
+    .prescription-mini-list {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+    .mini-rx-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .mini-rx {
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      gap: 8px;
+      align-items: baseline;
+      min-height: 42px;
+      padding: 7px 10px;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--ivory-soft);
+    }
+    .mini-rx em {
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .mini-rx strong {
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-style: italic;
+      line-height: 1;
+    }
+    .mini-rx span {
+      grid-column: 1 / -1;
+      color: var(--moss);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .prescription-cue {
+      color: var(--pencil);
+      font-size: 12px;
+      font-style: italic;
+      line-height: 1.35;
+    }
     .today-steps {
       display: grid;
       gap: 10px;
@@ -1019,6 +1071,52 @@
       font-weight: 700;
       line-height: 1.05;
       overflow-wrap: anywhere;
+    }
+    .today-prescription-viz {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .rx-metric {
+      position: relative;
+      min-height: 70px;
+      padding: 10px 8px;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      background: var(--ivory);
+      text-align: center;
+      overflow: hidden;
+    }
+    .rx-metric::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: var(--gold);
+      opacity: .85;
+    }
+    .rx-metric.rpe::before { background: var(--moss-deep); }
+    .rx-metric strong {
+      display: block;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 25px;
+      font-style: italic;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .rx-metric span {
+      display: block;
+      margin-top: 6px;
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      line-height: 1.15;
+      text-transform: uppercase;
     }
     .today-step-meta {
       display: block;
@@ -3469,6 +3567,22 @@
       }
       .mission-card strong {
         font-size: 18px;
+      }
+      .today-prescription-viz {
+        grid-template-columns: 1fr;
+      }
+      .rx-metric {
+        min-height: 58px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        text-align: left;
+      }
+      .rx-metric strong {
+        font-size: 23px;
+      }
+      .rx-metric span {
+        margin-top: 0;
       }
       .today-visual-grid,
       .app-pocket-bar {
@@ -8870,9 +8984,9 @@
 
     function formatSimpleSetRange(sets, reps, rpe, language = "en") {
       const setText = String(sets || 1).replace(/\s+/g, "");
-      if (language === "zh") return `${setText} 組 x ${reps} 下 @${rpe}`;
+      if (language === "zh") return `${setText} 組 x ${reps} 下 · RPE ${rpe}`;
       const plural = setText === "1" ? "set" : "sets";
-      return `${setText} ${plural} x ${reps} reps @${rpe}`;
+      return `${setText} ${plural} x ${reps} reps · RPE ${rpe}`;
     }
 
     function localizeCoachAction(action, language = "en") {
@@ -8922,9 +9036,10 @@
         .replace(/^Back-?off:\s*/i, "")
         .replace(/\.\s*Fatigue cap.*$/i, "")
         .trim();
-      const setMatch = value.match(/(\d+(?:\s*[-–]\s*\d+)?)\s*sets?\s*x\s*(\d+)\s*reps?\s*@\s*([0-9.]+(?:\s*[-–]\s*[0-9.]+)?)/i);
-      if (setMatch) {
-        return formatSimpleSetRange(setMatch[1].replace(/\s+/g, ""), setMatch[2], setMatch[3].replace(/\s+/g, ""), language);
+      const parsed = parseSetPrescription(value);
+      if (parsed) {
+        const setRange = parsed.setsMin && parsed.setsMin !== parsed.setsMax ? `${parsed.setsMin}-${parsed.setsMax}` : String(parsed.setsMax);
+        return formatSimpleSetRange(setRange, parsed.reps, parsed.rpe, language);
       }
       return localizeInstructionText(value, language) || fallback;
     }
@@ -8972,6 +9087,73 @@
       return `${setText}×${repText}${rpeText ? ` @${rpeText}` : ""}`;
     }
 
+    function renderPrescriptionViz(rx, language = currentLanguage(), rawText = "") {
+      if (!rx) return "";
+      const zh = language === "zh";
+      const labels = zh
+        ? { sets: "組數", reps: "每組次數", rpe: "目標 RPE" }
+        : { sets: "sets", reps: "reps", rpe: "target RPE" };
+      const sets = String(rx.sets ?? "—").replace(/\s+/g, "");
+      const reps = String(rx.reps ?? "—").replace(/\s+/g, "");
+      const rpe = String(rx.rpe ?? "—").replace(/\s+/g, "");
+      const aria = rawText || (zh ? `${sets} 組，每組 ${reps} 下，RPE ${rpe}` : `${sets} sets, ${reps} reps, RPE ${rpe}`);
+      return `
+        <div class="today-prescription-viz" aria-label="${escapeHtml(aria)}">
+          <div class="rx-metric"><strong>${escapeHtml(sets)}</strong><span>${escapeHtml(labels.sets)}</span></div>
+          <div class="rx-metric"><strong>${escapeHtml(reps)}</strong><span>${escapeHtml(labels.reps)}</span></div>
+          <div class="rx-metric rpe"><strong>${escapeHtml(rpe)}</strong><span>${escapeHtml(labels.rpe)}</span></div>
+        </div>
+      `;
+    }
+
+    function parsePrescriptionSegments(text) {
+      const normalized = String(text || "")
+        .replace(/[×]/g, "x")
+        .replace(/[–—]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+      const regex = /(?:\b(Top|Back-?off|then)\b[:\s]*)?(\d+)(?:\s*-\s*(\d+))?\s*(?:sets?|set|組)?\s*x\s*(\d+(?:\s*-\s*\d+)?)(?:\s*(?:reps?|rep|下))?\s*@\s*([0-9]+(?:\.[0-9]+)?(?:\s*-\s*[0-9]+(?:\.[0-9]+)?)?)/gi;
+      const segments = [];
+      let match;
+      while ((match = regex.exec(normalized))) {
+        const setRange = match[3] ? `${match[2]}-${match[3]}` : match[2];
+        segments.push({
+          label: String(match[1] || "").toLowerCase(),
+          sets: setRange,
+          reps: String(match[4]).replace(/\s+/g, ""),
+          rpe: String(match[5]).replace(/\s+/g, "")
+        });
+      }
+      return segments;
+    }
+
+    function renderPrescriptionMiniList(text, language = currentLanguage(), fallback = "—") {
+      const segments = parsePrescriptionSegments(text);
+      if (!segments.length) return `<span>${escapeHtml(simplifyPrescriptionText(text, language, fallback))}</span>`;
+      const zh = language === "zh";
+      const labelFor = (segment, index) => {
+        if (/top/.test(segment.label)) return zh ? "頂組" : "Top";
+        if (/back/.test(segment.label)) return zh ? "退階" : "Back-off";
+        if (/then/.test(segment.label)) return zh ? "接著" : "Then";
+        return zh ? `第 ${index + 1} 段` : `Part ${index + 1}`;
+      };
+      const cue = String(text || "").match(/\(([^)]+)\)/)?.[1] || "";
+      return `
+        <div class="prescription-mini-list">
+          <div class="mini-rx-grid">
+            ${segments.map((segment, index) => `
+              <div class="mini-rx">
+                <em>${escapeHtml(labelFor(segment, index))}</em>
+                <strong>${escapeHtml(segment.sets)}×${escapeHtml(segment.reps)}</strong>
+                <span>RPE ${escapeHtml(segment.rpe)}</span>
+              </div>
+            `).join("")}
+          </div>
+          ${cue ? `<div class="prescription-cue">${escapeHtml(cue)}</div>` : ""}
+        </div>
+      `;
+    }
+
     function formatSetRangeForVisual(minSets, maxSets) {
       const max = Number(maxSets) || 0;
       const min = Number(minSets) || max;
@@ -8995,12 +9177,15 @@
     }
 
     function renderTodayVisualStep(step) {
+      const mainHtml = step.rx
+        ? renderPrescriptionViz(step.rx, currentLanguage(), step.main)
+        : `<div class="today-step-main">${escapeHtml(step.main)}</div>`;
       return `
         <div class="today-step is-${escapeHtml(step.kind)}">
           <div class="today-step-number">${escapeHtml(step.number)}</div>
           <div class="today-step-body">
             <div class="today-step-label">${escapeHtml(step.label)}</div>
-            <div class="today-step-main">${escapeHtml(step.main)}</div>
+            ${mainHtml}
             <div class="today-step-meta">${escapeHtml(step.meta)}</div>
             ${step.tags?.length ? `<div class="today-step-tags">${step.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
             ${step.extra || ""}
@@ -9025,6 +9210,8 @@
       const backoffMain = noBackoff
         ? (zh ? "不用硬做退階" : "No required back-off")
         : formatVisualSetText(formatSetRangeForVisual(minBackoffSets, maxBackoffSets), plan.backoffReps, plan.backoffRpe);
+      const topRx = Number(plan.topSets) <= 0 ? null : { sets: plan.topSets, reps: plan.topReps, rpe: plan.topRpe };
+      const backoffRx = noBackoff ? null : { sets: formatSetRangeForVisual(minBackoffSets, maxBackoffSets), reps: plan.backoffReps, rpe: plan.backoffRpe };
       const fatigue = Math.max(0, Number(fatigueTarget) || 0);
       const fatigueFill = Math.max(8, Math.min(100, fatigue * 12.5));
       const coachTag = row.coachAdjusted
@@ -9036,6 +9223,7 @@
           number: "1",
           label: labels.top,
           main: topMain,
+          rx: topRx,
           meta: zh ? "先暖身，找到今天動作乾淨的目標 RPE。" : "Warm up and find today's clean target RPE.",
           tags: [getTodayTopInstruction(row), ...coachTag]
         },
@@ -9044,6 +9232,7 @@
           number: "2",
           label: labels.backoff,
           main: backoffMain,
+          rx: backoffRx,
           meta: noBackoff
             ? (zh ? "今天重點是品質，不追額外訓練量。" : "Quality day. Do not chase extra volume.")
             : (zh ? "頂組後降重或照表補量，每組都看速度與動作品質。" : "After the top set, reduce load or follow the plan while quality stays clean."),
@@ -9156,7 +9345,7 @@
               <h3>${escapeHtml(row.secondaryLift || (zh ? "無副項" : "No secondary lift"))}</h3>
               <div class="schedule-line">
                 <span>${t("prescription")}</span>
-                <span>${escapeHtml(row.secondaryPrescription || (zh ? "未指定" : "Not specified"))}</span>
+                <div>${renderPrescriptionMiniList(row.secondaryPrescription, currentLanguage(), zh ? "未指定" : "Not specified")}</div>
               </div>
             </section>
           </div>
