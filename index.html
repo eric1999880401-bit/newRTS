@@ -4168,11 +4168,26 @@
     let adminData = null;
     const BETA_PLAN_ID = "beta_monthly_twd_300";
     const BETA_PRICE_TWD = 300;
+    const OWNER_RECOVERY_ACCESS = Object.freeze({
+      uid: "LbVvj7xt1lWDwXbNFzlXbb6RESg2",
+      email: "eric1999880401@gmail.com",
+      currentPeriodEnd: "2036-05-14T13:41:26.256Z",
+      currentPeriodEndMs: 2094385286256
+    });
 
     function cleanFirebaseConfig(config = {}) {
       return Object.fromEntries(
         Object.entries(config).filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
       );
+    }
+
+    function normalizeClientEmail(value = "") {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function isOwnerRecoveryIdentity() {
+      if (!authUser) return false;
+      return authUser.uid === OWNER_RECOVERY_ACCESS.uid || normalizeClientEmail(authUser.email) === OWNER_RECOVERY_ACCESS.email;
     }
 
     function showToast(message, level = "ok") {
@@ -4584,7 +4599,10 @@
 
     function isAdminActive() {
       const role = String(adminData?.role || "");
-      return Boolean(adminData && adminData.active !== false && ["owner", "admin", "support"].includes(role));
+      return Boolean(
+        (adminData && adminData.active !== false && ["owner", "admin", "support"].includes(role))
+        || isOwnerRecoveryIdentity()
+      );
     }
 
     function isEntitlementActive(data = entitlementData) {
@@ -4622,9 +4640,9 @@
       const planLabel = document.getElementById("entitlementPlanLabel");
       if (planLabel) planLabel.textContent = entitlementData?.plan || (isAdminActive() ? "管理員" : "—");
       const untilLabel = document.getElementById("entitlementUntilLabel");
-      if (untilLabel) untilLabel.textContent = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? "管理員" : "—");
+      if (untilLabel) untilLabel.textContent = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isOwnerRecoveryIdentity() ? OWNER_RECOVERY_ACCESS.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? "管理員" : "—"));
       const adminLabel = document.getElementById("adminRoleLabel");
-      if (adminLabel) adminLabel.textContent = isAdminActive() ? (adminData.role || "管理員") : "否";
+      if (adminLabel) adminLabel.textContent = isAdminActive() ? (adminData?.role || "owner") : "否";
       const adminPanel = document.getElementById("adminPanel");
       const adminDrawer = document.getElementById("adminToolsDrawer");
       const adminStatus = document.getElementById("adminPanelStatus");
@@ -4671,6 +4689,16 @@
       ]);
       adminData = adminValue || adminData;
       entitlementData = entitlementValue || entitlementData;
+      if (!entitlementData && isOwnerRecoveryIdentity()) {
+        entitlementData = {
+          status: "active",
+          plan: BETA_PLAN_ID,
+          currentPeriodEnd: OWNER_RECOVERY_ACCESS.currentPeriodEnd,
+          currentPeriodEndMs: OWNER_RECOVERY_ACCESS.currentPeriodEndMs,
+          source: "owner_recovery_display",
+          active: true
+        };
+      }
       renderMembershipStatus();
       return { admin: adminValue, entitlement: entitlementValue };
     }
@@ -4737,6 +4765,17 @@
         renderMembershipStatus();
       }
       return functionData;
+    }
+
+    let accountRefreshQueued = false;
+
+    function queueAccountStatusRefresh() {
+      if (!authUser || accountRefreshQueued) return;
+      accountRefreshQueued = true;
+      window.setTimeout(() => {
+        accountRefreshQueued = false;
+        refreshAccountStatus().catch(() => {});
+      }, 250);
     }
 
     function renderAuthMigrationStatus() {
@@ -10549,6 +10588,10 @@
         closeFilmingGuide();
         closeInteractionModal();
       }
+    });
+    window.addEventListener("focus", queueAccountStatusRefresh);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") queueAccountStatusRefresh();
     });
     document.getElementById("newUserName").addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
