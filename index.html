@@ -512,6 +512,61 @@
       font-style: italic;
     }
     .overview-card.dark .card-detail { color: rgba(251,246,234,.72); }
+    .top-command-dock {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: -4px 0 16px;
+    }
+    .command-tile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 64px;
+      padding: 14px 16px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--ivory), var(--paper-warm));
+      color: var(--ink-base);
+      text-align: left;
+      box-shadow: var(--shadow);
+    }
+    .command-tile:hover {
+      transform: translateY(-1px);
+      border-color: var(--moss);
+      box-shadow: 0 18px 42px rgba(43,36,25,.16);
+    }
+    .command-tile strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 650;
+      color: var(--ink-base);
+    }
+    .command-tile span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .command-tile .status {
+      white-space: nowrap;
+      margin-left: auto;
+    }
+    .consumer-modal-source {
+      display: none !important;
+    }
+    .card-mini-action {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      min-height: 30px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
     .page-tabs {
       position: sticky;
       top: 0;
@@ -1015,6 +1070,39 @@
       line-height: 1.55;
     }
     .history-notes strong { color: var(--ink-base); font-style: normal; font-family: var(--font-label); font-weight: 600; font-size: 11px; letter-spacing: var(--tracking-wide); text-transform: uppercase; }
+    .history-control-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+    .history-summary-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--ink-soft);
+      background: var(--ivory);
+      font-size: 13px;
+    }
+    .history-drawer {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: .2;
+      overflow: hidden;
+      transition: grid-template-rows .22s ease, opacity .18s ease;
+    }
+    .history-drawer.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+    .history-drawer > div {
+      min-height: 0;
+    }
     .history-athlete-options {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -1042,6 +1130,33 @@
       color: var(--muted);
       font-size: 12px;
     }
+    .archive-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .archive-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--paper-warm);
+    }
+    .archive-card strong {
+      display: block;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 17px;
+    }
+    .archive-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -1058,6 +1173,59 @@
       width: min(720px, 100%);
       max-height: 90vh;
       overflow-y: auto;
+    }
+    .game-modal-card {
+      width: min(860px, 100%);
+      border-color: var(--moss);
+      box-shadow: 0 28px 90px rgba(43,36,25,.35);
+    }
+    .modal-action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .modal-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .modal-stat {
+      padding: 12px 14px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--ivory-soft);
+    }
+    .modal-stat .k {
+      color: var(--muted);
+      font-family: var(--font-label);
+      font-size: 11px;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .modal-stat .v {
+      margin-top: 4px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 24px;
+      line-height: 1.1;
+    }
+    .trend-sparkline {
+      width: 100%;
+      min-height: 130px;
+      margin-top: 8px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--ivory);
+    }
+    .trend-summary-card {
+      display: grid;
+      gap: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--paper-warm);
     }
     .modal-card.narrow { width: min(460px, 100%); }
     .edit-btn {
@@ -2164,6 +2332,8 @@
       .session-table { display: none; }
       .session-cards { display: grid; }
       .data-actions-grid { grid-template-columns: 1fr; }
+      .top-command-dock { grid-template-columns: 1fr; }
+      .command-tile { min-height: 58px; }
       .compact-grid,
       .control-row,
       .paywall-grid,
@@ -2204,7 +2374,18 @@
       </div>
     </section>
 
-    <section class="login-callout" id="loginCallout" aria-label="Login status">
+    <section class="top-command-dock" aria-label="Account quick actions">
+      <button class="command-tile" id="openSyncModalBtn" type="button">
+        <span><strong>訓練同步</strong><span id="compactSyncDetail">登入後同步訓練資料</span></span>
+        <span class="status warn" id="compactSyncStatus">尚未登入</span>
+      </button>
+      <button class="command-tile" id="openMembershipModalBtn" type="button">
+        <span><strong>會員狀態</strong><span id="compactMembershipDetail">查看權限與安全說明</span></span>
+        <span class="status warn" id="compactMembershipStatus">未開通</span>
+      </button>
+    </section>
+
+    <section class="login-callout consumer-modal-source" id="loginCallout" aria-label="Login status">
       <div>
         <div class="login-eyebrow" id="loginCalloutEyebrow">帳號同步</div>
         <h2 id="loginCalloutTitle">登入後同步你的訓練紀錄</h2>
@@ -2220,7 +2401,7 @@
       </div>
     </section>
 
-    <section class="panel paywall-panel" id="membershipPanel" aria-label="Membership status">
+    <section class="panel paywall-panel consumer-modal-source" id="membershipPanel" aria-label="Membership status">
       <div class="feature-title">
         <strong id="membershipTitle">健力訓練助手</strong>
         <span class="status warn" id="membershipStatus">尚未登入</span>
@@ -2256,6 +2437,7 @@
         <div class="card-label">今日最佳 e1RM</div>
         <div class="card-value" id="todayBestE1rm">--</div>
         <div class="card-detail" id="todayBestLift">等待紀錄</div>
+        <button class="card-mini-action" id="openE1rmTrendBtn" type="button">看趨勢</button>
       </div>
       <div class="overview-card">
         <div class="card-label">課表列數</div>
@@ -3105,11 +3287,21 @@
       <section class="panel">
         <h2 id="dashboardHistoryTitle">完整訓練紀錄</h2>
         <div class="hint">這裡會列出目前選手的所有舊紀錄。找不到時，先確認上方選手是否選到 Camel 或 Pig。</div>
-        <div class="feature-title" style="margin-top:14px">
-          <strong>目前查看</strong>
-          <span class="status ok" id="historyCountStatus">目前選手</span>
+        <div class="history-control-bar">
+          <span class="history-summary-chip" id="historySummaryText">目前選手</span>
+          <div class="actions-inline">
+            <button class="primary" id="toggleHistoryBtn" type="button">展開紀錄</button>
+            <button id="openArchiveCycleBtn" type="button">封存週期</button>
+            <button class="danger" id="openDeleteLogsBtn" type="button">刪除紀錄</button>
+          </div>
         </div>
-        <div id="historyAccordion" data-history-accordion></div>
+        <div id="historyAccordionWrap" class="history-drawer">
+          <div id="historyAccordion" data-history-accordion></div>
+        </div>
+        <details class="schedule-details" id="archiveCycleDrawer">
+          <summary>已封存週期</summary>
+          <div id="archiveCycleList" class="archive-list"></div>
+        </details>
       </section>
       <section class="panel" style="margin-top:16px">
         <h2 id="dashboardTrendTitle">訓練趨勢</h2>
@@ -3307,6 +3499,18 @@
     </div>
   </div>
 
+  <!-- Game-style Interaction Modal -->
+  <div id="interactionModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="interactionModalTitle">
+    <div class="panel modal-card game-modal-card">
+      <div class="row" style="margin-bottom:14px">
+        <h2 id="interactionModalTitle">選單</h2>
+        <div class="spacer"></div>
+        <button type="button" id="closeInteractionModalBtn">關閉</button>
+      </div>
+      <div id="interactionModalBody"></div>
+    </div>
+  </div>
+
   <script>
     const DEFAULT_PROGRAM_USER1 = [{"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 3×5 @6 (stop if any set >6.5)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6 (2-count pause)", "accessoriesNotes": "RDL 2–3×6–8 @6–7; chest-supported row 3×8–12; abs 2–3×8–12"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6.5–7", "backoffPlan": "4×4 @6 (all comp pauses; stop if >6.5)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6 (strict depth / stay braced)", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 1, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6 (cap last set ≤6.5)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "3×6 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6.5", "backoffPlan": "−5% then 4×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×5 @6.5, then 3×5 @6–6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×4 @6–6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×4 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2–3×15–20"}, {"week": 2, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6.5", "backoffPlan": "−6% then 3×4 @6–6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×5 @6", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 1, "focus": "Squat priority + bench volume", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7", "backoffPlan": "−5% then 4×3 @6.5 (cap last set ≤7)", "secondaryLift": "Paused Bench", "secondaryPrescription": "Top 1×4 @6.5–7, then 3×4 @6.5 (2-count pause)", "accessoriesNotes": "RDL 2×6–8 @6–7; row 3×8–12; abs 2–3×8–12"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 2, "focus": "Bench priority + squat control", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7", "backoffPlan": "4×3 @6.5 (all comp pauses)", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats 3×8–12; triceps 2–3×10–15; rear delts 2×15–20"}, {"week": 3, "phase": "Block 1 — Accumulation / technique", "day": 3, "focus": "Deadlift priority + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5 (cap last set ≤7)", "secondaryLift": "Close-Grip Paused Bench", "secondaryPrescription": "4×4 @6.5", "accessoriesNotes": "Back ext 2×10–15; hamstrings 2×8–12; upper back 3×10–15"}, {"week": 4, "phase": "Pivot / deload", "day": 1, "focus": "Squat + light bench", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Goal: drop fatigue hard. Only easy blood-flow accessories if desired."}, {"week": 4, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat technique", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×4 @5.5–6", "secondaryLift": "2ct Pause Squat", "secondaryPrescription": "2×3 @5.5–6", "accessoriesNotes": "Everything should feel fast. No grinders, no soreness chasing."}, {"week": 4, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench technique", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @5.5–6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×5 @6", "accessoriesNotes": "Everything should feel fast. Stop if position breaks."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @7.5", "backoffPlan": "−5% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7, then 3×4 @6.5–7", "accessoriesNotes": "Keep assistance, but cut 1 set if recovery is tight."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @7.5", "backoffPlan": "4×3 @6.5–7 (comp pause, cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6", "accessoriesNotes": "Lats + triceps stay in. Use conservative jumps, especially on bench."}, {"week": 5, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7", "backoffPlan": "−6% then 3×3 @6.5–7 (cap last set ≤7.5)", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Back ext or hamstrings 2×8–12; upper back 2–3×10–15"}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8", "backoffPlan": "−5% then 3×3 @7 (cap last set ≤7.5)", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×4 @7–7.5, then 3×4 @6.5–7", "accessoriesNotes": "Keep bar speed honest. If single overshoots, hold or reduce load."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8", "backoffPlan": "4×3 @7 (cap last set ≤7.5)", "secondaryLift": "Box Squat", "secondaryPrescription": "3×3 @6–6.5", "accessoriesNotes": "Lats + triceps, but avoid elbow / wrist irritation."}, {"week": 6, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5", "backoffPlan": "−6% then 3×3 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "4×4 @6.5–7", "accessoriesNotes": "Deadlift volume stays moderate—quality over fatigue."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 1, "focus": "Squat strength + paused bench", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8 (repeat if W6 overshot)", "backoffPlan": "−5% then 2–3×2 @7", "secondaryLift": "Board Bench", "secondaryPrescription": "Top 1×3 @7.5, then 3×3 @6.5–7", "accessoriesNotes": "Do not force a PR single here. Clean reps only."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 2, "focus": "Bench strength + squat secondary", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8 (repeat if touch inconsistent)", "backoffPlan": "3×2 @7", "secondaryLift": "Box Squat", "secondaryPrescription": "3×2 @6–6.5", "accessoriesNotes": "Bench should look like competition every rep."}, {"week": 7, "phase": "Block 2 — Strength / intensification", "day": 3, "focus": "Deadlift strength + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @7.5–8", "backoffPlan": "−6% then 2–3×2 @6.5–7", "secondaryLift": "Spoto Bench", "secondaryPrescription": "3×4 @6.5", "accessoriesNotes": "If recovery is poor, do only 2 back-off sets."}, {"week": 8, "phase": "Pivot / deload", "day": 1, "focus": "Squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Paused Bench", "secondaryPrescription": "2×3 @6", "accessoriesNotes": "Strip fatigue. Only light pump work if you feel beat up."}, {"week": 8, "phase": "Pivot / deload", "day": 2, "focus": "Bench + squat touch", "mainLift": "Comp Bench", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×3 @6", "secondaryLift": "Squat variation", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "Everything should feel easy and technically sharp."}, {"week": 8, "phase": "Pivot / deload", "day": 3, "focus": "Deadlift + bench touch", "mainLift": "Sumo Deadlift", "topSetTarget": "single 1×1 @6", "backoffPlan": "2×2 @6", "secondaryLift": "Close-Grip Bench", "secondaryPrescription": "2×4 @6", "accessoriesNotes": "Leave the gym feeling better than you walked in."}, {"week": 9, "phase": "Block 3 — Realization", "day": 1, "focus": "Peak squat + bench touch", "mainLift": "Comp Squat", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "2–3×2 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Low volume, high quality. Film the single and first back-off set."}, {"week": 9, "phase": "Block 3 — Realization", "day": 2, "focus": "Peak bench + light squat", "mainLift": "Comp Bench", "topSetTarget": "1×1 @8–8.5", "backoffPlan": "3×2 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "No grinders. Every bench rep must be comp-standard."}, {"week": 9, "phase": "Block 3 — Realization", "day": 3, "focus": "Peak deadlift + bench secondary", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @8", "backoffPlan": "2×2 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "3×3 @6.5", "accessoriesNotes": "Finish deadlifts hard, but stop if position opens."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 1, "focus": "Squat opener practice", "mainLift": "Comp Squat", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2×1 @6.5–7", "secondaryLift": "Bench overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Treat this as opener rehearsal, not maxing."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 2, "focus": "Bench opener practice", "mainLift": "Comp Bench", "topSetTarget": "Planned opener 1×1 @8–8.5", "backoffPlan": "2–3×1 @6.5–7", "secondaryLift": "Squat overload", "secondaryPrescription": "3 sets* 10 secs ", "accessoriesNotes": "Protect the touch. If wrist pain >3/10, downshift."}, {"week": 10, "phase": "Block 3 — Opener practice", "day": 3, "focus": "Deadlift opener practice", "mainLift": "Sumo Deadlift", "topSetTarget": "Planned opener 1×1 @8", "backoffPlan": "1–2×1 @6.5–7", "secondaryLift": "Floor Bench", "secondaryPrescription": "2×2 @6", "accessoriesNotes": "No chasing second attempts in training."}, {"week": 11, "phase": "Taper", "day": 1, "focus": "Squat taper", "mainLift": "Comp Squat", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Minimal assistance only if it improves recovery."}, {"week": 11, "phase": "Taper", "day": 2, "focus": "Bench taper", "mainLift": "Comp Bench", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1–2×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Keep everything fast and crisp."}, {"week": 11, "phase": "Taper", "day": 3, "focus": "Deadlift taper", "mainLift": "Sumo Deadlift", "topSetTarget": "1×1 @6–6.5", "backoffPlan": "1×1 @6", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Walk out fresh."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 1, "focus": "Test squat + light bench", "mainLift": "Squat Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; shut it down if depth slips", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Comp standard first: depth non-negotiable."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 2, "focus": "Test bench + light squat", "mainLift": "Bench Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; only comp-standard touches count", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "No touch = no make. Protect the wrist if needed."}, {"week": 12, "phase": "Week 12 — Test / mock meet", "day": 3, "focus": "Test deadlift", "mainLift": "Deadlift Attempts", "topSetTarget": "A1 ~90–92%, A2 ~95–97%, A3 PR if ready", "backoffPlan": "Warm-ups by feel; stop if lockout soft / position breaks", "secondaryLift": "", "secondaryPrescription": "", "accessoriesNotes": "Lockout standard: knees + hips through, no overextension."}];
     const RPE_TABLE = {"10.0": {"1": 1.0, "2": 0.955, "3": 0.922, "4": 0.892, "5": 0.863, "6": 0.837, "7": 0.811, "8": 0.786, "9": 0.762, "10": 0.739, "11": 0.707, "12": 0.68}, "9.5": {"1": 0.978, "2": 0.939, "3": 0.907, "4": 0.878, "5": 0.85, "6": 0.824, "7": 0.799, "8": 0.774, "9": 0.751, "10": 0.723, "11": 0.694, "12": 0.667}, "9.0": {"1": 0.955, "2": 0.922, "3": 0.892, "4": 0.863, "5": 0.837, "6": 0.811, "7": 0.786, "8": 0.762, "9": 0.739, "10": 0.707, "11": 0.68, "12": 0.653}, "8.5": {"1": 0.939, "2": 0.907, "3": 0.878, "4": 0.85, "5": 0.824, "6": 0.799, "7": 0.774, "8": 0.751, "9": 0.723, "10": 0.694, "11": 0.667, "12": 0.64}, "8.0": {"1": 0.922, "2": 0.892, "3": 0.863, "4": 0.837, "5": 0.811, "6": 0.786, "7": 0.762, "8": 0.739, "9": 0.707, "10": 0.68, "11": 0.653, "12": 0.626}, "7.5": {"1": 0.907, "2": 0.878, "3": 0.85, "4": 0.824, "5": 0.799, "6": 0.774, "7": 0.751, "8": 0.723, "9": 0.694, "10": 0.667, "11": 0.64, "12": 0.613}, "7.0": {"1": 0.892, "2": 0.863, "3": 0.837, "4": 0.811, "5": 0.786, "6": 0.762, "7": 0.739, "8": 0.707, "9": 0.68, "10": 0.653, "11": 0.626, "12": 0.599}, "6.5": {"1": 0.878, "2": 0.85, "3": 0.824, "4": 0.799, "5": 0.774, "6": 0.751, "7": 0.723, "8": 0.694, "9": 0.667, "10": 0.64, "11": 0.613, "12": 0.586}, "6.0": {"1": 0.863, "2": 0.837, "3": 0.811, "4": 0.786, "5": 0.762, "6": 0.739, "7": 0.707, "8": 0.68, "9": 0.653, "10": 0.626, "11": 0.599, "12": 0.572}, "5.5": {"1": 0.85, "2": 0.824, "3": 0.799, "4": 0.774, "5": 0.751, "6": 0.723, "7": 0.694, "8": 0.667, "9": 0.64, "10": 0.613, "11": 0.586, "12": 0.559}, "5.0": {"1": 0.837, "2": 0.811, "3": 0.786, "4": 0.762, "5": 0.739, "6": 0.707, "7": 0.68, "8": 0.653, "9": 0.626, "10": 0.599, "11": 0.572, "12": 0.545}};
@@ -3387,6 +3591,7 @@
         aiCoachSessions: normalizeArray(source.aiCoachSessions, fallback.aiCoachSessions),
         videoReviews: normalizeArray(source.videoReviews, fallback.videoReviews),
         videoAnalyses: normalizeArray(source.videoAnalyses, fallback.videoAnalyses),
+        archivedCycles: normalizeArray(source.archivedCycles, fallback.archivedCycles),
         personalCalibration: source.personalCalibration || fallback.personalCalibration || null,
         program: normalizeArray(source.program, fallback.program),
         logs: normalizeArray(source.logs, fallback.logs)
@@ -3423,6 +3628,7 @@
     let lastPoseAnalysis = null;
     let poseVideoObjectUrl = "";
     let lastPoseFrames = [];
+    let historyExpanded = false;
 
     function saveState(successMessage = "") {
       return firebasePush(successMessage);
@@ -3521,7 +3727,9 @@
         coachDecisions: 0,
         aiCoachSessions: 0,
         videoReviews: 0,
-        videoAnalyses: 0
+        videoAnalyses: 0,
+        archivedCycles: 0,
+        archivedLogs: 0
       };
       Object.values(users || {}).forEach((user) => {
         counts.athletes += 1;
@@ -3533,6 +3741,8 @@
         counts.aiCoachSessions += (user.aiCoachSessions || []).length;
         counts.videoReviews += (user.videoReviews || []).length;
         counts.videoAnalyses += (user.videoAnalyses || []).length;
+        counts.archivedCycles += (user.archivedCycles || []).length;
+        counts.archivedLogs += (user.archivedCycles || []).reduce((sum, cycle) => sum + (cycle.logs || []).length, 0);
       });
       return counts;
     }
@@ -3610,12 +3820,16 @@
         coachDecisions: Object.keys(scopedData.coachDecisions || {}).length,
         aiCoachSessions: Object.keys(scopedData.aiCoachSessions || {}).length,
         videoReviews: Object.keys(scopedData.videoReviews || {}).length,
-        videoAnalyses: Object.keys(scopedData.videoAnalyses || {}).length
+        videoAnalyses: Object.keys(scopedData.videoAnalyses || {}).length,
+        archivedCycles: Object.values(scopedData.athletes || {}).reduce((sum, athlete) => sum + collectionValues(athlete.archivedCycles).length, 0),
+        archivedLogs: Object.values(scopedData.athletes || {}).reduce((sum, athlete) => {
+          return sum + collectionValues(athlete.archivedCycles).reduce((inner, cycle) => inner + (cycle.logs || []).length, 0);
+        }, 0)
       };
     }
 
     function totalRecordCount(counts) {
-      return ["programRows", "logs", "generatedPlans", "readinessChecks", "coachDecisions", "aiCoachSessions", "videoReviews", "videoAnalyses"]
+      return ["programRows", "logs", "generatedPlans", "readinessChecks", "coachDecisions", "aiCoachSessions", "videoReviews", "videoAnalyses", "archivedCycles", "archivedLogs"]
         .reduce((sum, key) => sum + (Number(counts?.[key]) || 0), 0);
     }
 
@@ -3680,7 +3894,8 @@
           athleteProfile: user.athleteProfile || defaultAthleteProfile(),
           personalCalibration: computePersonalCalibration(user),
           generatedPlans: user.generatedPlans || [],
-          activeGeneratedPlanId: user.activeGeneratedPlanId || ""
+          activeGeneratedPlanId: user.activeGeneratedPlanId || "",
+          archivedCycles: user.archivedCycles || []
         };
         scoped.programs[athleteId] = {
           id: athleteId,
@@ -3712,6 +3927,7 @@
         profile.personalCalibration = athlete.personalCalibration || null;
         profile.generatedPlans = normalizeArray(athlete.generatedPlans, []);
         profile.activeGeneratedPlanId = String(athlete.activeGeneratedPlanId || "");
+        profile.archivedCycles = normalizeArray(athlete.archivedCycles, []);
         profile.program = collectionValues(scopedData?.programs?.[athleteId]?.rows);
         profile.logs = collectionValues(scopedData?.logs).filter((row) => row.athleteId === athleteId || row.legacyAthleteId === athleteId);
         profile.readinessChecks = collectionValues(scopedData?.readinessChecks).filter((row) => row.athleteId === athleteId || row.legacyAthleteId === athleteId);
@@ -3867,6 +4083,7 @@
       if (status) status.textContent = copy.status;
       if (target) target.textContent = copy.target;
       if (googleBtn) googleBtn.disabled = !fbAuth;
+      renderTopActionDock();
     }
 
     function isAdminActive() {
@@ -3921,17 +4138,13 @@
         adminStatus.className = "status " + (isAdminActive() ? "ok" : "warn");
         adminStatus.textContent = isAdminActive() ? "管理員可用" : "限管理員";
       }
+      renderTopActionDock();
     }
 
     function showPaidFeatureLock(feature = "此功能") {
       const access = getAccessState();
       showToast(`${feature} 需要會員權限。你仍可查看與匯出既有資料。`, "bad");
-      const panel = document.getElementById("membershipPanel");
-      if (panel) {
-        panel.scrollIntoView({ behavior: "smooth", block: "center" });
-        panel.classList.add("bad");
-        window.setTimeout(() => panel.classList.remove("bad"), 1800);
-      }
+      openMembershipModal();
       return access;
     }
 
@@ -4532,6 +4745,7 @@
           offline: "Offline"
         };
       el.textContent = labels[key] || text;
+      renderTopActionDock();
     }
 
     function loadFbConfigUI() {
@@ -5329,6 +5543,20 @@
         .sort((a, b) => new Date(a.date) - new Date(b.date) || a.order - b.order);
     }
 
+    function getAllTrainingLogs(user, { includeArchived = true } = {}) {
+      const activeLogs = (user.logs || []).map((row) => ({ ...row, archived: false }));
+      if (!includeArchived) return activeLogs;
+      const archivedLogs = (user.archivedCycles || []).flatMap((cycle) => {
+        return (cycle.logs || []).map((row) => ({
+          ...row,
+          archived: true,
+          archiveId: cycle.id,
+          archiveName: cycle.name
+        }));
+      });
+      return [...activeLogs, ...archivedLogs];
+    }
+
     function getBestE1RMByLift(user, days = 90) {
       const best = { Squat: null, Bench: null, Deadlift: null };
       getRecentLogs(user, days).forEach((row) => {
@@ -5338,6 +5566,89 @@
         }
       });
       return best;
+    }
+
+    function getE1rmTrendSeries(user, days = 180) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      const grouped = new Map();
+      getAllTrainingLogs(user, { includeArchived: true }).forEach((row) => {
+        const date = parseDateValue(row.date);
+        const e1rm = Number(row.e1rm);
+        const family = liftFamily(row.lift);
+        if (!date || date < cutoff || !Number.isFinite(e1rm) || !["Squat", "Bench", "Deadlift"].includes(family)) return;
+        const key = `${row.date}|${family}`;
+        const existing = grouped.get(key);
+        if (!existing || e1rm > existing.e1rm) {
+          grouped.set(key, {
+            date: row.date,
+            family,
+            e1rm,
+            lift: row.lift,
+            archived: Boolean(row.archived)
+          });
+        }
+      });
+      return [...grouped.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.family.localeCompare(b.family));
+    }
+
+    function buildTrendSvg(points, width = 680, height = 150) {
+      if (!points.length) {
+        return `<div class="empty">目前沒有足夠 e1RM 紀錄。</div>`;
+      }
+      const padding = 18;
+      const values = points.map((point) => Number(point.e1rm)).filter(Number.isFinite);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const span = Math.max(1, max - min);
+      const xStep = points.length > 1 ? (width - padding * 2) / (points.length - 1) : 0;
+      const coords = points.map((point, index) => {
+        const x = padding + xStep * index;
+        const y = height - padding - ((Number(point.e1rm) - min) / span) * (height - padding * 2);
+        return { ...point, x, y };
+      });
+      const line = coords.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+      const circles = coords.map((point) => `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="3.8"><title>${escapeHtml(point.date)} ${formatNumber(point.e1rm, 1)} kg</title></circle>`).join("");
+      return `
+        <svg class="trend-sparkline" viewBox="0 0 ${width} ${height}" role="img" aria-label="e1RM trend">
+          <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="rgba(92,75,49,.22)" />
+          <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height - padding}" stroke="rgba(92,75,49,.22)" />
+          <polyline points="${line}" fill="none" stroke="var(--moss-deep)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <g fill="var(--accent)">${circles}</g>
+          <text x="${padding}" y="${padding + 2}" fill="var(--muted)" font-size="12">${formatNumber(max, 1)} kg</text>
+          <text x="${padding}" y="${height - 4}" fill="var(--muted)" font-size="12">${formatNumber(min, 1)} kg</text>
+        </svg>
+      `;
+    }
+
+    function openE1rmTrendModal() {
+      const user = getActiveUser();
+      const series = getE1rmTrendSeries(user, 210);
+      const byLift = ["Squat", "Bench", "Deadlift"].map((family) => {
+        const points = series.filter((point) => point.family === family);
+        const latest = points[points.length - 1] || null;
+        const previous = points.length >= 2 ? points[points.length - 2] : null;
+        const delta = latest && previous ? latest.e1rm - previous.e1rm : null;
+        return { family, points, latest, previous, delta };
+      });
+      const statHtml = byLift.map((item) => `
+        <div class="modal-stat">
+          <div class="k">${item.family}</div>
+          <div class="v">${item.latest ? formatNumber(item.latest.e1rm, 1) + " kg" : "—"}</div>
+          <div class="compact-list">${item.delta === null ? "等待更多紀錄" : `${item.delta >= 0 ? "+" : ""}${formatNumber(item.delta, 1)} kg vs 前次`}</div>
+        </div>
+      `).join("");
+      const chartHtml = byLift.map((item) => `
+        <div class="trend-summary-card">
+          <strong>${item.family} · ${item.points.length} 筆</strong>
+          ${buildTrendSvg(item.points)}
+        </div>
+      `).join("");
+      openInteractionModal("e1RM 趨勢", `
+        <div class="compact-list">彙整目前紀錄與已封存週期，用每日同動作最佳 e1RM 看長期變化。</div>
+        <div class="modal-stat-grid">${statHtml}</div>
+        <div class="grid grid-1">${chartHtml}</div>
+      `);
     }
 
     function getLatestReadiness(user, date = null) {
@@ -6413,6 +6724,110 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    function openInteractionModal(title, html, afterRender = null) {
+      const modal = document.getElementById("interactionModal");
+      const titleEl = document.getElementById("interactionModalTitle");
+      const body = document.getElementById("interactionModalBody");
+      if (!modal || !titleEl || !body) return;
+      titleEl.textContent = title;
+      body.innerHTML = html;
+      modal.classList.add("open");
+      if (typeof afterRender === "function") afterRender(body);
+    }
+
+    function closeInteractionModal() {
+      const modal = document.getElementById("interactionModal");
+      const body = document.getElementById("interactionModalBody");
+      if (modal) modal.classList.remove("open");
+      if (body) body.innerHTML = "";
+    }
+
+    function renderTopActionDock() {
+      const syncStatus = document.getElementById("compactSyncStatus");
+      const syncDetail = document.getElementById("compactSyncDetail");
+      const membershipStatus = document.getElementById("compactMembershipStatus");
+      const membershipDetail = document.getElementById("compactMembershipDetail");
+      const scopedReady = Boolean(authUser && scopedRef && isScopedMigrationComplete());
+      const access = getAccessState();
+      if (syncStatus) {
+        syncStatus.className = "status " + (scopedReady ? "ok" : authUser ? "warn" : "warn");
+        syncStatus.textContent = scopedReady ? "已同步" : authUser ? "選擇資料" : "尚未登入";
+      }
+      if (syncDetail) {
+        syncDetail.textContent = scopedReady
+          ? "訓練資料已跟著帳號走"
+          : authUser
+            ? "完成資料建立後開始同步"
+            : "登入後同步訓練資料";
+      }
+      if (membershipStatus) {
+        membershipStatus.className = "status " + access.level;
+        membershipStatus.textContent = access.label;
+      }
+      if (membershipDetail) {
+        membershipDetail.textContent = access.active ? "完整功能可用" : "點開查看權限與說明";
+      }
+    }
+
+    function openSyncModal() {
+      const scopedReady = Boolean(authUser && scopedRef && isScopedMigrationComplete());
+      const signedLabel = authUser?.email || authUser?.uid || "尚未登入";
+      openInteractionModal("訓練同步", `
+        <div class="modal-stat-grid">
+          <div class="modal-stat"><div class="k">登入帳號</div><div class="v">${escapeHtml(authUser ? signedLabel : "未登入")}</div></div>
+          <div class="modal-stat"><div class="k">資料同步</div><div class="v">${scopedReady ? "已啟用" : "待設定"}</div></div>
+          <div class="modal-stat"><div class="k">目前選手</div><div class="v">${escapeHtml(getActiveUser().name)}</div></div>
+        </div>
+        <div class="compact-list">${scopedReady ? "你的訓練紀錄會保存到私人帳號空間。" : "登入後先建立或匯入訓練資料，再開始同步。"}</div>
+        <div class="modal-action-grid">
+          <button class="primary" id="modalGoogleSignInBtn" type="button">${authUser ? "切換 Google 帳號" : "使用 Google 登入"}</button>
+          <button id="modalAccountSettingsBtn" type="button">帳號與資料設定</button>
+          ${authUser ? `<button id="modalSignOutBtn" type="button">登出</button>` : ""}
+        </div>
+      `, (body) => {
+        body.querySelector("#modalGoogleSignInBtn")?.addEventListener("click", () => signInWithGoogle());
+        body.querySelector("#modalAccountSettingsBtn")?.addEventListener("click", () => {
+          closeInteractionModal();
+          switchPage("settings");
+          window.setTimeout(() => document.getElementById("authPanel")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+        });
+        body.querySelector("#modalSignOutBtn")?.addEventListener("click", () => {
+          closeInteractionModal();
+          signOutAuth();
+        });
+      });
+    }
+
+    async function openMembershipModal() {
+      await refreshAccountStatus();
+      const access = getAccessState();
+      openInteractionModal("會員狀態", `
+        <div class="modal-stat-grid">
+          <div class="modal-stat"><div class="k">狀態</div><div class="v">${escapeHtml(access.label)}</div></div>
+          <div class="modal-stat"><div class="k">方案</div><div class="v">${escapeHtml(entitlementData?.plan || (isAdminActive() ? "管理員" : "—"))}</div></div>
+          <div class="modal-stat"><div class="k">可用到</div><div class="v">${escapeHtml(entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? "管理員" : "—"))}</div></div>
+        </div>
+        <div class="compact-list">${escapeHtml(access.detail)}</div>
+        <div class="modal-action-grid">
+          <button class="primary" id="modalRefreshAccountBtn" type="button">重新整理狀態</button>
+          <button id="modalMembershipSettingsBtn" type="button">會員設定</button>
+          <button id="modalTermsBtn" type="button">安全說明</button>
+        </div>
+      `, (body) => {
+        body.querySelector("#modalRefreshAccountBtn")?.addEventListener("click", () => openMembershipModal());
+        body.querySelector("#modalMembershipSettingsBtn")?.addEventListener("click", () => {
+          closeInteractionModal();
+          switchPage("settings");
+          window.setTimeout(() => document.getElementById("membershipSettingsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+        });
+        body.querySelector("#modalTermsBtn")?.addEventListener("click", () => {
+          closeInteractionModal();
+          switchPage("settings");
+          window.setTimeout(() => document.getElementById("termsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+        });
+      });
     }
 
     function syncSegmentedControl(targetId) {
@@ -7781,18 +8196,216 @@
       `).join("");
     }
 
+    function dateRangeLabel(logs = []) {
+      const dates = logs.map((row) => row.date).filter(Boolean).sort();
+      if (!dates.length) return "—";
+      return dates[0] === dates[dates.length - 1] ? dates[0] : `${dates[0]} → ${dates[dates.length - 1]}`;
+    }
+
+    function renderArchiveCycles() {
+      const target = document.getElementById("archiveCycleList");
+      if (!target) return;
+      const user = getActiveUser();
+      const cycles = [...(user.archivedCycles || [])].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+      if (!cycles.length) {
+        target.innerHTML = `<div class="empty">尚未封存週期。</div>`;
+        return;
+      }
+      target.innerHTML = cycles.map((cycle) => `
+        <div class="archive-card">
+          <div>
+            <strong>${escapeHtml(cycle.name || "已封存週期")}</strong>
+            <span>${escapeHtml(cycle.dateRange || dateRangeLabel(cycle.logs || []))} · ${(cycle.logs || []).length} 筆紀錄 · ${escapeHtml((cycle.createdAt || "").slice(0, 10))}</span>
+          </div>
+          <div class="actions-inline">
+            <button type="button" onclick="restoreArchivedCycle('${escapeHtml(cycle.id)}')">查看封存</button>
+            <button class="danger" type="button" onclick="openDeleteArchiveModal('${escapeHtml(cycle.id)}')">刪除封存</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function setHistoryExpanded(nextValue) {
+      historyExpanded = Boolean(nextValue);
+      renderHistory();
+    }
+
+    function openArchiveCycleModal() {
+      const user = getActiveUser();
+      const logs = user.logs || [];
+      if (!logs.length) {
+        showToast("目前沒有可封存的訓練紀錄。", "warn");
+        return;
+      }
+      const range = dateRangeLabel(logs);
+      const defaultName = `${user.name} ${range} 週期`;
+      openInteractionModal("封存訓練週期", `
+        <div class="modal-stat-grid">
+          <div class="modal-stat"><div class="k">選手</div><div class="v">${escapeHtml(user.name)}</div></div>
+          <div class="modal-stat"><div class="k">紀錄數</div><div class="v">${logs.length}</div></div>
+          <div class="modal-stat"><div class="k">日期</div><div class="v">${escapeHtml(range)}</div></div>
+        </div>
+        <div class="field">
+          <label for="archiveCycleName">週期名稱</label>
+          <input id="archiveCycleName" type="text" value="${escapeHtml(defaultName)}" />
+        </div>
+        <label class="check-row" style="margin-top:12px">
+          <input id="archiveThenClear" type="checkbox" />
+          <span>封存後清空目前紀錄，開始新週期。未勾選時只會建立封存備份。</span>
+        </label>
+        <div class="footer-note">封存會把目前紀錄完整複製到已封存週期；不會刪除舊 Firebase 備份。</div>
+        <div class="modal-action-grid">
+          <button class="primary" id="confirmArchiveCycleBtn" type="button">確認封存</button>
+          <button id="cancelArchiveCycleBtn" type="button">取消</button>
+        </div>
+      `, (body) => {
+        body.querySelector("#confirmArchiveCycleBtn")?.addEventListener("click", archiveCurrentCycle);
+        body.querySelector("#cancelArchiveCycleBtn")?.addEventListener("click", closeInteractionModal);
+      });
+    }
+
+    async function archiveCurrentCycle() {
+      if (!canWriteFirebase()) return;
+      const user = getActiveUser();
+      const logs = user.logs || [];
+      if (!logs.length) return;
+      const name = document.getElementById("archiveCycleName")?.value.trim() || `${user.name} ${dateRangeLabel(logs)} 週期`;
+      const clearAfter = Boolean(document.getElementById("archiveThenClear")?.checked);
+      const cycle = {
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        dateRange: dateRangeLabel(logs),
+        logCount: logs.length,
+        logs: cloneData(logs)
+      };
+      user.archivedCycles = [...(user.archivedCycles || []), cycle];
+      if (clearAfter) user.logs = [];
+      const saved = await saveState(clearAfter ? "已封存，並開始新的訓練週期。" : "已封存目前週期。");
+      if (!saved) {
+        user.archivedCycles = (user.archivedCycles || []).filter((item) => item.id !== cycle.id);
+        if (clearAfter) user.logs = logs;
+      }
+      closeInteractionModal();
+      refreshAll();
+      switchPage("dashboard");
+    }
+
+    function openDeleteCurrentLogsModal() {
+      const user = getActiveUser();
+      if (!(user.logs || []).length) {
+        showToast("目前選手沒有可刪除的訓練紀錄。", "warn");
+        return;
+      }
+      openInteractionModal("刪除目前紀錄", `
+        <div class="feature-band bad">
+          <div class="feature-title"><strong>這會刪除目前選手尚未封存的訓練紀錄</strong><span class="status bad">${(user.logs || []).length} 筆</span></div>
+          <div class="compact-list">已封存週期不會被刪除。建議先按「封存週期」備份，再開始新週期。</div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label for="deleteLogsConfirm">輸入 DELETE 才能刪除</label>
+          <input id="deleteLogsConfirm" type="text" placeholder="DELETE" />
+        </div>
+        <div class="modal-action-grid">
+          <button class="danger" id="confirmDeleteCurrentLogsBtn" type="button">刪除目前紀錄</button>
+          <button id="cancelDeleteCurrentLogsBtn" type="button">取消</button>
+        </div>
+      `, (body) => {
+        body.querySelector("#confirmDeleteCurrentLogsBtn")?.addEventListener("click", deleteCurrentLogs);
+        body.querySelector("#cancelDeleteCurrentLogsBtn")?.addEventListener("click", closeInteractionModal);
+      });
+    }
+
+    async function deleteCurrentLogs() {
+      if (!canWriteFirebase()) return;
+      const input = document.getElementById("deleteLogsConfirm")?.value.trim();
+      if (input !== "DELETE") {
+        showToast("請輸入 DELETE 才能刪除。", "warn");
+        return;
+      }
+      const user = getActiveUser();
+      const previous = user.logs || [];
+      user.logs = [];
+      const saved = await saveState("目前訓練紀錄已刪除。");
+      if (!saved) user.logs = previous;
+      closeInteractionModal();
+      refreshAll();
+      switchPage("dashboard");
+    }
+
+    function restoreArchivedCycle(cycleId) {
+      const user = getActiveUser();
+      const cycle = (user.archivedCycles || []).find((item) => item.id === cycleId);
+      if (!cycle) return;
+      historyExpanded = true;
+      openInteractionModal(cycle.name || "已封存週期", `
+        <div class="modal-stat-grid">
+          <div class="modal-stat"><div class="k">日期</div><div class="v">${escapeHtml(cycle.dateRange || dateRangeLabel(cycle.logs || []))}</div></div>
+          <div class="modal-stat"><div class="k">紀錄</div><div class="v">${(cycle.logs || []).length}</div></div>
+        </div>
+        <div class="compact-list">封存週期目前以保護資料為主，不會自動覆蓋目前紀錄。需要重新合併時，可以先匯出資料或告訴我幫你做合併流程。</div>
+      `);
+    }
+
+    function openDeleteArchiveModal(cycleId) {
+      const user = getActiveUser();
+      const cycle = (user.archivedCycles || []).find((item) => item.id === cycleId);
+      if (!cycle) return;
+      openInteractionModal("刪除封存週期", `
+        <div class="feature-band bad">
+          <div class="feature-title"><strong>${escapeHtml(cycle.name || "已封存週期")}</strong><span class="status bad">${(cycle.logs || []).length} 筆</span></div>
+          <div class="compact-list">這只會刪除此封存週期，不會刪除目前紀錄。</div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label for="deleteArchiveConfirm">輸入 刪除 才能刪除封存</label>
+          <input id="deleteArchiveConfirm" type="text" placeholder="刪除" />
+        </div>
+        <div class="modal-action-grid">
+          <button class="danger" id="confirmDeleteArchiveBtn" type="button">刪除封存</button>
+          <button id="cancelDeleteArchiveBtn" type="button">取消</button>
+        </div>
+      `, (body) => {
+        body.querySelector("#confirmDeleteArchiveBtn")?.addEventListener("click", () => deleteArchivedCycle(cycleId));
+        body.querySelector("#cancelDeleteArchiveBtn")?.addEventListener("click", closeInteractionModal);
+      });
+    }
+
+    async function deleteArchivedCycle(cycleId) {
+      if (!canWriteFirebase()) return;
+      const input = document.getElementById("deleteArchiveConfirm")?.value.trim();
+      if (input !== "刪除") {
+        showToast("請輸入「刪除」才會刪除封存。", "warn");
+        return;
+      }
+      const user = getActiveUser();
+      const previous = user.archivedCycles || [];
+      user.archivedCycles = previous.filter((item) => item.id !== cycleId);
+      const saved = await saveState("封存週期已刪除。");
+      if (!saved) user.archivedCycles = previous;
+      closeInteractionModal();
+      refreshAll();
+      switchPage("dashboard");
+    }
+    window.restoreArchivedCycle = restoreArchivedCycle;
+    window.openDeleteArchiveModal = openDeleteArchiveModal;
+
     function renderHistory() {
       const containers = [...document.querySelectorAll("[data-history-accordion]")];
       const user = getActiveUser();
       const zh = currentLanguage() === "zh";
       const logs = [...user.logs].sort((a, b) => new Date(b.date) - new Date(a.date) || b.order - a.order);
-      const status = document.getElementById("historyCountStatus");
-      if (status) {
-        status.className = "status " + (logs.length ? "ok" : "warn");
-        status.textContent = logs.length
-          ? `${user.name} · ${logs.length} ${zh ? "筆" : "sets"}`
-          : (zh ? "目前選手沒有紀錄" : "No logs for active athlete");
+      const wrapper = document.getElementById("historyAccordionWrap");
+      const toggleBtn = document.getElementById("toggleHistoryBtn");
+      const summary = document.getElementById("historySummaryText");
+      const range = dateRangeLabel(logs);
+      if (wrapper) wrapper.classList.toggle("open", historyExpanded);
+      if (toggleBtn) toggleBtn.textContent = historyExpanded ? (zh ? "收起紀錄" : "Collapse") : (zh ? "展開紀錄" : "Expand");
+      if (summary) {
+        summary.textContent = logs.length
+          ? `${user.name} · ${logs.length} ${zh ? "筆" : "sets"} · ${range}`
+          : (zh ? `${user.name} 目前沒有紀錄` : `No logs for ${user.name}`);
       }
+      renderArchiveCycles();
 
       if (!logs.length) {
         const otherUsers = Object.values(state.users || {})
@@ -7908,6 +8521,7 @@
       }
 
       containers.forEach((container) => { container.innerHTML = html; });
+      renderArchiveCycles();
     }
 
     function refreshAll() {
@@ -7930,6 +8544,7 @@
       renderHistory();
       syncAllSegmentedControls();
       applyLanguage();
+      renderTopActionDock();
       renderAuthMigrationStatus();
     }
 
@@ -8175,6 +8790,8 @@
           stressBudget: user.athleteProfile?.stressBudget || "",
           programRows: user.program.length, loggedSets: user.logs.length,
           generatedPlans: (user.generatedPlans || []).length,
+          archivedCycles: (user.archivedCycles || []).length,
+          archivedLogs: (user.archivedCycles || []).reduce((sum, cycle) => sum + (cycle.logs || []).length, 0),
           readinessChecks: (user.readinessChecks || []).length,
           coachDecisions: (user.coachDecisions || []).length,
           aiCoachSessions: (user.aiCoachSessions || []).length,
@@ -8216,6 +8833,16 @@
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(programRows.length ? programRows : [{ note: "No program imported" }]), `Program_${safeSheetName(u.name)}`.slice(0, 31));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logRows.length ? logRows : [{ note: "No log rows yet" }]), `Log_${safeSheetName(u.name)}`.slice(0, 31));
+        const archivedRows = (u.archivedCycles || []).flatMap((cycle) => (cycle.logs || []).map((r) => ({
+          ArchiveId: cycle.id,
+          ArchiveName: cycle.name,
+          ArchiveDateRange: cycle.dateRange,
+          Date: r.date, Week: r.week, Day: r.day, SessionFocus: r.sessionFocus,
+          Lift: r.lift, Variation: r.variation, SetType: r.setType,
+          Reps: r.reps, WeightKg: r.weight, RPE: r.rpe, E1RMKg: r.e1rm,
+          FatigueDropPercent: r.fatiguePct, TechniqueNotes: r.techNotes, GeneralNotes: r.generalNotes
+        })));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(archivedRows.length ? archivedRows : [{ note: "No archived cycles" }]), `Archive_${safeSheetName(u.name)}`.slice(0, 31));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((u.readinessChecks || []).length ? u.readinessChecks : [{ note: "No readiness checks" }]), `Ready_${safeSheetName(u.name)}`.slice(0, 31));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((u.coachDecisions || []).map((d) => ({
           Date: d.date, Action: d.action, Score: d.readinessScore?.score, Applied: d.applied,
@@ -8942,6 +9569,13 @@
 
     /* ── Event listeners ── */
     document.getElementById("addUserBtn").addEventListener("click", openUserModal);
+    document.getElementById("openSyncModalBtn").addEventListener("click", openSyncModal);
+    document.getElementById("openMembershipModalBtn").addEventListener("click", openMembershipModal);
+    document.getElementById("openE1rmTrendBtn").addEventListener("click", openE1rmTrendModal);
+    document.getElementById("toggleHistoryBtn").addEventListener("click", () => setHistoryExpanded(!historyExpanded));
+    document.getElementById("openArchiveCycleBtn").addEventListener("click", openArchiveCycleModal);
+    document.getElementById("openDeleteLogsBtn").addEventListener("click", openDeleteCurrentLogsModal);
+    document.getElementById("closeInteractionModalBtn").addEventListener("click", closeInteractionModal);
     document.getElementById("closeUserModalBtn").addEventListener("click", closeUserModal);
     document.getElementById("openFilmingGuideBtn").addEventListener("click", openFilmingGuide);
     document.getElementById("closeFilmingGuideBtn").addEventListener("click", closeFilmingGuide);
@@ -8964,10 +9598,14 @@
     document.getElementById("filmingGuideModal").addEventListener("click", (event) => {
       if (event.target.id === "filmingGuideModal") closeFilmingGuide();
     });
+    document.getElementById("interactionModal").addEventListener("click", (event) => {
+      if (event.target.id === "interactionModal") closeInteractionModal();
+    });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         closeUserModal();
         closeFilmingGuide();
+        closeInteractionModal();
       }
     });
     document.getElementById("newUserName").addEventListener("keydown", (event) => {
@@ -9019,13 +9657,10 @@
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
     document.getElementById("languageToggleBtn").addEventListener("click", toggleLanguage);
     document.getElementById("membershipSetupBtn").addEventListener("click", async () => {
-      await refreshAccountStatus();
-      switchPage("settings");
-      document.getElementById("membershipSettingsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      await openMembershipModal();
     });
     document.getElementById("membershipTermsBtn").addEventListener("click", () => {
-      switchPage("settings");
-      document.getElementById("termsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      openMembershipModal();
     });
 
     document.getElementById("restoreProgramInput").addEventListener("change", async (e) => {
@@ -9146,10 +9781,7 @@
     document.getElementById("googleSignInBtn").addEventListener("click", signInWithGoogle);
     document.getElementById("loginCalloutGoogleBtn").addEventListener("click", signInWithGoogle);
     document.getElementById("loginCalloutSetupBtn").addEventListener("click", () => {
-      switchPage("settings");
-      window.setTimeout(() => {
-        document.getElementById("authPanel")?.scrollIntoView({ behavior: "auto", block: "center" });
-      }, 0);
+      openSyncModal();
     });
     document.getElementById("signOutBtn").addEventListener("click", signOutAuth);
     document.getElementById("refreshMigrationPreviewBtn").addEventListener("click", () => {
