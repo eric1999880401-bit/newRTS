@@ -3030,6 +3030,261 @@
       border-radius: inherit;
       background: linear-gradient(90deg, var(--moss), var(--terra));
     }
+    .video-command-panel,
+    .review-command-panel {
+      display: grid;
+      gap: 12px;
+      margin: 14px 0;
+    }
+    .video-workbench,
+    .review-workbench {
+      display: grid;
+      grid-template-columns: minmax(280px, 1.2fr) minmax(240px, .8fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+    .video-orbit-card,
+    .review-hero-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 170px;
+      padding: 18px;
+      border: 1px solid var(--rule);
+      background:
+        linear-gradient(135deg, rgba(122,138,94,.16), transparent 42%),
+        linear-gradient(165deg, var(--ivory), var(--ivory-soft));
+      border-radius: calc(var(--radius) + 2px);
+    }
+    .video-orbit-card::after,
+    .review-hero-card::after {
+      content: "";
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 86px;
+      height: 86px;
+      border: 1px solid rgba(122,138,94,.35);
+      transform: rotate(45deg);
+      opacity: .25;
+      pointer-events: none;
+    }
+    .video-orbit-eyebrow,
+    .review-eyebrow {
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .video-orbit-card h3,
+    .review-hero-card h3 {
+      margin: 6px 0 8px;
+      font-size: clamp(25px, 3vw, 36px);
+      line-height: 1.05;
+    }
+    .video-flow,
+    .review-score-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .video-flow-step,
+    .review-score-tile {
+      min-height: 88px;
+      padding: 11px;
+      border: 1px solid var(--rule);
+      background: var(--ivory-soft);
+      border-radius: var(--radius);
+    }
+    .video-flow-step {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 8px;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .video-flow-step.active {
+      border-color: var(--moss);
+      background: rgba(122,138,94,.15);
+      transform: translateY(-2px);
+    }
+    .video-flow-step.done {
+      border-color: rgba(122,138,94,.55);
+      background: rgba(122,138,94,.11);
+    }
+    .video-flow-step.locked { opacity: .68; }
+    .video-flow-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .video-flow-number {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid var(--rule-strong);
+      color: var(--ink-base);
+      font-weight: 700;
+    }
+    .video-flow-step.done .video-flow-number {
+      background: var(--moss);
+      color: var(--paper);
+      border-color: var(--moss);
+    }
+    .video-flow-step strong,
+    .review-score-tile strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .video-flow-step span,
+    .review-score-tile span {
+      color: var(--pencil);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .video-action-grid,
+    .review-action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .video-action-card,
+    .review-action-card {
+      display: grid;
+      align-content: space-between;
+      min-height: 104px;
+      text-align: left;
+      padding: 13px;
+      border: 1px solid var(--rule);
+      background: var(--ivory-soft);
+      border-radius: var(--radius);
+      color: var(--ink-base);
+      cursor: pointer;
+    }
+    .video-action-card:hover,
+    .review-action-card:hover {
+      background: var(--paper-warm);
+      border-color: var(--rule-strong);
+    }
+    .video-action-card small,
+    .review-action-card small {
+      color: var(--pencil);
+      line-height: 1.35;
+    }
+    .video-signal-grid,
+    .video-insight-strip,
+    .review-lift-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .video-signal-card,
+    .video-insight-card,
+    .review-lift-card,
+    .review-session-card {
+      padding: 13px;
+      border: 1px solid var(--rule);
+      background: var(--ivory);
+      border-radius: var(--radius);
+    }
+    .video-signal-card .k,
+    .video-insight-card .k,
+    .review-lift-card .k,
+    .review-score-tile .k {
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .video-signal-card .v,
+    .video-insight-card .v,
+    .review-lift-card .v,
+    .review-score-tile .v {
+      margin-top: 4px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .confidence-track,
+    .review-lift-track,
+    .review-rpe-track {
+      height: 8px;
+      overflow: hidden;
+      margin-top: 9px;
+      border-radius: 999px;
+      background: var(--paper-deep);
+    }
+    .confidence-fill,
+    .review-lift-fill,
+    .review-rpe-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--moss), var(--terra));
+    }
+    .video-result-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--rule);
+      background: var(--ivory);
+      border-left: 4px solid var(--teal-dust);
+      border-radius: var(--radius);
+    }
+    .video-result-card.pose { border-left-color: var(--terra); }
+    .video-result-head,
+    .review-session-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .video-result-head h3,
+    .review-session-head h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .video-metric-pills,
+    .review-session-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .video-metric-pills span,
+    .review-session-chips span {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: var(--ivory-soft);
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+    .review-session-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .review-session-card {
+      min-height: 150px;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .review-session-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--rule-strong);
+      background: var(--ivory-soft);
+    }
     .video-review-list {
       display: grid;
       gap: 10px;
@@ -3307,12 +3562,19 @@
       .workout-layout { grid-template-columns: 1fr; }
       .product-grid,
       .product-grid.wide-left,
+      .video-workbench,
+      .review-workbench,
       .pose-analysis-stage,
       .video-quick-card,
       .dashboard-lanes { grid-template-columns: 1fr; }
       .pose-setup-strip,
+      .video-flow,
+      .review-score-grid,
+      .video-signal-grid,
+      .video-insight-strip,
+      .review-lift-grid,
       .filming-guide-grid,
-      .calibration-signal { grid-template-columns: 1fr; }
+      .calibration-signal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .span-2, .span-4 { grid-column: 1 / -1; }
     }
     @media (max-width: 760px) {
@@ -3384,6 +3646,15 @@
       .onboarding-grid,
       .admin-grid,
       .weekly-grid,
+      .video-flow,
+      .review-score-grid,
+      .video-action-grid,
+      .review-action-grid,
+      .video-signal-grid,
+      .video-insight-strip,
+      .review-lift-grid,
+      .pose-setup-strip,
+      .calibration-signal,
       .metric-strip { grid-template-columns: 1fr; }
       .metric-strip .metric { border-right: none; border-bottom: 1px solid var(--rule); }
       .metric-strip .metric:last-child { border-bottom: none; }
@@ -4845,6 +5116,7 @@
           </div>
           <button id="openFilmingGuideBtn" type="button" data-i18n="filmingGuideButton">Filming guide</button>
         </div>
+        <div id="videoCommandPanel" class="video-command-panel"></div>
         <div class="video-quick-card">
           <div class="field">
             <label for="videoLift" data-i18n="lift">Lift</label>
@@ -4974,6 +5246,7 @@
       <section class="panel">
         <h2 id="dashboardHistoryTitle">完整訓練紀錄</h2>
         <div class="hint">這裡會列出目前選手的所有舊紀錄。找不到時，先確認上方選手是否選到 Camel 或 Pig。</div>
+        <div id="reviewCommandPanel" class="review-command-panel"></div>
         <div class="history-control-bar">
           <span class="history-summary-chip" id="historySummaryText">目前選手</span>
           <div class="actions-inline">
@@ -10236,6 +10509,7 @@
         if (saveBtn) saveBtn.disabled = true;
         if (weakBtn) weakBtn.disabled = true;
         if (rpeBtn) rpeBtn.disabled = true;
+        renderVideoCommandPanel();
         return;
       }
       const level = analysis.confidence >= 0.72 ? "ok" : analysis.confidence >= 0.45 ? "warn" : "bad";
@@ -10265,6 +10539,7 @@
       if (saveBtn) saveBtn.disabled = false;
       if (weakBtn) weakBtn.disabled = false;
       if (rpeBtn) rpeBtn.disabled = false;
+      renderVideoCommandPanel();
     }
 
     function drawPoseOverlay(analysis = lastPoseAnalysis) {
@@ -10516,19 +10791,259 @@
       }
     }
 
+    function percentWidth(value, max = 1) {
+      const number = Number(value);
+      const ceiling = Math.max(Number(max) || 1, 1);
+      if (!Number.isFinite(number) || number <= 0) return 0;
+      return Math.max(4, Math.min(100, (number / ceiling) * 100));
+    }
+
+    function shortDateLabel(value) {
+      const text = String(value || "").trim();
+      if (!text) return "--";
+      return text.length >= 10 ? text.slice(5, 10).replace("-", "/") : text;
+    }
+
+    function getSessionSummaries(user, limit = 4) {
+      const grouped = new Map();
+      [...(user.logs || [])].forEach((row) => {
+        const key = row.date || "unknown";
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(row);
+      });
+      return [...grouped.entries()]
+        .sort((a, b) => String(b[0]).localeCompare(String(a[0])))
+        .slice(0, limit)
+        .map(([date, rows]) => {
+          const sortedRows = [...rows].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+          const lifts = [...new Set(sortedRows.map((row) => liftFamily(row.lift)).filter(Boolean))];
+          const rpe = average(sortedRows.map((row) => row.rpe));
+          const e1rm = Math.max(0, ...sortedRows.map((row) => Number(row.e1rm) || 0));
+          return {
+            date,
+            rows: sortedRows,
+            lifts,
+            setCount: sortedRows.length,
+            avgRpe: rpe,
+            bestE1rm: e1rm || null,
+            week: sortedRows[0]?.week || "--",
+            day: sortedRows[0]?.day || "--",
+            focus: sortedRows[0]?.sessionFocus || sortedRows[0]?.lift || ""
+          };
+        });
+    }
+
+    function renderVideoCommandPanel() {
+      const target = document.getElementById("videoCommandPanel");
+      if (!target) return;
+      const user = getActiveUser();
+      const zh = currentLanguage() === "zh";
+      const file = document.getElementById("videoFile")?.files?.[0] || null;
+      const lift = document.getElementById("videoLift")?.value || "Squat";
+      const setType = document.getElementById("videoSetType")?.value || "Top";
+      const reps = Number(document.getElementById("videoReps")?.value) || 1;
+      const rpe = Number(document.getElementById("videoRpe")?.value) || 8;
+      const speed = document.getElementById("videoSpeed")?.value || "Normal";
+      const viewAngle = document.getElementById("poseViewAngle")?.value || "side";
+      const latestSavedAnalysis = [...(user.videoAnalyses || [])]
+        .sort((a, b) => String(b.savedAt || b.createdAt || b.date).localeCompare(String(a.savedAt || a.createdAt || a.date)))[0] || null;
+      const activeAnalysis = lastPoseAnalysis || latestSavedAnalysis;
+      const poseAi = [...(user.aiCoachSessions || [])]
+        .filter((session) => String(session.requestSummary?.requestFocus || "").startsWith("pose-"))
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0] || null;
+      const steps = [
+        {
+          title: zh ? "選動作" : "Choose lift",
+          detail: `${lift} · ${setType}`,
+          done: Boolean(lift),
+          active: !file
+        },
+        {
+          title: zh ? "放影片" : "Load video",
+          detail: file ? file.name : (zh ? "先上傳或選檔" : "Pick a training clip"),
+          done: Boolean(file),
+          active: Boolean(lift && !file)
+        },
+        {
+          title: zh ? "本機分析" : "Local analysis",
+          detail: activeAnalysis ? `${Math.round(Number(activeAnalysis.confidence || 0) * 100)}% confidence` : (zh ? "抓角度、速度、槓路" : "Angles, speed, path"),
+          done: Boolean(activeAnalysis),
+          active: Boolean(file && !activeAnalysis)
+        },
+        {
+          title: zh ? "AI 回饋" : "AI feedback",
+          detail: poseAi ? (zh ? "已有建議" : "Suggestion ready") : (zh ? "弱點 / RPE 第二意見" : "Weak points / RPE"),
+          done: Boolean(poseAi),
+          active: Boolean(activeAnalysis && !poseAi)
+        }
+      ];
+      const flowHtml = steps.map((step, index) => `
+        <div class="video-flow-step ${step.done ? "done" : step.active ? "active" : "locked"}">
+          <div class="video-flow-top">
+            <span class="video-flow-number">${step.done ? "✓" : index + 1}</span>
+            <span>${step.done ? (zh ? "完成" : "Done") : step.active ? (zh ? "現在" : "Now") : (zh ? "待辦" : "Next")}</span>
+          </div>
+          <strong>${escapeHtml(step.title)}</strong>
+          <span>${escapeHtml(step.detail)}</span>
+        </div>
+      `).join("");
+      const confidence = Number(activeAnalysis?.confidence || 0);
+      target.innerHTML = `
+        <div class="video-workbench">
+          <div class="video-orbit-card">
+            <div class="video-orbit-eyebrow">${zh ? "影片動作分析" : "Video workflow"}</div>
+            <h3>${zh ? "一支影片，變成可追蹤的訓練線索" : "Turn one set into coachable signals"}</h3>
+            <div class="compact-list">${zh ? "先照固定角度拍，再用本機分析抓角度、速度與槓路；AI 只在你按下後讀摘要給建議。" : "Film from a fixed angle, analyze locally, then ask AI only when you want a second opinion."}</div>
+            <div class="video-flow">${flowHtml}</div>
+          </div>
+          <div class="video-action-grid">
+            <button class="video-action-card" type="button" data-video-action="guide"><strong>${zh ? "拍攝教學" : "Filming guide"}</strong><small>${zh ? "距離、高度、側面/正面角度" : "Distance, height, side/front setup"}</small></button>
+            <button class="video-action-card" type="button" data-video-action="annotate"><strong>${zh ? "快速標註" : "Quick annotation"}</strong><small>${zh ? "RPE、重量、速度感與 cue" : "RPE, load, speed feel, cue"}</small></button>
+            <button class="video-action-card" type="button" data-video-action="analyze"><strong>${zh ? "開始分析" : "Analyze"}</strong><small>${file ? (zh ? "用目前影片跑本機姿態分析" : "Run local pose analysis") : (zh ? "先選影片" : "Choose a video first")}</small></button>
+            <button class="video-action-card" type="button" data-video-action="ai"><strong>${zh ? "問 AI 教練" : "Ask AI coach"}</strong><small>${activeAnalysis ? (zh ? "用分析摘要找弱點或 RPE" : "Use the summary for cues or RPE") : (zh ? "先完成一次分析" : "Run analysis first")}</small></button>
+          </div>
+        </div>
+        <div class="video-signal-grid">
+          <div class="video-signal-card"><div class="k">${zh ? "動作" : "Lift"}</div><div class="v">${escapeHtml(lift)}</div><div class="compact-list">${escapeHtml(viewAngle === "front" ? (zh ? "正面" : "Front") : (zh ? "側面" : "Side"))}</div></div>
+          <div class="video-signal-card"><div class="k">${zh ? "這組" : "Set"}</div><div class="v">${reps} rep</div><div class="compact-list">RPE ${formatNumber(rpe, 1)} · ${escapeHtml(speed)}</div></div>
+          <div class="video-signal-card"><div class="k">${zh ? "影片" : "Video"}</div><div class="v">${file ? "Ready" : "--"}</div><div class="compact-list">${file ? escapeHtml(file.name) : (zh ? "尚未選檔" : "No file selected")}</div></div>
+          <div class="video-signal-card"><div class="k">${zh ? "分析信心" : "Confidence"}</div><div class="v">${activeAnalysis ? `${Math.round(confidence * 100)}%` : "--"}</div><div class="confidence-track"><div class="confidence-fill" style="width:${percentWidth(confidence)}%"></div></div></div>
+        </div>
+      `;
+      target.querySelectorAll("[data-video-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const action = button.dataset.videoAction;
+          if (action === "guide") openFilmingGuide();
+          if (action === "annotate") {
+            const drawer = document.getElementById("manualAnnotationPanel");
+            if (drawer) drawer.open = true;
+            drawer?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          if (action === "analyze") document.getElementById("analyzePoseBtn")?.click();
+          if (action === "ai") {
+            if (!getCurrentPoseAnalysisForAi()) {
+              showToast(zh ? "請先完成一次影片分析。" : "Run a pose analysis first.", "warn");
+              return;
+            }
+            askPoseAi("weakness");
+          }
+        });
+      });
+    }
+
+    function renderReviewCommandPanel() {
+      const target = document.getElementById("reviewCommandPanel");
+      if (!target) return;
+      const user = getActiveUser();
+      const zh = currentLanguage() === "zh";
+      const logs = [...(user.logs || [])];
+      const recent = getRecentLogs(user, 28);
+      const sessions = getSessionSummaries(user, 5);
+      const best = getBestE1RMByLift(user, 90);
+      const archivedCycles = user.archivedCycles || [];
+      const trainingDates = new Set(logs.map((row) => row.date).filter(Boolean));
+      const latest = sessions[0];
+      const bestValues = Object.values(best).map((row) => Number(row?.e1rm || 0)).filter(Boolean);
+      const maxBest = bestValues.length ? Math.max(...bestValues) : 1;
+      const liftCards = ["Squat", "Bench", "Deadlift"].map((lift) => {
+        const row = best[lift];
+        const value = Number(row?.e1rm || 0);
+        const liftLogs = recent.filter((item) => liftFamily(item.lift) === lift);
+        return `
+          <div class="review-lift-card">
+            <div class="k">${lift}</div>
+            <div class="v">${value ? `${formatNumber(value, 1)} kg` : "--"}</div>
+            <div class="review-lift-track"><div class="review-lift-fill" style="width:${percentWidth(value, maxBest)}%"></div></div>
+            <div class="compact-list">${liftLogs.length} ${zh ? "組 / 28 天" : "sets / 28 days"}${row?.date ? ` · ${shortDateLabel(row.date)}` : ""}</div>
+          </div>
+        `;
+      }).join("");
+      const sessionCards = sessions.length ? sessions.map((session) => {
+        const rpeWidth = percentWidth(session.avgRpe || 0, 10);
+        return `
+          <button class="review-session-card" type="button" data-review-date="${escapeHtml(session.date)}">
+            <div class="review-session-head">
+              <div>
+                <h3>${shortDateLabel(session.date)}</h3>
+                <div class="compact-list">W${escapeHtml(session.week)} D${escapeHtml(session.day)} · ${escapeHtml(session.focus || (zh ? "訓練日" : "Training day"))}</div>
+              </div>
+              <span class="status ok">${session.setCount} ${zh ? "組" : "sets"}</span>
+            </div>
+            <div class="review-session-chips">${session.lifts.map((lift) => `<span>${escapeHtml(lift)}</span>`).join("")}</div>
+            <div class="review-rpe-track"><div class="review-rpe-fill" style="width:${rpeWidth}%"></div></div>
+            <div class="compact-list">${zh ? "平均 RPE" : "Avg RPE"} ${session.avgRpe === null ? "--" : formatNumber(session.avgRpe, 1)} · ${zh ? "最高 e1RM" : "Best e1RM"} ${session.bestE1rm ? formatNumber(session.bestE1rm, 1) + " kg" : "--"}</div>
+          </button>
+        `;
+      }).join("") : `<div class="empty">${zh ? "還沒有訓練紀錄，先從今日頁記錄第一組。" : "No sessions yet. Log your first set from Today."}</div>`;
+      target.innerHTML = `
+        <div class="review-workbench">
+          <div class="review-hero-card">
+            <div class="review-eyebrow">${zh ? "回顧中心" : "Review center"}</div>
+            <h3>${escapeHtml(user.name || "Athlete")} ${zh ? "的訓練雷達" : "training radar"}</h3>
+            <div class="compact-list">${zh ? "先看趨勢與最近訓練，需要細節時再展開完整紀錄。" : "Scan trends first, then open full records only when needed."}</div>
+            <div class="review-score-grid">
+              <div class="review-score-tile"><div class="k">${zh ? "全部組數" : "Total sets"}</div><div class="v">${logs.length}</div><span>${trainingDates.size} ${zh ? "個訓練日" : "training days"}</span></div>
+              <div class="review-score-tile"><div class="k">${zh ? "近 28 天" : "Last 28 days"}</div><div class="v">${recent.length}</div><span>${zh ? "目前週期工作量" : "current-cycle volume"}</span></div>
+              <div class="review-score-tile"><div class="k">${zh ? "最近一次" : "Latest"}</div><div class="v">${latest ? shortDateLabel(latest.date) : "--"}</div><span>${latest ? `${latest.setCount} ${zh ? "組" : "sets"}` : (zh ? "尚無紀錄" : "No logs")}</span></div>
+              <div class="review-score-tile"><div class="k">${zh ? "封存週期" : "Archives"}</div><div class="v">${archivedCycles.length}</div><span>${zh ? "可回頭比較" : "saved cycles"}</span></div>
+            </div>
+          </div>
+          <div class="review-action-grid">
+            <button class="review-action-card" type="button" data-review-action="trend"><strong>e1RM ${zh ? "趨勢" : "trend"}</strong><small>${zh ? "用彈窗看 30/90/180 天變化" : "Open 30/90/180-day chart"}</small></button>
+            <button class="review-action-card" type="button" data-review-action="records"><strong>${zh ? "完整紀錄" : "Full records"}</strong><small>${zh ? "篩選日期、動作與目前/封存週期" : "Filter dates, lifts, active/archive"}</small></button>
+            <button class="review-action-card" type="button" data-review-action="archive"><strong>${zh ? "封存週期" : "Archive cycle"}</strong><small>${zh ? "新週期前先安全備份" : "Snapshot before a new block"}</small></button>
+            <button class="review-action-card" type="button" data-review-action="export"><strong>${zh ? "匯出資料" : "Export data"}</strong><small>${zh ? "到期也能帶走自己的紀錄" : "Keep your training portable"}</small></button>
+          </div>
+        </div>
+        <div class="review-lift-grid">${liftCards}</div>
+        <div class="review-session-grid">${sessionCards}</div>
+      `;
+      target.querySelectorAll("[data-review-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const action = button.dataset.reviewAction;
+          if (action === "trend") openE1rmTrendModal();
+          if (action === "records") openHistoryCenterModal();
+          if (action === "archive") openArchiveCycleModal();
+          if (action === "export") exportAllToExcel();
+        });
+      });
+      target.querySelectorAll("[data-review-date]").forEach((button) => {
+        button.addEventListener("click", () => {
+          historyExpanded = true;
+          renderHistory();
+          document.getElementById("historyAccordionWrap")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    }
+
     function renderVideoReviews() {
+      renderVideoCommandPanel();
       const user = getActiveUser();
       const target = document.getElementById("videoReviewList");
       if (!target) return;
       const reviews = [...(user.videoReviews || [])].sort((a, b) => String(b.createdAt || b.date).localeCompare(String(a.createdAt || a.date))).slice(0, 6);
       const analyses = [...(user.videoAnalyses || [])].sort((a, b) => String(b.savedAt || b.createdAt || b.date).localeCompare(String(a.savedAt || a.createdAt || a.date))).slice(0, 6);
       const zh = currentLanguage() === "zh";
+      const confidenceValues = [
+        ...analyses.map((analysis) => Number(analysis.confidence)),
+        ...reviews.map((review) => Number(review.confidence))
+      ].filter(Number.isFinite);
+      const avgConfidence = average(confidenceValues);
+      const latestLabel = analyses[0]?.date || reviews[0]?.date || "";
+      const insightHtml = `
+        <div class="video-insight-strip">
+          <div class="video-insight-card"><div class="k">${zh ? "影片筆記" : "Video notes"}</div><div class="v">${(user.videoReviews || []).length}</div><div class="compact-list">${zh ? "人工 RPE / cue" : "Manual RPE / cues"}</div></div>
+          <div class="video-insight-card"><div class="k">${zh ? "動作分析" : "Pose analyses"}</div><div class="v">${(user.videoAnalyses || []).length}</div><div class="compact-list">${zh ? "角度、速度、槓路" : "Angles, speed, bar path"}</div></div>
+          <div class="video-insight-card"><div class="k">${zh ? "平均信心" : "Avg confidence"}</div><div class="v">${avgConfidence === null ? "--" : `${Math.round(avgConfidence * 100)}%`}</div><div class="confidence-track"><div class="confidence-fill" style="width:${percentWidth(avgConfidence || 0)}%"></div></div></div>
+          <div class="video-insight-card"><div class="k">${zh ? "最近分析" : "Latest"}</div><div class="v">${latestLabel ? shortDateLabel(latestLabel) : "--"}</div><div class="compact-list">${latestLabel || (zh ? "尚無資料" : "No data yet")}</div></div>
+        </div>
+      `;
       if (!reviews.length && !analyses.length) {
-        target.innerHTML = `<div class="empty">${zh ? "尚未有影片分析或 RPE 標註。" : "No video review notes or pose analyses yet."}</div>`;
+        target.innerHTML = `${insightHtml}<div class="empty">${zh ? "還沒有影片回饋。先選動作、上傳影片，再按開始分析。" : "No video reviews or pose analyses yet. Choose a lift, load a video, then run analysis."}</div>`;
         return;
       }
       const analysisHtml = analyses.map((analysis) => `
-        <div class="video-review-item">
+        <div class="video-result-card pose">
           <strong>${escapeHtml(analysis.lift)} | ${escapeHtml(analysis.viewAngle === "front" ? (zh ? "正面" : "front") : (zh ? "側面" : "side"))} | ${Math.round(Number(analysis.confidence || 0) * 100)}%</strong>
           <div class="compact-list">${escapeHtml(analysis.date)} | ${zh ? "次數" : "reps"} ${(analysis.repPhases || []).length} | ${zh ? "速度下降" : "velocity drop"} ${analysis.velocityCurveSummary?.velocityDropPct ?? "--"}%</div>
           <div class="compact-list">${zh ? "槓路漂移" : "Drift"} ${analysis.barPathSummary?.horizontalDriftPct ?? "--"}% | ${escapeHtml(analysis.calibration?.unit || "relative")}${analysis.rawVideoSaved ? (zh ? " | 已暫存原影片" : " | raw saved") : ""}</div>
@@ -10536,7 +11051,7 @@
         </div>
       `).join("");
       const reviewHtml = reviews.map((review) => `
-        <div class="video-review-item">
+        <div class="video-result-card">
           <strong>${escapeHtml(review.lift)} · ${escapeHtml(review.setType)} · RPE ${formatNumber(review.manualRpe, 1)}</strong>
           <div class="compact-list">${escapeHtml(review.date)} · ${escapeHtml(review.barSpeed)} · ${escapeHtml(review.fileName || (zh ? "未上傳檔名" : "No file label"))}</div>
           <div class="compact-list">${zh ? "估算 RPE" : "Estimated RPE"} ${formatNumber(review.estimatedRpe, 1)} · ${zh ? "信心" : "confidence"} ${Math.round(Number(review.confidence || 0) * 100)}%${review.storagePath ? (zh ? " · 已上傳" : " · uploaded") : ""}</div>
@@ -10544,7 +11059,7 @@
           ${(review.why || []).length ? `<ul class="reason-list">${review.why.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>` : ""}
         </div>
       `).join("");
-      target.innerHTML = `${analysisHtml}${reviewHtml}`;
+      target.innerHTML = `${insightHtml}${analysisHtml}${reviewHtml}`;
     }
 
     function renderProgressDashboard() {
@@ -10564,6 +11079,7 @@
       const videoAnalyses = user.videoAnalyses || [];
       const calibration = computePersonalCalibration(user);
       const zh = currentLanguage() === "zh";
+      renderReviewCommandPanel();
       overview.innerHTML = `
         <div class="metric"><div class="k">${zh ? "28 天組數" : "28-day sets"}</div><div class="v">${recent.length}</div></div>
         <div class="metric"><div class="k">${zh ? "最近狀態" : "Latest readiness"}</div><div class="v">${latestReadiness ? readinessScore.score : "—"}</div></div>
@@ -12296,6 +12812,12 @@
     document.getElementById("askPoseWeaknessBtn").addEventListener("click", () => askPoseAi("weakness"));
     document.getElementById("askPoseRpeBtn").addEventListener("click", () => askPoseAi("rpe"));
     document.getElementById("poseCalibrationMode").addEventListener("change", updatePoseCalibrationUi);
+    ["videoLift", "videoRpe", "videoFile", "videoSetType", "videoReps", "videoWeight", "videoSpeed", "poseViewAngle", "poseSaveRawVideo"].forEach((id) => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.addEventListener("input", renderVideoCommandPanel);
+      input.addEventListener("change", renderVideoCommandPanel);
+    });
 
     document.getElementById("usePlanForLogBtn").addEventListener("click", () => {
       const week = Number(document.getElementById("filterWeek").value) || 1;
