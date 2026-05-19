@@ -4316,6 +4316,7 @@
             <button id="saveSettingsBtn" type="button">儲存設定</button>
             <button class="secondary" id="loadBundledProgramBtn" type="button">載入範例課表</button>
             <button class="danger" id="clearActiveDataBtn" type="button">清除目前選手紀錄</button>
+            <button class="danger" id="deleteAthleteBtn" type="button">刪除目前選手</button>
           </div>
         </section>
 
@@ -5564,11 +5565,15 @@
         u2: createUserProfile("u2", "User 2", [])
       };
       const normalized = {};
-      Object.entries(defaults).forEach(([id, profile]) => {
-        normalized[id] = normalizeUserProfile(id, users?.[id] || {}, profile);
-      });
-      Object.entries(users || {}).forEach(([id, profile]) => {
-        if (!normalized[id]) normalized[id] = normalizeUserProfile(id, profile);
+      const entries = Object.entries(users || {}).filter(([, profile]) => profile && typeof profile === "object");
+      if (!entries.length) {
+        Object.entries(defaults).forEach(([id, profile]) => {
+          normalized[id] = normalizeUserProfile(id, {}, profile);
+        });
+        return normalized;
+      }
+      entries.forEach(([id, profile]) => {
+        normalized[id] = normalizeUserProfile(id, profile, defaults[id] || {});
       });
       return normalized;
     }
@@ -11402,6 +11407,108 @@
       switchPage("dashboard");
     }
 
+    function getAthleteDataCounts(user) {
+      const archivedCycles = user.archivedCycles || [];
+      const archivedLogs = archivedCycles.reduce((sum, cycle) => sum + (cycle.logs || []).length, 0);
+      return {
+        programRows: (user.program || []).length,
+        logs: (user.logs || []).length,
+        archivedCycles: archivedCycles.length,
+        archivedLogs,
+        generatedPlans: (user.generatedPlans || []).length,
+        readinessChecks: (user.readinessChecks || []).length,
+        coachDecisions: (user.coachDecisions || []).length,
+        aiSessions: (user.aiCoachSessions || []).length,
+        videoItems: (user.videoReviews || []).length + (user.videoAnalyses || []).length
+      };
+    }
+
+    function openDeleteAthleteModal() {
+      const userIds = Object.keys(state.users || {});
+      if (userIds.length <= 1) {
+        showToast("至少要保留一位選手。你可以改名或清除紀錄，但不能刪掉最後一位。", "warn");
+        return;
+      }
+      const user = getActiveUser();
+      const confirmName = String(user.name || user.id || "").trim();
+      const counts = getAthleteDataCounts(user);
+      const statHtml = [
+        ["訓練紀錄", counts.logs],
+        ["課表列", counts.programRows],
+        ["封存週期", counts.archivedCycles],
+        ["封存組數", counts.archivedLogs],
+        ["AI / 教練", counts.aiSessions + counts.coachDecisions],
+        ["影片資料", counts.videoItems]
+      ].map(([label, value]) => `<div class="modal-stat"><div class="k">${label}</div><div class="v">${value}</div></div>`).join("");
+      openInteractionModal("刪除選手", `
+        <div class="feature-band bad">
+          <div class="feature-title">
+            <strong>你要刪除「${escapeHtml(confirmName)}」這位選手</strong>
+            <span class="status bad">不可復原</span>
+          </div>
+          <div class="compact-list">這只會刪除目前選手底下的課表、訓練紀錄、影片分析與教練資料；不會刪除 Google 帳號、會員權限，也不會刪除同帳號裡其他選手。</div>
+        </div>
+        <div class="modal-stat-grid">${statHtml}</div>
+        <label class="check-row" style="margin-top:14px">
+          <input id="deleteAthleteAcknowledge" type="checkbox" />
+          <span>我知道這會永久刪除這位選手的資料；如果只是換週期，我應該先去回顧頁封存週期。</span>
+        </label>
+        <div class="field" style="margin-top:14px">
+          <label for="deleteAthleteConfirm">輸入選手名稱「${escapeHtml(confirmName)}」確認刪除</label>
+          <input id="deleteAthleteConfirm" type="text" placeholder="${escapeHtml(confirmName)}" autocomplete="off" />
+        </div>
+        <div class="modal-action-grid">
+          <button class="danger" id="confirmDeleteAthleteBtn" type="button">刪除這位選手</button>
+          <button id="cancelDeleteAthleteBtn" type="button">取消</button>
+        </div>
+      `, (body) => {
+        body.querySelector("#confirmDeleteAthleteBtn")?.addEventListener("click", deleteActiveAthlete);
+        body.querySelector("#cancelDeleteAthleteBtn")?.addEventListener("click", closeInteractionModal);
+      });
+    }
+
+    async function deleteActiveAthlete() {
+      if (!canWriteFirebase()) return;
+      const user = getActiveUser();
+      const userIds = Object.keys(state.users || {});
+      if (userIds.length <= 1) {
+        showToast("至少要保留一位選手。", "warn");
+        return;
+      }
+      const confirmName = String(user.name || user.id || "").trim();
+      const typedName = document.getElementById("deleteAthleteConfirm")?.value.trim();
+      const acknowledged = Boolean(document.getElementById("deleteAthleteAcknowledge")?.checked);
+      if (!acknowledged) {
+        showToast("請先勾選確認，避免誤刪。", "warn");
+        return;
+      }
+      if (typedName !== confirmName) {
+        showToast(`請完整輸入「${confirmName}」才會刪除。`, "warn");
+        return;
+      }
+      const previousUsers = cloneData(state.users);
+      const previousActiveUserId = state.activeUserId;
+      const remainingIds = userIds.filter((id) => id !== user.id);
+      const nextId = remainingIds
+        .sort((a, b) => {
+          const left = state.users[a] || {};
+          const right = state.users[b] || {};
+          return ((right.logs || []).length - (left.logs || []).length) || String(left.name || a).localeCompare(String(right.name || b));
+        })[0];
+      delete state.users[user.id];
+      state.activeUserId = nextId;
+      const saved = await saveState(`已刪除選手：${confirmName}`);
+      if (!saved) {
+        state.users = previousUsers;
+        state.activeUserId = previousActiveUserId;
+        showToast("刪除沒有完成，資料已復原。", "bad");
+        return;
+      }
+      closeInteractionModal();
+      refreshAll();
+      switchPage("settings");
+    }
+
     function restoreArchivedCycle(cycleId) {
       const user = getActiveUser();
       const cycle = (user.archivedCycles || []).find((item) => item.id === cycleId);
@@ -12677,6 +12784,7 @@
     document.getElementById("toggleHistoryBtn").addEventListener("click", openHistoryCenterModal);
     document.getElementById("openArchiveCycleBtn").addEventListener("click", openArchiveCycleModal);
     document.getElementById("openDeleteLogsBtn").addEventListener("click", openDeleteCurrentLogsModal);
+    document.getElementById("deleteAthleteBtn")?.addEventListener("click", openDeleteAthleteModal);
     document.getElementById("closeInteractionModalBtn").addEventListener("click", closeInteractionModal);
     document.getElementById("closeUserModalBtn").addEventListener("click", closeUserModal);
     document.getElementById("openFilmingGuideBtn").addEventListener("click", openFilmingGuide);
