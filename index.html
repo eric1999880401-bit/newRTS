@@ -84,10 +84,16 @@
       --tracking-wide: .14em;
     }
     html[lang="zh-Hant"] {
-      --font-display:  'Noto Serif TC', 'Noto Sans TC', 'Microsoft JhengHei', serif;
+      --font-display:  'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
       --font-body:     'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
       --font-label:    'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
       --tracking-wide: .08em;
+    }
+    html[lang="zh-Hant"] .page-tab.active,
+    html[lang="zh-Hant"] .card-detail,
+    html[lang="zh-Hant"] .compact-list,
+    html[lang="zh-Hant"] .panel .hint {
+      font-style: normal;
     }
     html[lang="zh-Hant"] h1,
     html[lang="zh-Hant"] h2,
@@ -541,6 +547,7 @@
     }
     .page-tab:hover { background: transparent; color: var(--ink-base); border-color: var(--rule); }
     .page-tab.active { background: transparent; color: var(--ink-base); border-color: var(--ink-base); font-style: italic; }
+    .consumer-hidden-tab { display: none !important; }
     .page-content { display: none; }
     .page-content.active { display: block; }
     .grid { display: grid; gap: 18px; }
@@ -1230,6 +1237,10 @@
     .notes-drawer[open] summary::after {
       content: "Close";
     }
+    html[lang="zh-Hant"] .context-drawer summary::after,
+    html[lang="zh-Hant"] .notes-drawer summary::after { content: "展開"; }
+    html[lang="zh-Hant"] .context-drawer[open] summary::after,
+    html[lang="zh-Hant"] .notes-drawer[open] summary::after { content: "收起"; }
     .drawer-grid {
       margin-top: 14px;
       display: grid;
@@ -1559,6 +1570,59 @@
     .migration-panel.locked {
       border-left-color: var(--brick);
     }
+    .settings-section-title {
+      margin-top: 18px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 20px;
+    }
+    .advanced-drawer {
+      margin-top: 14px;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      background: var(--ivory-soft);
+      overflow: hidden;
+    }
+    .advanced-drawer summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 54px;
+      padding: 12px 14px;
+      color: var(--ink-base);
+      cursor: pointer;
+      list-style: none;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .advanced-drawer summary::-webkit-details-marker { display: none; }
+    .advanced-drawer summary::after {
+      content: "+";
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+    .advanced-drawer[open] summary::after { content: "-"; }
+    .advanced-body {
+      display: grid;
+      gap: 14px;
+      padding: 0 14px 14px;
+      border-top: 1px solid var(--rule-soft);
+    }
+    .advanced-body > .feature-band:first-child { margin-top: 14px; }
+    .technical-copy {
+      color: var(--pencil);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .consumer-mini-note {
+      margin-top: 8px;
+      color: var(--pencil);
+      font-size: 13px;
+      line-height: 1.45;
+    }
     .paywall-panel {
       border-left: 6px solid var(--terra);
       background: var(--paper-warm);
@@ -1784,6 +1848,7 @@
       gap: 14px;
       margin-bottom: 14px;
     }
+    #page-coach > #videoAnalysisPanel:first-child { margin-top: 0 !important; }
     .video-section-head .hint { margin-bottom: 0; }
     .video-quick-card {
       display: grid;
@@ -2097,51 +2162,51 @@
       <div class="brand-row">
         <div class="brand-mark" aria-hidden="true">PL</div>
         <div>
-          <h1>Powerlifting Log</h1>
-          <div class="sub">Training command center for today: plan, lift, e1RM, back-off, fatigue.</div>
+          <h1>健力訓練助手</h1>
+          <div class="sub">今天怎麼練、怎麼調整、怎麼回顧，一個地方完成。</div>
         </div>
       </div>
       <div class="header-actions" aria-label="App actions">
         <div class="sync-chip"><span class="sync-dot" aria-hidden="true"></span><span id="syncStatusText">offline</span></div>
         <button class="theme-toggle" id="themeToggleBtn" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">
           <span class="theme-toggle-icon" aria-hidden="true">☾</span>
-          <span class="theme-toggle-label">Night</span>
+          <span class="theme-toggle-label">夜間</span>
         </button>
         <button class="theme-toggle language-toggle" id="languageToggleBtn" type="button" aria-label="Switch language" title="Switch language">中文</button>
-        <button class="primary" id="addUserBtn" type="button">Add Athlete</button>
+        <button class="primary" id="addUserBtn" type="button">新增選手</button>
       </div>
     </section>
 
     <section class="login-callout" id="loginCallout" aria-label="Login status">
       <div>
-        <div class="login-eyebrow" id="loginCalloutEyebrow">Account sync</div>
-        <h2 id="loginCalloutTitle">Sign in to sync your training log</h2>
-        <p id="loginCalloutText">Use Google to keep your plan, logs, today's guidance, and progress available across devices.</p>
+        <div class="login-eyebrow" id="loginCalloutEyebrow">帳號同步</div>
+        <h2 id="loginCalloutTitle">登入後同步你的訓練紀錄</h2>
+        <p id="loginCalloutText">使用 Google 帳號登入，就能在不同裝置看到自己的課表、紀錄、今日建議與進度。</p>
       </div>
       <div class="login-callout-actions">
-        <button class="primary" id="loginCalloutGoogleBtn" type="button">Continue with Google</button>
-        <button id="loginCalloutSetupBtn" type="button">Manage account data</button>
+        <button class="primary" id="loginCalloutGoogleBtn" type="button">使用 Google 登入</button>
+        <button id="loginCalloutSetupBtn" type="button">管理帳號資料</button>
       </div>
       <div class="login-mini-status">
-        <span id="loginCalloutStatus">Sign in required</span>
-        <span id="loginCalloutTarget">Sync off</span>
+        <span id="loginCalloutStatus">尚未登入</span>
+        <span id="loginCalloutTarget">尚未同步</span>
       </div>
     </section>
 
     <section class="panel paywall-panel" id="membershipPanel" aria-label="Membership status">
       <div class="feature-title">
-        <strong id="membershipTitle">RPE 自動調節健力訓練系統</strong>
-        <span class="status warn" id="membershipStatus">Beta access required</span>
+        <strong id="membershipTitle">健力訓練助手</strong>
+        <span class="status warn" id="membershipStatus">尚未登入</span>
       </div>
-      <div class="compact-list" id="membershipCopy">每月 TWD 300，包含課表生成、AI Coach、Pose AI、個人化 RPE 校準、週報與 Excel 匯出。付費 Beta 先採手動收款與人工開通。</div>
+      <div class="compact-list" id="membershipCopy">登入後可保存訓練資料；會員可使用課表、AI 教練與影片分析。</div>
       <div class="paywall-grid">
-        <div class="value-card"><strong>決策中心</strong><span>用 e1RM、RPE、fatigue drop 與 readiness 決定今天怎麼練。</span></div>
-        <div class="value-card"><strong>AI + 影片輔助</strong><span>AI 只讀匿名摘要；影片分析只做教練輔助，不取代人工 RPE。</span></div>
-        <div class="value-card"><strong>資料可帶走</strong><span>到期後仍可登入、查看與匯出，不會把訓練紀錄鎖死。</span></div>
+        <div class="value-card"><strong>今天怎麼練</strong><span>看清楚主項、退階組與建議重量。</span></div>
+        <div class="value-card"><strong>訓練建議</strong><span>依照 RPE、e1RM 與恢復狀態調整今天訓練。</span></div>
+        <div class="value-card"><strong>影片回饋</strong><span>用固定角度影片追蹤速度、深度與動作穩定度。</span></div>
       </div>
       <div class="actions-inline">
-        <button class="primary" id="membershipSetupBtn" type="button">查看會員/付款狀態</button>
-        <button id="membershipTermsBtn" type="button">條款與 Beta 限制</button>
+        <button class="primary" id="membershipSetupBtn" type="button">查看會員狀態</button>
+        <button id="membershipTermsBtn" type="button">會員與安全說明</button>
       </div>
     </section>
 
@@ -2151,97 +2216,97 @@
 
     <section class="overview" aria-label="Today overview">
       <div class="overview-card dark">
-        <div class="card-label">Active athlete</div>
+        <div class="card-label">目前選手</div>
         <div class="card-value" id="activeAthleteName">User 1</div>
-        <div class="card-detail" id="todayFocusSummary">No session selected yet.</div>
+        <div class="card-detail" id="todayFocusSummary">尚未選擇今天訓練</div>
       </div>
       <div class="overview-card">
-        <div class="card-label">Today sets</div>
+        <div class="card-label">今日組數</div>
         <div class="card-value" id="todaySetCount">0</div>
-        <div class="card-detail" id="todayLiftSummary">No saved sets</div>
+        <div class="card-detail" id="todayLiftSummary">尚未儲存組數</div>
       </div>
       <div class="overview-card">
-        <div class="card-label">Top e1RM today</div>
+        <div class="card-label">今日最佳 e1RM</div>
         <div class="card-value" id="todayBestE1rm">--</div>
-        <div class="card-detail" id="todayBestLift">Waiting for log</div>
+        <div class="card-detail" id="todayBestLift">等待紀錄</div>
       </div>
       <div class="overview-card">
-        <div class="card-label">Program rows</div>
+        <div class="card-label">課表列數</div>
         <div class="card-value" id="activeProgramRows">0</div>
-        <div class="card-detail" id="activeProgramStatus">Import or load a plan</div>
+        <div class="card-detail" id="activeProgramStatus">尚未載入課表</div>
       </div>
       <div class="overview-card">
-        <div class="card-label">Back-off base</div>
-        <div class="card-value" id="activeBackoffBase">Top set</div>
+        <div class="card-label">退階基準</div>
+        <div class="card-value" id="activeBackoffBase">頂組</div>
         <div class="card-detail" id="activeFatigueTarget">Target 5%</div>
       </div>
     </section>
 
     <div class="page-tabs">
-      <button class="page-tab active" data-page="workout">Today</button>
-      <button class="page-tab" data-page="planner">Plan Builder</button>
-      <button class="page-tab" data-page="coach">Coach</button>
-      <button class="page-tab" data-page="dashboard">Dashboard</button>
-      <button class="page-tab" data-page="history">History</button>
-      <button class="page-tab" data-page="settings">Setup</button>
+      <button class="page-tab active" data-page="workout">今日</button>
+      <button class="page-tab" data-page="planner">課表</button>
+      <button class="page-tab" data-page="coach">影片</button>
+      <button class="page-tab" data-page="dashboard">回顧</button>
+      <button class="page-tab consumer-hidden-tab" data-page="history">紀錄</button>
+      <button class="page-tab" data-page="settings">我的</button>
     </div>
 
     <!-- PAGE 1: Settings & Import -->
     <div id="page-settings" class="page-content">
       <div class="grid grid-2">
         <section class="panel">
-          <h2>Active user settings</h2>
-          <div class="hint">Each user has an independent name, rounding increment, fatigue threshold, imported program, and training log.</div>
+          <h2>基本訓練設定</h2>
+          <div class="hint">設定你的顯示名稱、重量進位、退階組計算方式與疲勞下降目標。</div>
           <div class="grid grid-2">
             <div class="field">
-              <label for="userName">Display name</label>
-              <input id="userName" type="text" placeholder="User name" />
+              <label for="userName">顯示名稱</label>
+              <input id="userName" type="text" placeholder="選手名稱" />
             </div>
             <div class="field">
-              <label for="roundingKg">Rounding increment (kg)</label>
+              <label for="roundingKg">重量進位 (kg)</label>
               <input id="roundingKg" type="number" min="0.1" step="0.1" />
             </div>
             <div class="field">
-              <label for="fatigueDropPct">Fatigue drop target (%)</label>
+              <label for="fatigueDropPct">疲勞下降目標 (%)</label>
               <input id="fatigueDropPct" type="number" min="0" max="25" step="0.5" />
             </div>
             <div class="field">
-              <label for="defaultTopSetSource">Back-off recommendation base</label>
+              <label for="defaultTopSetSource">退階重量基準</label>
               <select id="defaultTopSetSource">
-                <option value="latestTop">Latest top set in this session</option>
-                <option value="currentSet">Current set e1RM</option>
+                <option value="latestTop">本堂最新頂組</option>
+                <option value="currentSet">目前這組 e1RM</option>
               </select>
             </div>
           </div>
           <div class="actions-inline">
-            <button id="saveSettingsBtn" type="button">Save settings</button>
-            <button class="secondary" id="loadBundledProgramBtn" type="button">Reload bundled sample program</button>
-            <button class="danger" id="clearActiveDataBtn" type="button">Clear active user's log</button>
+            <button id="saveSettingsBtn" type="button">儲存設定</button>
+            <button class="secondary" id="loadBundledProgramBtn" type="button">載入範例課表</button>
+            <button class="danger" id="clearActiveDataBtn" type="button">清除目前選手紀錄</button>
           </div>
         </section>
 
         <section class="panel">
-          <h2>Program import</h2>
-          <div class="hint">Import one program file for the active user. The parser expects a practical RPE/autoregulation workbook with a <span class="mono">Schedule_12w</span> sheet.</div>
+          <h2>匯入課表</h2>
+          <div class="hint">如果你已有自己的課表，可以匯入給目前選手使用；一般使用者可直接到「課表」產生新 block。</div>
           <div class="grid grid-2">
             <div class="field">
-              <label for="programImport">Import program (.xlsx, .xls, .csv)</label>
+              <label for="programImport">匯入課表檔 (.xlsx, .xls, .csv)</label>
               <input id="programImport" type="file" accept=".xlsx,.xls,.csv" />
             </div>
             <div class="field">
-              <label>Program status</label>
+              <label>課表狀態</label>
               <div class="metric">
-                <div class="k">Rows imported for active user</div>
+                <div class="k">目前課表列數</div>
                 <div class="v" id="programCount">0</div>
               </div>
             </div>
           </div>
-          <div class="inline-note">Expected columns: Week, Day, Phase, Focus, Main Lift, Top Set Target, Back-off Plan, Secondary Lift, Secondary Prescription, Accessories / Notes.</div>
+          <div class="inline-note">一般不用碰這裡；只有要匯入自己的 Excel/CSV 課表時才需要。</div>
           <div class="actions-inline" style="margin-top:10px">
-            <button id="downloadTemplateBtn" type="button">Download Program Template</button>
+            <button id="downloadTemplateBtn" type="button">下載課表範本</button>
           </div>
           <details style="margin-top:12px">
-            <summary>Method used in this app</summary>
+            <summary>進階：計算方式</summary>
             <div class="inline-note" style="margin-top:10px">
               e1RM is calculated from load / %1RM. The %1RM is taken from a reps x RPE table. Back-off recommendations multiply the selected e1RM by the target table percentage, then round to the user's chosen plate increment. Fatigue drop is computed as:
               <span class="mono">(reference e1RM - current e1RM) / reference e1RM x 100</span>.
@@ -2251,153 +2316,178 @@
       </div>
 
       <section class="panel" style="margin-top:16px">
-        <h2>Data management</h2>
-        <div class="hint">Export, backup, and restore tools live here so the training screen stays focused.</div>
+        <h2>我的資料</h2>
+        <div class="hint">你可以隨時匯出訓練紀錄；進階備份工具先收起來，避免日常訓練時被打擾。</div>
         <div class="data-actions-grid">
-          <button class="primary" id="exportAllBtn" type="button">Export All</button>
-          <button id="backupProgramBtn" type="button">Backup Program</button>
-          <label class="button" for="restoreProgramInput">Import Program Backup</label>
-          <input id="restoreProgramInput" type="file" accept=".xlsx,.xls,.csv" hidden />
-          <button id="backupLogsBtn" type="button">Backup Logs</button>
-          <label class="button" for="restoreLogsInput">Import Logs Backup</label>
-          <input id="restoreLogsInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+          <button class="primary" id="exportAllBtn" type="button">匯出我的資料</button>
+          <button id="backupProgramBtn" type="button">備份課表</button>
+          <button id="backupLogsBtn" type="button">備份紀錄</button>
         </div>
-        <div class="footer-note">Before major edits or browser cleanup, export a workbook so training history can be restored.</div>
+        <details class="advanced-drawer">
+          <summary>進階資料工具</summary>
+          <div class="advanced-body">
+            <div class="data-actions-grid">
+              <label class="button" for="restoreProgramInput">匯入課表備份</label>
+              <input id="restoreProgramInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+              <label class="button" for="restoreLogsInput">匯入紀錄備份</label>
+              <input id="restoreLogsInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+            </div>
+            <div class="technical-copy">大量修改或更換瀏覽器前，建議先匯出一份 Excel 備份。</div>
+          </div>
+        </details>
       </section>
 
-      <!-- Firebase Cloud Sync -->
       <section class="panel" style="margin-top:16px">
-        <h2>Cloud Sync (Firebase)</h2>
-        <div class="hint">Connect to Firebase Realtime Database to sync data across devices in real time. Paste your Firebase config below.</div>
-        <div class="grid grid-2">
-          <div class="field">
-            <label for="fbApiKey">apiKey</label>
-            <input id="fbApiKey" type="text" placeholder="AIzaSy..." />
-          </div>
-          <div class="field">
-            <label for="fbAuthDomain">authDomain</label>
-            <input id="fbAuthDomain" type="text" placeholder="your-project.firebaseapp.com" />
-          </div>
-          <div class="field">
-            <label for="fbDatabaseURL">databaseURL</label>
-            <input id="fbDatabaseURL" type="text" placeholder="https://your-project-default-rtdb.firebaseio.com" />
-          </div>
-          <div class="field">
-            <label for="fbProjectId">projectId</label>
-            <input id="fbProjectId" type="text" placeholder="your-project" />
-          </div>
-        </div>
-        <div class="actions-inline">
-          <button class="primary" id="fbConnectBtn" type="button">Connect & Sync</button>
-          <button class="danger" id="fbDisconnectBtn" type="button">Disconnect</button>
-          <div id="fbStatusIndicator" class="status warn" style="margin-left:8px">Not connected</div>
-        </div>
-        <div class="feature-band warn auth-panel-prominent" id="authPanel">
-          <div class="feature-title">
-            <strong>Firebase Auth + zero-loss migration</strong>
-            <span class="status warn" id="authStatus">Auth not ready</span>
-          </div>
-          <div class="footer-note">Legacy data at <span class="mono">powerlifting_log</span> is read-only in this Auth version. Sign in, preview counts, create a backup, then claim the existing records into your private <span class="mono">users/{uid}</span> path.</div>
-          <div class="grid grid-2" style="margin-top:12px">
-            <div class="field">
-              <label for="authEmail">Email</label>
-              <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" />
-            </div>
-            <div class="field">
-              <label for="authPassword">Password</label>
-              <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password" />
-            </div>
-          </div>
-          <div class="actions-inline">
-            <button id="emailSignInBtn" type="button">Sign in / create</button>
-            <button id="googleSignInBtn" type="button">Google sign in</button>
-            <button class="danger" id="signOutBtn" type="button">Sign out</button>
-          </div>
-          <div class="auth-status-grid">
-            <div class="migration-count"><div class="k">Signed in as</div><div class="v" id="authUserLabel">—</div></div>
-            <div class="migration-count"><div class="k">Write target</div><div class="v" id="writeTargetLabel">Locked</div></div>
-            <div class="migration-count"><div class="k">Migration</div><div class="v" id="migrationStateLabel">Not claimed</div></div>
-          </div>
-        </div>
-        <div class="feature-band warn migration-panel locked" id="migrationPanel">
-          <div class="feature-title">
-            <strong>Claim existing training data</strong>
-            <span class="status warn" id="migrationPreviewStatus">Waiting</span>
-          </div>
-          <div class="footer-note">Choose one legacy athlete to claim into this signed-in account. Pig can stay in legacy until she signs in and claims her own data.</div>
-          <div class="field" style="margin-top:12px">
-            <label for="claimLegacyAthlete">Legacy athlete to claim</label>
-            <select id="claimLegacyAthlete"></select>
-          </div>
-          <div id="migrationPreviewCounts" class="migration-count-grid"></div>
-          <div class="actions-inline">
-            <button id="refreshMigrationPreviewBtn" type="button">Refresh preview</button>
-            <button id="backupLegacyBtn" type="button">Create migration backup</button>
-            <button class="primary" id="claimLegacyBtn" type="button">Claim selected athlete</button>
-            <button id="startFreshAccountBtn" type="button">Start fresh account</button>
-          </div>
-          <div class="footer-note" id="migrationTargetLabel">Sign in before claiming legacy data.</div>
-        </div>
+        <h2>帳號與會員</h2>
+        <div class="hint">查看登入、會員狀態與資料權利；一般訓練不需要理解底層同步細節。</div>
         <div class="feature-band paywall-panel" id="membershipSettingsPanel">
           <div class="feature-title">
-            <strong>付費 Beta 權限</strong>
+            <strong>會員狀態</strong>
             <span class="status warn" id="settingsMembershipStatus">未開通</span>
           </div>
-          <div class="compact-list" id="settingsMembershipCopy">TWD 300/月，手動收款後由管理員開通。到期後仍可讀取與匯出資料，但新增紀錄、課表生成、AI 與影片儲存會上鎖。</div>
+          <div class="compact-list" id="settingsMembershipCopy">登入後可保存訓練資料；會員可使用課表、AI 教練與影片分析。</div>
           <div class="auth-status-grid">
             <div class="migration-count"><div class="k">方案</div><div class="v" id="entitlementPlanLabel">—</div></div>
             <div class="migration-count"><div class="k">可用到</div><div class="v" id="entitlementUntilLabel">—</div></div>
-            <div class="migration-count"><div class="k">管理員</div><div class="v" id="adminRoleLabel">否</div></div>
+            <div class="migration-count"><div class="k">身份</div><div class="v" id="adminRoleLabel">一般</div></div>
           </div>
           <div class="actions-inline">
-            <button id="refreshAccountStatusBtn" type="button">重新整理權限</button>
-            <button id="claimFirstAdminBtn" type="button">成為第一位管理員</button>
+            <button id="refreshAccountStatusBtn" type="button">重新整理會員狀態</button>
           </div>
         </div>
-        <div class="feature-band admin-panel locked" id="adminPanel">
-          <div class="feature-title">
-            <strong>Beta 會員開通工具</strong>
-            <span class="status warn" id="adminPanelStatus">限管理員</span>
+
+        <details class="advanced-drawer">
+          <summary>登入與舊資料匯入</summary>
+          <div class="advanced-body">
+            <div class="feature-band warn auth-panel-prominent" id="authPanel">
+              <div class="feature-title">
+                <strong>登入帳號</strong>
+                <span class="status warn" id="authStatus">尚未登入</span>
+              </div>
+              <div class="consumer-mini-note">建議使用 Google 登入。舊訓練資料會先保留，確認後才匯入你的帳號。</div>
+              <div class="grid grid-2" style="margin-top:12px">
+                <div class="field">
+                  <label for="authEmail">Email</label>
+                  <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+                </div>
+                <div class="field">
+                  <label for="authPassword">密碼</label>
+                  <input id="authPassword" type="password" autocomplete="current-password" placeholder="密碼" />
+                </div>
+              </div>
+              <div class="actions-inline">
+                <button id="emailSignInBtn" type="button">Email 登入 / 建立帳號</button>
+                <button id="googleSignInBtn" type="button">使用 Google 登入</button>
+                <button class="danger" id="signOutBtn" type="button">登出</button>
+              </div>
+              <div class="auth-status-grid">
+                <div class="migration-count"><div class="k">登入帳號</div><div class="v" id="authUserLabel">—</div></div>
+                <div class="migration-count"><div class="k">資料狀態</div><div class="v" id="writeTargetLabel">未啟用</div></div>
+                <div class="migration-count"><div class="k">匯入狀態</div><div class="v" id="migrationStateLabel">尚未匯入</div></div>
+              </div>
+            </div>
+            <div class="feature-band warn migration-panel locked" id="migrationPanel">
+              <div class="feature-title">
+                <strong>匯入舊訓練資料</strong>
+                <span class="status warn" id="migrationPreviewStatus">等待中</span>
+              </div>
+              <div class="consumer-mini-note">選擇要放進目前帳號的舊選手資料。未選到的資料會留在備份中，不會被刪除。</div>
+              <div class="field" style="margin-top:12px">
+                <label for="claimLegacyAthlete">要匯入的選手</label>
+                <select id="claimLegacyAthlete"></select>
+              </div>
+              <div id="migrationPreviewCounts" class="migration-count-grid"></div>
+              <div class="actions-inline">
+                <button id="refreshMigrationPreviewBtn" type="button">重新整理預覽</button>
+                <button id="backupLegacyBtn" type="button">建立匯入前備份</button>
+                <button class="primary" id="claimLegacyBtn" type="button">匯入選取資料</button>
+                <button id="startFreshAccountBtn" type="button">建立全新訓練帳號</button>
+              </div>
+              <div class="technical-copy" id="migrationTargetLabel">登入後才能匯入舊資料。</div>
+            </div>
           </div>
-          <div class="compact-list">手動收款後，用 email 或 uid 開通 31 天 Beta。這裡不處理刷卡，只負責權限。</div>
-          <div class="admin-grid">
-            <div class="field">
-              <label for="adminTargetEmail">使用者 Email</label>
-              <input id="adminTargetEmail" type="email" placeholder="athlete@example.com" />
+        </details>
+
+        <details class="advanced-drawer">
+          <summary>進階同步設定</summary>
+          <div class="advanced-body">
+            <div class="technical-copy">這區是部署或除錯用。一般使用者不需要修改。</div>
+            <div class="grid grid-2">
+              <div class="field">
+                <label for="fbApiKey">apiKey</label>
+                <input id="fbApiKey" type="text" placeholder="AIzaSy..." />
+              </div>
+              <div class="field">
+                <label for="fbAuthDomain">authDomain</label>
+                <input id="fbAuthDomain" type="text" placeholder="your-project.firebaseapp.com" />
+              </div>
+              <div class="field">
+                <label for="fbDatabaseURL">databaseURL</label>
+                <input id="fbDatabaseURL" type="text" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+              </div>
+              <div class="field">
+                <label for="fbProjectId">projectId</label>
+                <input id="fbProjectId" type="text" placeholder="your-project" />
+              </div>
             </div>
-            <div class="field">
-              <label for="adminTargetUid">或 Firebase UID</label>
-              <input id="adminTargetUid" type="text" placeholder="Firebase uid" />
-            </div>
-            <div class="field">
-              <label for="adminGrantDays">開通天數</label>
-              <input id="adminGrantDays" type="number" min="1" max="3650" value="31" />
-            </div>
-            <div class="field">
-              <label for="adminGrantNotes">備註</label>
-              <input id="adminGrantNotes" type="text" placeholder="手動收款、退款或客服備註" />
+            <div class="actions-inline">
+              <button class="primary" id="fbConnectBtn" type="button">連線同步</button>
+              <button class="danger" id="fbDisconnectBtn" type="button">停止同步</button>
+              <div id="fbStatusIndicator" class="status warn" style="margin-left:8px">未連線</div>
             </div>
           </div>
-          <div class="actions-inline">
-            <button class="primary" id="adminGrantBtn" type="button">開通/延長權限</button>
-            <button id="adminLookupBtn" type="button">查詢使用者</button>
-            <button class="danger" id="adminRevokeBtn" type="button">取消權限</button>
+        </details>
+
+        <details class="advanced-drawer" id="adminToolsDrawer" hidden>
+          <summary>管理員工具</summary>
+          <div class="advanced-body">
+            <div class="feature-band admin-panel locked" id="adminPanel">
+              <div class="feature-title">
+                <strong>會員開通工具</strong>
+                <span class="status warn" id="adminPanelStatus">限管理員</span>
+              </div>
+              <div class="compact-list">收到款項後，用 email 或 uid 開通會員權限。這裡只管理權限，不處理刷卡。</div>
+              <div class="admin-grid">
+                <div class="field">
+                  <label for="adminTargetEmail">使用者 Email</label>
+                  <input id="adminTargetEmail" type="email" placeholder="athlete@example.com" />
+                </div>
+                <div class="field">
+                  <label for="adminTargetUid">進階：Firebase UID</label>
+                  <input id="adminTargetUid" type="text" placeholder="Firebase uid" />
+                </div>
+                <div class="field">
+                  <label for="adminGrantDays">開通天數</label>
+                  <input id="adminGrantDays" type="number" min="1" max="3650" value="31" />
+                </div>
+                <div class="field">
+                  <label for="adminGrantNotes">備註</label>
+                  <input id="adminGrantNotes" type="text" placeholder="收款、退款或客服備註" />
+                </div>
+              </div>
+              <div class="actions-inline">
+                <button class="primary" id="adminGrantBtn" type="button">開通 / 延長權限</button>
+                <button id="adminLookupBtn" type="button">查詢使用者</button>
+                <button class="danger" id="adminRevokeBtn" type="button">取消權限</button>
+                <button id="claimFirstAdminBtn" type="button">成為第一位管理員</button>
+              </div>
+              <div id="adminOutput" class="feature-band"></div>
+            </div>
           </div>
-          <div id="adminOutput" class="feature-band"></div>
-        </div>
+        </details>
+
         <div class="feature-band" id="termsPanel">
           <div class="feature-title">
-            <strong>條款、退款與安全邊界</strong>
-            <span class="status warn">Beta</span>
+            <strong>會員與安全說明</strong>
+            <span class="status warn">訓練輔助</span>
           </div>
           <div class="paywall-grid">
-            <div class="value-card"><strong>7 天退款</strong><span>付費 Beta 期間，開通後 7 天內可人工退款並取消權限。</span></div>
+            <div class="value-card"><strong>7 天退款</strong><span>付費開通後 7 天內可人工退款並取消權限。</span></div>
             <div class="value-card"><strong>不是醫療診斷</strong><span>疼痛/受傷只做訓練調整與紅旗提醒；嚴重症狀請停止並找專業人員。</span></div>
-            <div class="value-card"><strong>不是授權 RTS</strong><span>本產品不使用 RTS 作品牌授權主張；訓練邏輯基於 RPE、自動調節與你的資料。</span></div>
-            <div class="value-card"><strong>資料權利</strong><span>你可以隨時 Export All。原始影片預設不永久保存，選存影片也只保留 30 天。</span></div>
+            <div class="value-card"><strong>訓練邏輯</strong><span>基於 RPE、自動調節、e1RM 與你的訓練資料提供建議。</span></div>
+            <div class="value-card"><strong>資料權利</strong><span>你可以隨時匯出資料。原始影片預設不永久保存，選存影片也只保留 30 天。</span></div>
           </div>
         </div>
-        <div class="footer-note">Training data writes require Firebase Auth after this migration update. The app still reads legacy data for preview and recovery, but new saves go only to the signed-in user's scoped path.</div>
       </section>
     </div>
 
@@ -2406,20 +2496,20 @@
       <div class="grid workout-layout">
         <section class="panel training-card">
           <div class="panel-header">
-          <h2>Today's schedule</h2>
-          <div class="hint">Pick week/day and review the main lift, secondary work, and accessories before logging.</div>
+          <h2>今天怎麼練</h2>
+          <div class="hint">先看今天重點與建議組數，再把每一組記錄下來。</div>
           <div class="grid grid-3">
             <div class="field">
-              <label for="filterWeek">Week</label>
+              <label for="filterWeek">週次</label>
               <select id="filterWeek"></select>
             </div>
             <div class="field">
-              <label for="filterDay">Day</label>
+              <label for="filterDay">訓練日</label>
               <select id="filterDay"></select>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="usePlanForLogBtn" type="button">Send schedule to log form</button>
+              <button id="usePlanForLogBtn" type="button">帶入今天訓練</button>
             </div>
           </div>
           </div>
@@ -2428,18 +2518,18 @@
 
         <section class="panel training-card">
           <div class="panel-header">
-            <h2>Log set</h2>
-            <div class="hint">Pick the lift, enter the set, and save before the next set starts.</div>
+            <h2>記錄這一組</h2>
+            <div class="hint">選動作、輸入重量與 RPE，下一組前先存起來。</div>
           </div>
           <div class="log-console">
           <div class="quick-set-shell">
             <div class="quick-set-header">
-              <span>Quick set</span>
-              <strong>Lift, load, RPE, save</strong>
+              <span>快速記錄</span>
+              <strong>動作、重量、RPE</strong>
             </div>
             <div class="quick-set-grid">
               <div class="field span-4">
-                <label for="logLift">Lift</label>
+                <label for="logLift">動作</label>
                 <div class="segmented" id="liftSegmented" aria-label="Lift quick selector">
                   <button type="button" data-target="logLift" data-value="Squat">Squat</button>
                   <button type="button" data-target="logLift" data-value="Bench">Bench</button>
@@ -2452,7 +2542,7 @@
                 </select>
               </div>
               <div class="field span-4">
-                <label for="logSetType">Set type</label>
+                <label for="logSetType">組別</label>
                 <div class="segmented set-types" id="setTypeSegmented" aria-label="Set type quick selector">
                   <button type="button" data-target="logSetType" data-value="Warm up">Warm up</button>
                   <button type="button" data-target="logSetType" data-value="Top">Top</button>
@@ -2471,11 +2561,11 @@
                 </select>
               </div>
               <div class="field">
-                <label for="logReps">Reps</label>
+                <label for="logReps">次數</label>
                 <select id="logReps"></select>
               </div>
               <div class="field weight-field span-2">
-                <label for="logWeight">Weight (kg)</label>
+                <label for="logWeight">重量 (kg)</label>
                 <div class="number-stepper">
                   <button type="button" data-step-target="logWeight" data-step="-2.5">-</button>
                   <input id="logWeight" type="number" step="0.1" min="0" />
@@ -2487,7 +2577,7 @@
                 <select id="logRpe"></select>
               </div>
               <div class="field">
-                <label for="logVariation">Variation</label>
+                <label for="logVariation">變化式</label>
                 <select id="logVariation">
                   <option>Competition</option>
                   <option>Paused</option>
@@ -2503,15 +2593,15 @@
                 </select>
               </div>
               <div class="field" id="variationOtherWrap" style="display:none">
-                <label for="logVariationOther">Other variation</label>
-                <input id="logVariationOther" type="text" placeholder="Type custom variation" />
+                <label for="logVariationOther">自訂變化式</label>
+                <input id="logVariationOther" type="text" placeholder="輸入自訂變化式" />
               </div>
               <div class="field">
-                <label for="targetReps">Back-off reps</label>
+                <label for="targetReps">退階次數</label>
                 <select id="targetReps"></select>
               </div>
               <div class="field">
-                <label for="targetRpe">Back-off RPE</label>
+                <label for="targetRpe">退階 RPE</label>
                 <select id="targetRpe"></select>
               </div>
             </div>
@@ -2519,70 +2609,70 @@
 
           <div class="metrics" style="margin-top:14px">
             <div class="metric">
-              <div class="k">%1RM lookup</div>
+              <div class="k">%1RM</div>
               <div class="v" id="pct1rmMetric">—</div>
             </div>
             <div class="metric">
-              <div class="k">Current e1RM</div>
+              <div class="k">本組 e1RM</div>
               <div class="v" id="e1rmMetric">—</div>
             </div>
             <div class="metric">
-              <div class="k">Suggested back-off load</div>
+              <div class="k">建議退階重量</div>
               <div class="v" id="suggestedMetric">—</div>
             </div>
             <div class="metric">
-              <div class="k">Fatigue drop</div>
+              <div class="k">疲勞下降</div>
               <div class="v" id="fatigueMetric">—</div>
             </div>
           </div>
 
           <div class="fatigue-rail">
             <div class="fatigue-rail-meta">
-              <span>Fatigue gauge</span>
-              <span id="fatigueRailValue">Waiting for set</span>
+              <span>疲勞指標</span>
+              <span id="fatigueRailValue">等待輸入</span>
             </div>
             <div class="fatigue-track"><div class="fatigue-fill" id="fatigueRailFill"></div></div>
           </div>
 
           <div class="save-row" style="margin-top:14px">
-            <div id="fatigueStatus" class="status warn">Waiting for a reference top set</div>
-            <button id="applySuggestedBtn" type="button">Use suggested load</button>
-            <button class="primary" id="saveSetBtn" type="button">Save set</button>
+            <div id="fatigueStatus" class="status warn">等待頂組作為基準</div>
+            <button id="applySuggestedBtn" type="button">套用建議重量</button>
+            <button class="primary" id="saveSetBtn" type="button">儲存這一組</button>
           </div>
           <div class="footer-note" id="calcSourceNote"></div>
 
           <details class="context-drawer">
-            <summary>Session context</summary>
+            <summary>進階：訓練背景</summary>
             <div class="drawer-grid">
               <div class="field">
-                <label for="logDate">Date</label>
+                <label for="logDate">日期</label>
                 <input id="logDate" type="date" />
               </div>
               <div class="field">
-                <label for="logWeek">Week #</label>
+                <label for="logWeek">週次</label>
                 <select id="logWeek"></select>
               </div>
               <div class="field">
-                <label for="logDay">Training day</label>
+                <label for="logDay">訓練日</label>
                 <select id="logDay"></select>
               </div>
               <div class="field span-4">
-                <label for="logSessionFocus">Session focus</label>
-                <input id="logSessionFocus" type="text" placeholder="Auto-filled from imported program when available" />
+                <label for="logSessionFocus">本堂重點</label>
+                <input id="logSessionFocus" type="text" placeholder="有課表時會自動帶入" />
               </div>
             </div>
           </details>
 
           <details class="notes-drawer">
-            <summary>Details and notes</summary>
+            <summary>備註</summary>
             <div class="notes-grid">
               <div class="field">
-                <label for="logTechNotes">Technique notes</label>
-                <textarea id="logTechNotes" placeholder="Bar path, depth, lockout, stability, pain, etc."></textarea>
+                <label for="logTechNotes">技術備註</label>
+                <textarea id="logTechNotes" placeholder="槓路、深度、鎖定、穩定度、疼痛等"></textarea>
               </div>
               <div class="field">
-                <label for="logGeneralNotes">General notes</label>
-                <textarea id="logGeneralNotes" placeholder="Sleep, readiness, accessories, session comments, etc."></textarea>
+                <label for="logGeneralNotes">一般備註</label>
+                <textarea id="logGeneralNotes" placeholder="睡眠、恢復、輔助訓練、本堂感受等"></textarea>
               </div>
             </div>
           </details>
@@ -2592,22 +2682,22 @@
 
       <!-- Current session log below -->
       <section class="panel" style="margin-top:16px">
-        <h2>Current session log</h2>
-        <div class="hint">Filtered by active user + selected date.</div>
+        <h2>今日紀錄</h2>
+        <div class="hint">目前選手與日期的訓練組數。</div>
         <div class="session-cards" id="sessionCards"></div>
         <div class="table-wrap session-table">
           <table>
             <thead>
               <tr>
                 <th>#</th>
-                <th>Lift</th>
-                <th>Variation</th>
-                <th>Type</th>
-                <th class="right">Reps</th>
-                <th class="right">Weight</th>
+                <th>動作</th>
+                <th>變化式</th>
+                <th>組別</th>
+                <th class="right">次數</th>
+                <th class="right">重量</th>
                 <th class="right">RPE</th>
                 <th class="right">e1RM</th>
-                <th class="right">Fatigue %</th>
+                <th class="right">疲勞 %</th>
                 <th></th>
               </tr>
             </thead>
@@ -2622,9 +2712,9 @@
       <section class="panel paywall-panel" id="onboardingPanel" style="margin-bottom:16px">
         <div class="feature-title">
           <strong>10 分鐘建立第一份訓練 block</strong>
-          <span class="status warn" id="onboardingStatus">Onboarding</span>
+          <span class="status warn" id="onboardingStatus">新手引導</span>
         </div>
-        <div class="compact-list">填入三項 e1RM、目標與弱點後，系統會把資料帶入 Plan Builder。這不是 RTS 授權模板，而是可解釋的 RPE 自動調節規則引擎。</div>
+        <div class="compact-list">填入三項 e1RM、目標與弱點後，系統會帶你產生第一份可編輯課表。</div>
         <div class="onboarding-grid">
           <div class="field">
             <label for="onboardMeetDate">目標/測驗日期</label>
@@ -2664,104 +2754,104 @@
           <textarea id="onboardEquipment" placeholder="例：只有一般槓、護腕，臥推手腕不舒服，每次 90 分鐘內。"></textarea>
         </div>
         <div class="actions-inline">
-          <button class="primary" id="onboardGenerateBtn" type="button">套用並產生第一份 block</button>
-          <button id="onboardFillBtn" type="button">只填入 Plan Builder</button>
+          <button class="primary" id="onboardGenerateBtn" type="button">套用並產生課表</button>
+          <button id="onboardFillBtn" type="button">只填入課表設定</button>
         </div>
       </section>
       <div class="product-grid wide-left">
         <section class="panel">
-          <h2>RPE Plan Builder</h2>
-          <div class="hint">Generate an editable powerlifting plan with deterministic RPE/autoregulation rules. The engine uses your recent logs, selected constraints, and fatigue targets.</div>
+          <h2>課表產生</h2>
+          <div class="hint">依照訓練天數、目標、弱點與近期紀錄，產生可編輯的健力課表。</div>
           <div class="grid grid-3">
             <div class="field">
-              <label for="builderWeeks">Block length</label>
+              <label for="builderWeeks">Block 長度</label>
               <select id="builderWeeks">
-                <option value="4">4 weeks</option>
-                <option value="6">6 weeks</option>
-                <option value="8" selected>8 weeks</option>
-                <option value="10">10 weeks</option>
-                <option value="12">12 weeks</option>
+                <option value="4">4 週</option>
+                <option value="6">6 週</option>
+                <option value="8" selected>8 週</option>
+                <option value="10">10 週</option>
+                <option value="12">12 週</option>
               </select>
             </div>
             <div class="field">
-              <label for="builderDays">Training days / week</label>
+              <label for="builderDays">每週訓練天數</label>
               <select id="builderDays">
-                <option value="3" selected>3 days</option>
-                <option value="4">4 days</option>
-                <option value="5">5 days</option>
+                <option value="3" selected>3 天</option>
+                <option value="4">4 天</option>
+                <option value="5">5 天</option>
               </select>
             </div>
             <div class="field">
-              <label for="builderGoal">Block goal</label>
+              <label for="builderGoal">Block 目標</label>
               <select id="builderGoal">
-                <option value="accumulation">Accumulation / technique</option>
-                <option value="strength" selected>Strength / intensification</option>
-                <option value="realization">Realization / mock meet</option>
+                <option value="accumulation">累積 / 技術</option>
+                <option value="strength" selected>力量 / 強化</option>
+                <option value="realization">測驗 / 模擬比賽</option>
               </select>
             </div>
             <div class="field">
-              <label for="builderStrategy">Planning model</label>
+              <label for="builderStrategy">規劃模式</label>
               <select id="builderStrategy">
-                <option value="emerging" selected>Athlete response model</option>
-                <option value="generalized">Generalized Intermediate inspired</option>
-                <option value="meet">Meet prep / TTP peak</option>
+                <option value="emerging" selected>依個人反應調整</option>
+                <option value="generalized">中階訓練者通用</option>
+                <option value="meet">比賽 / 測驗準備</option>
               </select>
             </div>
             <div class="field">
-              <label for="builderStressBudget">Stress budget</label>
+              <label for="builderStressBudget">訓練壓力</label>
               <select id="builderStressBudget">
-                <option value="conservative" selected>Conservative</option>
-                <option value="moderate">Moderate</option>
-                <option value="aggressive">Aggressive</option>
+                <option value="conservative" selected>保守</option>
+                <option value="moderate">中等</option>
+                <option value="aggressive">較高</option>
               </select>
             </div>
             <div class="field">
-              <label for="builderMeetDate">Test or meet date</label>
+              <label for="builderMeetDate">測驗 / 比賽日期</label>
               <input id="builderMeetDate" type="date" />
             </div>
             <div class="field">
-              <label for="builderWeakness">Primary weak point</label>
+              <label for="builderWeakness">主要弱點</label>
               <select id="builderWeakness">
-                <option value="squat-control">Squat depth / control</option>
-                <option value="bench-pause">Bench pause / touch</option>
-                <option value="deadlift-floor">Deadlift off floor</option>
-                <option value="lockout">Lockout strength</option>
-                <option value="recovery" selected>Recovery management</option>
+                <option value="squat-control">深蹲深度 / 控制</option>
+                <option value="bench-pause">臥推停頓 / 觸胸</option>
+                <option value="deadlift-floor">硬舉離地</option>
+                <option value="lockout">鎖定力量</option>
+                <option value="recovery" selected>恢復管理</option>
               </select>
             </div>
             <div class="field">
-              <label for="builderExperience">Training age</label>
+              <label for="builderExperience">訓練年資</label>
               <select id="builderExperience">
-                <option value="novice">Novice</option>
-                <option value="intermediate" selected>Intermediate</option>
-                <option value="advanced">Advanced</option>
+                <option value="novice">新手</option>
+                <option value="intermediate" selected>中階</option>
+                <option value="advanced">進階</option>
               </select>
             </div>
           </div>
           <div class="compact-grid" style="margin-top:14px">
             <div class="field">
-              <label for="builderEquipment">Equipment / constraints</label>
-              <textarea id="builderEquipment" placeholder="Rack, bench, deadlift platform, belt, sleeves, specialty bars, time limits..."></textarea>
+              <label for="builderEquipment">器材 / 限制</label>
+              <textarea id="builderEquipment" placeholder="深蹲架、臥推椅、硬舉平台、腰帶、護具、時間限制等"></textarea>
             </div>
             <div class="field">
-              <label for="builderNotes">Coach notes</label>
-              <textarea id="builderNotes" placeholder="Anything the rules engine should respect: wrist irritation, deadlift fatigue, paused bench priority..."></textarea>
+              <label for="builderNotes">訓練備註</label>
+              <textarea id="builderNotes" placeholder="例：手腕不適、硬舉容易疲勞、臥推停頓優先等"></textarea>
             </div>
           </div>
           <div class="actions-inline">
-            <button class="primary" id="generatePlanBtn" type="button">Generate RPE Plan</button>
-            <button id="savePlanDraftBtn" type="button">Save draft edits</button>
-            <button id="applyGeneratedPlanBtn" type="button">Apply to active program</button>
+            <button class="primary" id="generatePlanBtn" type="button">產生課表</button>
+            <button id="savePlanDraftBtn" type="button">儲存草稿</button>
+            <button id="applyGeneratedPlanBtn" type="button">套用到今日訓練</button>
           </div>
-          <div class="footer-note">Generated plans are editable drafts saved to Firebase. Applying one replaces the active athlete's program rows after confirmation.</div>
+          <div class="footer-note">產生後可先編輯草稿；按下套用並確認後，才會成為今日訓練使用的課表。</div>
         </section>
 
         <section class="panel">
-          <h2>Generated plan preview</h2>
-          <div class="hint">Review and edit the draft before applying. Changes are not active on Today until you press Apply to active program.</div>
+          <h2>課表預覽</h2>
+          <div class="hint">先看摘要與每週內容，不懂的規則說明可以收起來。</div>
           <div id="planEngineSummary" class="feature-band">
-            <div class="feature-title"><strong>No generated draft yet</strong><span class="status warn">Waiting</span></div>
-            <div class="compact-list">Choose the inputs and generate a plan.</div>
+            <div class="feature-title"><strong>尚未產生課表</strong><span class="status warn">等待中</span></div>
+            <div class="compact-list">填好設定後按「產生課表」。</div>
           </div>
           <div id="generatedPlanPreview" class="program-preview"></div>
         </section>
@@ -2770,7 +2860,7 @@
 
     <!-- PAGE 4: Coach -->
     <div id="page-coach" class="page-content">
-      <div class="product-grid">
+      <div class="product-grid" id="coachToolsGrid">
         <section class="panel">
           <h2 data-i18n="readinessCheckTitle">Readiness check</h2>
           <div class="hint" data-i18n="readinessCheckHint">Record the daily context before heavy work. The coach rules adjust training without making medical claims.</div>
@@ -2841,7 +2931,7 @@
           </div>
           <details style="margin-top:14px">
             <summary data-i18n="aiCoachPacket">AI coach packet</summary>
-            <div class="footer-note" id="aiPacketHelp">This is an anonymized JSON summary. It is usable now as a manual copy/paste packet, but it is not connected to an AI API and it will never change Firebase automatically.</div>
+            <div class="footer-note" id="aiPacketHelp">這是給 AI 教練看的匿名訓練摘要；一般使用者不用打開。</div>
             <textarea id="aiCoachPacket" class="prompt-box" readonly></textarea>
             <div class="actions-inline">
               <button id="buildAiPacketBtn" type="button" data-i18n="buildAnonymousPacket">Build anonymous packet</button>
@@ -2851,7 +2941,7 @@
         </section>
       </div>
 
-      <section class="panel" style="margin-top:16px">
+      <section class="panel" id="videoAnalysisPanel" style="margin-top:16px">
         <div class="video-section-head">
           <div>
             <h2 data-i18n="videoAnalysisTitle">Video analysis</h2>
@@ -2938,26 +3028,36 @@
               <select id="poseViewAngle"><option value="side" data-i18n="sideView">Side view</option><option value="front" data-i18n="frontView">Front view</option></select>
             </div>
             <div class="field">
-              <label for="poseCalibrationMode" data-i18n="calibration">Calibration</label>
-              <select id="poseCalibrationMode"><option value="relative" data-i18n="relativeOnly">Relative only</option><option value="plate" data-i18n="plateDiameter">Plate diameter</option><option value="custom" data-i18n="knownDistance">Known distance</option></select>
-            </div>
-            <div class="field" id="poseRealDistanceField">
-              <label for="poseRealDistance" id="poseRealDistanceLabel" data-i18n="knownMeters">Known meters</label>
-              <input id="poseRealDistance" type="number" min="0" step="0.01" value="0.45" />
-            </div>
-            <div class="field" id="posePixelDistanceField">
-              <label for="posePixelDistance" id="posePixelDistanceLabel" data-i18n="pixelDistance">Pixel distance</label>
-              <input id="posePixelDistance" type="number" min="0" step="1" placeholder="Optional" />
+              <label>&nbsp;</label>
+              <button class="primary" id="analyzePoseBtn" type="button" data-i18n="analyzeLocally">Analyze locally</button>
             </div>
           </div>
-          <div id="poseCalibrationHelp" class="footer-note"></div>
-          <div class="actions-inline">
-            <label class="compact-list"><input id="poseSaveRawVideo" type="checkbox" /> <span data-i18n="keepRawVideo">Keep raw video for 30 days</span></label>
-            <button class="primary" id="analyzePoseBtn" type="button" data-i18n="analyzeLocally">Analyze locally</button>
-            <button id="savePoseAnalysisBtn" type="button" disabled data-i18n="saveAnalysisSummary">Save analysis summary</button>
-            <button id="askPoseWeaknessBtn" type="button" disabled data-i18n="aiWeakPoints">AI weak points</button>
-            <button id="askPoseRpeBtn" type="button" disabled data-i18n="aiRpeOpinion">AI RPE opinion</button>
-          </div>
+          <details class="advanced-drawer">
+            <summary data-i18n="advancedOptions">Advanced options</summary>
+            <div class="advanced-body">
+              <div class="grid grid-4">
+                <div class="field">
+                  <label for="poseCalibrationMode" data-i18n="calibration">Calibration</label>
+                  <select id="poseCalibrationMode"><option value="relative" data-i18n="relativeOnly">Relative only</option><option value="plate" data-i18n="plateDiameter">Plate diameter</option><option value="custom" data-i18n="knownDistance">Known distance</option></select>
+                </div>
+                <div class="field" id="poseRealDistanceField">
+                  <label for="poseRealDistance" id="poseRealDistanceLabel" data-i18n="knownMeters">Known meters</label>
+                  <input id="poseRealDistance" type="number" min="0" step="0.01" value="0.45" />
+                </div>
+                <div class="field" id="posePixelDistanceField">
+                  <label for="posePixelDistance" id="posePixelDistanceLabel" data-i18n="pixelDistance">Pixel distance</label>
+                  <input id="posePixelDistance" type="number" min="0" step="1" placeholder="Optional" />
+                </div>
+              </div>
+              <div id="poseCalibrationHelp" class="footer-note"></div>
+              <div class="actions-inline">
+                <label class="compact-list"><input id="poseSaveRawVideo" type="checkbox" /> <span data-i18n="keepRawVideo">Keep raw video for 30 days</span></label>
+                <button id="savePoseAnalysisBtn" type="button" disabled data-i18n="saveAnalysisSummary">Save analysis summary</button>
+                <button id="askPoseWeaknessBtn" type="button" disabled data-i18n="aiWeakPoints">AI weak points</button>
+                <button id="askPoseRpeBtn" type="button" disabled data-i18n="aiRpeOpinion">AI RPE opinion</button>
+              </div>
+            </div>
+          </details>
           <div class="pose-analysis-stage">
             <div class="pose-preview-shell">
               <video id="posePreviewVideo" controls muted playsinline></video>
@@ -2976,15 +3076,15 @@
     <!-- PAGE 5: Dashboard -->
     <div id="page-dashboard" class="page-content">
       <section class="panel">
-        <h2>Progress Dashboard</h2>
-        <div class="hint">A quick product-grade view of the last 28 days: e1RM, training volume, readiness, and coach interventions.</div>
+        <h2>訓練回顧</h2>
+        <div class="hint">快速看最近 28 天的 e1RM、訓練量、恢復狀態與教練調整。</div>
         <div id="progressOverview" class="metric-strip"></div>
         <div id="dashboardLanes" class="dashboard-lanes"></div>
       </section>
       <section class="panel" style="margin-top:16px">
         <div class="feature-title">
-          <strong>Weekly Review</strong>
-          <span class="status warn" id="weeklyReviewStatus">Last 7 days</span>
+          <strong>本週回顧</strong>
+          <span class="status warn" id="weeklyReviewStatus">最近 7 天</span>
         </div>
         <div class="hint">每週回顧完成率、e1RM 趨勢、RPE 校準與疲勞警訊，讓使用者看得出每月付費的訓練決策價值。</div>
         <div id="weeklyReviewOutput" class="weekly-grid"></div>
@@ -2994,8 +3094,8 @@
     <!-- PAGE 6: History -->
     <div id="page-history" class="page-content">
       <section class="panel">
-        <h2>Training history</h2>
-        <div class="hint">All logged sessions for the active user, grouped by date. Click a date to expand.</div>
+        <h2>完整訓練紀錄</h2>
+        <div class="hint">依日期整理目前選手的所有訓練紀錄。</div>
         <div id="historyAccordion"></div>
       </section>
     </div>
@@ -3276,7 +3376,7 @@
       return {
         schemaVersion: APP_SCHEMA_VERSION,
         activeUserId: "u1",
-        uiLanguage: "en",
+        uiLanguage: "zh",
         users: normalizeUsers({})
       };
     }
@@ -3749,14 +3849,14 @@
     }
 
     function getAccessState() {
-      if (!authUser) return { active: false, level: "warn", label: "需要登入", detail: "登入後才能確認付費 Beta 權限。" };
-      if (!isScopedMigrationComplete()) return { active: false, level: "warn", label: "尚未匯入資料", detail: "先 Claim 或建立個人資料，再開通付費 Beta。" };
-      if (isAdminActive()) return { active: true, level: "ok", label: "管理員已解鎖", detail: "管理員帳號已解鎖 Beta 功能。" };
+      if (!authUser) return { active: false, level: "warn", label: "請先登入", detail: "登入後可保存訓練資料；會員可使用課表、AI 教練與影片分析。" };
+      if (!isScopedMigrationComplete()) return { active: false, level: "warn", label: "需要建立資料", detail: "請先選擇或建立你的訓練資料。" };
+      if (isAdminActive()) return { active: true, level: "ok", label: "會員有效", detail: "會員有效中，可使用完整訓練功能。" };
       if (isEntitlementActive()) {
         const end = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : "未設定到期日";
-        return { active: true, level: "ok", label: "Beta 已開通", detail: `TWD ${BETA_PRICE_TWD}/月 Beta 已開通，到期日 ${end}。` };
+        return { active: true, level: "ok", label: "會員有效", detail: `會員可使用課表、AI 教練、影片分析與資料匯出。到期日 ${end}。` };
       }
-      return { active: false, level: "bad", label: "Beta 未開通", detail: "你仍可讀取與匯出資料；新增紀錄、課表生成、AI 與影片儲存需要開通。" };
+      return { active: false, level: "bad", label: "會員未開通", detail: "你仍可查看與匯出資料；開通後可新增訓練、產生課表與使用 AI/影片功能。" };
     }
 
     function renderMembershipStatus() {
@@ -3777,8 +3877,10 @@
       const adminLabel = document.getElementById("adminRoleLabel");
       if (adminLabel) adminLabel.textContent = isAdminActive() ? (adminData.role || "管理員") : "否";
       const adminPanel = document.getElementById("adminPanel");
+      const adminDrawer = document.getElementById("adminToolsDrawer");
       const adminStatus = document.getElementById("adminPanelStatus");
       if (adminPanel) adminPanel.classList.toggle("locked", !isAdminActive());
+      if (adminDrawer) adminDrawer.hidden = !isAdminActive();
       if (adminStatus) {
         adminStatus.className = "status " + (isAdminActive() ? "ok" : "warn");
         adminStatus.textContent = isAdminActive() ? "管理員可用" : "限管理員";
@@ -3787,7 +3889,7 @@
 
     function showPaidFeatureLock(feature = "此功能") {
       const access = getAccessState();
-      showToast(`${feature} 需要付費 Beta 權限。你仍可查看與匯出既有資料。`, "bad");
+      showToast(`${feature} 需要會員權限。你仍可查看與匯出既有資料。`, "bad");
       const panel = document.getElementById("membershipPanel");
       if (panel) {
         panel.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -3909,20 +4011,20 @@
       renderCountGrid("migrationPreviewCounts", counts);
       if (authStatus) {
         authStatus.className = "status " + (authUser ? "ok" : "warn");
-        authStatus.textContent = authUser ? "Signed in" : (fbAuth ? "Sign in required" : "Auth config missing");
+        authStatus.textContent = authUser ? "已登入" : (fbAuth ? "請先登入" : "登入尚未啟用");
       }
       if (authUserLabel) authUserLabel.textContent = authUser?.email || authUser?.uid || "—";
       const scopedReady = authUser && scopedRef && isScopedMigrationComplete();
-      if (writeTargetLabel) writeTargetLabel.textContent = scopedReady ? "users/{uid}" : "Locked";
-      if (migrationStateLabel) migrationStateLabel.textContent = isScopedMigrationComplete() ? "Complete" : "Not claimed";
+      if (writeTargetLabel) writeTargetLabel.textContent = scopedReady ? "已啟用" : "未啟用";
+      if (migrationStateLabel) migrationStateLabel.textContent = isScopedMigrationComplete() ? "已完成" : "尚未匯入";
       if (migrationPreviewStatus) {
         migrationPreviewStatus.className = "status " + (counts.athletes ? "warn" : "bad");
-        migrationPreviewStatus.textContent = counts.athletes ? `${selectedLegacyName} preview ready` : "No legacy data";
+        migrationPreviewStatus.textContent = counts.athletes ? `${selectedLegacyName} 可匯入` : "沒有舊資料";
       }
       if (migrationTargetLabel) {
         migrationTargetLabel.textContent = authUser
-          ? `Target account: ${authUser.uid}. Claiming ${selectedLegacyName} only; Pig remains at powerlifting_log until her own account claims it.`
-          : "Sign in before claiming legacy data.";
+          ? `即將匯入：${selectedLegacyName}。其他選手資料會保留，不會被刪除。`
+          : "登入後才能匯入舊資料。";
       }
       if (migrationPanel) migrationPanel.classList.toggle("locked", !scopedReady);
       renderMembershipStatus();
@@ -4254,8 +4356,10 @@
           renderAuthMigrationStatus();
           clearFirebaseLocalCache();
         }, (err) => {
-          console.error("Firebase read failed:", err);
           const denied = err?.code === "PERMISSION_DENIED";
+          if (!denied) {
+            console.error("Firebase read failed:", err);
+          }
           if (denied) {
             legacyDataCache = null;
             updateFbStatus("warn", authUser ? "Legacy sealed" : "Sign in required");
@@ -4419,16 +4523,16 @@
 
     const UI_TEXT = {
       en: {
-        appTitle: "Powerlifting Log",
-        appSub: "Training command center for today: plan, lift, e1RM, back-off, fatigue.",
+        appTitle: "Powerlifting Training Assistant",
+        appSub: "Plan today, adjust wisely, and review progress in one place.",
         languageButton: "中文",
         addAthlete: "Add Athlete",
         navToday: "Today",
-        navPlanner: "Plan Builder",
-        navCoach: "Coach",
-        navDashboard: "Dashboard",
+        navPlanner: "Plan",
+        navCoach: "Video",
+        navDashboard: "Review",
         navHistory: "History",
-        navSetup: "Setup",
+        navSetup: "Me",
         todayPlan: "Today plan",
         coachAdjusted: "Coach adjusted",
         sessionFocus: "Session focus",
@@ -4445,7 +4549,7 @@
         editableRows: "Editable sessions",
         showAll: "Show all sessions",
         showLess: "Show first week only",
-        aiHelp: "AI coach packet is an anonymized JSON summary. Right now it is manual: build it, copy it, and paste it into an AI coach. It does not call an AI API or change Firebase automatically."
+        aiHelp: "This is an anonymized training summary for the AI coach. Most users can leave it closed."
       },
       zh: {
         appTitle: "健力訓練紀錄",
@@ -4474,14 +4578,14 @@
         editableRows: "可編輯課表",
         showAll: "顯示全部課表",
         showLess: "只顯示第一週",
-        aiHelp: "AI coach packet 是匿名 JSON 摘要。目前是手動使用：先產生、複製，再貼到 AI 教練工具。它不會自動呼叫 AI API，也不會自動改 Firebase。"
+        aiHelp: "這是給 AI 教練看的匿名訓練摘要；一般使用者不用打開。"
       }
     };
 
     Object.assign(UI_TEXT.en, {
       languageButton: "中文",
-      readinessCheckTitle: "Readiness check",
-      readinessCheckHint: "Record the daily context before heavy work. The coach rules adjust training without making medical claims.",
+      readinessCheckTitle: "Today status",
+      readinessCheckHint: "Quickly record sleep, stress, soreness, pain, and motivation before training.",
       sleepHours: "Sleep hours",
       stress15: "Stress 1-5",
       soreness15: "Soreness 1-5",
@@ -4503,17 +4607,17 @@
       painContext: "Pain location / context",
       painContextPlaceholder: "Example: left wrist tight on bench, low back pump, poor sleep after night shift...",
       saveReadiness: "Save readiness",
-      buildCoachDecision: "Build coach decision",
+      buildCoachDecision: "Build today adjustment",
       applyDecisionToLog: "Apply decision to log form",
-      coachDecisionTitle: "Coach decision",
-      coachDecisionHint: "A rules-first adjustment for today. It can reduce load, cut volume, switch emphasis, or stop the main lift when risk is high.",
-      aiSecondOpinion: "AI second opinion",
+      coachDecisionTitle: "Today adjustment",
+      coachDecisionHint: "A rules-first suggestion for whether to keep, reduce, or change today's training.",
+      aiSecondOpinion: "AI coach suggestion",
       manualApplyOnly: "Manual apply only",
       aiSecondOpinionHint: "AI reads an anonymous training summary and returns suggestions you must review before applying.",
       askAiCoach: "Ask AI Coach",
       applyAiSuggestion: "Apply AI suggestion",
-      aiCoachPacket: "AI coach packet",
-      buildAnonymousPacket: "Build anonymous packet",
+      aiCoachPacket: "Advanced: AI summary",
+      buildAnonymousPacket: "Build summary",
       copyPacket: "Copy packet",
       personalCalibrationTitle: "Personal calibration",
       personalCalibrationStatusNew: "Needs samples",
@@ -4531,14 +4635,14 @@
       calibrationBiasNeutral: "Manual RPE and estimated RPE are currently close. Keep adding labels to tighten confidence.",
       calibrationWeakPoints: "Common weak points",
       calibrationAiNote: "AI Coach reads this summary as personal context. It does not train a model automatically.",
-      videoAnalysisTitle: "Video analysis",
+      videoAnalysisTitle: "Video movement analysis",
       videoAnalysisHint: "Load a fixed-angle training video, run local pose analysis, then optionally ask AI for weak points or an RPE second opinion.",
       filmingGuideButton: "Filming guide",
       lift: "Lift",
       manualRpe: "Manual RPE",
       videoFile: "Video file",
-      optionalAnnotationTitle: "Optional manual annotation",
-      optionalAnnotationHint: "For calibration later: reps, set type, speed feel, and one coaching note.",
+      optionalAnnotationTitle: "Advanced labels",
+      optionalAnnotationHint: "Optional: reps, set type, speed feel, and one coaching note for personal calibration.",
       optional: "optional",
       setType: "Set type",
       reps: "Reps",
@@ -4550,7 +4654,7 @@
       coachCuePlaceholder: "Depth, pause, lockout, bar path...",
       uploadEstimateRpe: "Upload + estimate RPE",
       saveNoteOnly: "Save note only",
-      poseAnalysisTitle: "Pose analysis",
+      poseAnalysisTitle: "Movement analysis",
       localOnly: "Local only",
       fixedFilmingSetup: "Fixed filming setup",
       distance: "Distance",
@@ -4565,17 +4669,18 @@
       sideView: "Side view",
       frontView: "Front view",
       calibration: "Calibration",
-      relativeOnly: "Relative only",
-      plateDiameter: "Plate diameter",
-      knownDistance: "Known distance",
+      relativeOnly: "Trend only",
+      plateDiameter: "Plate calibration",
+      knownDistance: "Known-distance calibration",
       knownMeters: "Known meters",
       pixelDistance: "Pixel distance",
       platePixels: "Plate pixels",
       keepRawVideo: "Keep raw video for 30 days",
-      analyzeLocally: "Analyze locally",
+      analyzeLocally: "Start analysis",
       saveAnalysisSummary: "Save analysis summary",
-      aiWeakPoints: "AI weak points",
-      aiRpeOpinion: "AI RPE opinion",
+      aiWeakPoints: "Ask AI for weak points",
+      aiRpeOpinion: "Ask AI about RPE",
+      advancedOptions: "Advanced options",
       noPoseAnalysis: "No pose analysis yet.",
       poseRelativeHelp: "Relative only: no calibration needed. Use this when you only want relative tempo, drift, and trend data.",
       posePlateHelp: "Plate diameter: enter the real plate diameter and its size in pixels if you want estimated m/s.",
@@ -4602,16 +4707,16 @@
     });
 
     Object.assign(UI_TEXT.zh, {
-      appTitle: "健力訓練記錄",
-      appSub: "今日訓練指揮中心：課表、紀錄、e1RM、退階重量與疲勞下降。",
+      appTitle: "健力訓練助手",
+      appSub: "今天怎麼練、怎麼調整、怎麼回顧，一個地方完成。",
       languageButton: "EN",
       addAthlete: "新增選手",
       navToday: "今日",
-      navPlanner: "課表產生",
-      navCoach: "教練",
-      navDashboard: "儀表板",
+      navPlanner: "課表",
+      navCoach: "影片",
+      navDashboard: "回顧",
       navHistory: "紀錄",
-      navSetup: "設定",
+      navSetup: "我的",
       todayPlan: "今日課表",
       coachAdjusted: "教練已調整",
       sessionFocus: "本堂重點",
@@ -4622,15 +4727,15 @@
       secondary: "副項",
       prescription: "處方",
       accessories: "輔助 / 備註",
-      ruleExplanation: "規則說明",
+      ruleExplanation: "進階說明",
       planTarget: "課表疲勞上限",
       setupTarget: "設定目標",
       editableRows: "可編輯課表",
       showAll: "顯示全部課表",
       showLess: "只顯示第一週",
-      aiHelp: "AI coach packet 是匿名訓練摘要；AI 建議只供參考，必須手動套用才會改資料。",
-      readinessCheckTitle: "Readiness 檢查",
-      readinessCheckHint: "重訓前先記錄今天狀態；規則教練只做訓練調整，不做醫療診斷。",
+      aiHelp: "這是給 AI 教練看的匿名訓練摘要；一般使用者不用打開。",
+      readinessCheckTitle: "今日狀態",
+      readinessCheckHint: "訓練前快速記錄睡眠、壓力、痠痛與疼痛；需要時再讓系統調整今天訓練。",
       sleepHours: "睡眠時數",
       stress15: "壓力 1-5",
       soreness15: "痠痛 1-5",
@@ -4652,17 +4757,17 @@
       painContext: "疼痛位置 / 情境",
       painContextPlaceholder: "例：臥推左手腕緊、下背充血、夜班後睡不好...",
       saveReadiness: "儲存狀態",
-      buildCoachDecision: "產生教練調整",
+      buildCoachDecision: "產生今日調整",
       applyDecisionToLog: "套用到今日紀錄",
-      coachDecisionTitle: "教練調整",
-      coachDecisionHint: "先用規則做今日調整：降重量、減量、改重點，或風險高時停止主項。",
-      aiSecondOpinion: "AI 第二意見",
+      coachDecisionTitle: "今日調整建議",
+      coachDecisionHint: "根據今日狀態與原課表，建議降重量、減量、改重點或維持原計畫。",
+      aiSecondOpinion: "AI 教練建議",
       manualApplyOnly: "手動套用",
       aiSecondOpinionHint: "AI 只讀匿名訓練摘要；建議必須由你確認後才會套用。",
       askAiCoach: "詢問 AI 教練",
       applyAiSuggestion: "套用 AI 建議",
-      aiCoachPacket: "AI 教練摘要包",
-      buildAnonymousPacket: "產生匿名摘要",
+      aiCoachPacket: "進階：AI 摘要資料",
+      buildAnonymousPacket: "產生摘要",
       copyPacket: "複製摘要",
       personalCalibrationTitle: "個人化校準",
       personalCalibrationStatusNew: "需要樣本",
@@ -4680,14 +4785,14 @@
       calibrationBiasNeutral: "人工 RPE 和估算值目前接近，繼續累積標註可提高信心。",
       calibrationWeakPoints: "常見弱點",
       calibrationAiNote: "AI 教練會讀取這份個人摘要作為背景；目前不會自動訓練模型。",
-      videoAnalysisTitle: "影片分析",
-      videoAnalysisHint: "載入固定角度訓練影片，在本機做姿態分析，再選擇是否交給 AI 判讀弱點或 RPE 參考。",
+      videoAnalysisTitle: "影片動作分析",
+      videoAnalysisHint: "選動作、上傳固定角度影片，先在本機分析；需要時再交給 AI 看弱點或 RPE 參考。",
       filmingGuideButton: "拍攝教學",
       lift: "動作",
       manualRpe: "人工 RPE",
       videoFile: "影片檔案",
-      optionalAnnotationTitle: "選填人工標註",
-      optionalAnnotationHint: "之後校準用：次數、組別、速度感與一句教練備註。",
+      optionalAnnotationTitle: "進階標註",
+      optionalAnnotationHint: "選填：次數、組別、速度感與一句教練備註，用來做個人化校準。",
       optional: "選填",
       setType: "組別",
       reps: "次數",
@@ -4699,7 +4804,7 @@
       coachCuePlaceholder: "深度、停頓、鎖定、槓路...",
       uploadEstimateRpe: "上傳並估算 RPE",
       saveNoteOnly: "只儲存備註",
-      poseAnalysisTitle: "姿態分析",
+      poseAnalysisTitle: "動作分析",
       localOnly: "本機分析",
       fixedFilmingSetup: "固定拍攝設定",
       distance: "距離",
@@ -4714,17 +4819,18 @@
       sideView: "側面",
       frontView: "正面",
       calibration: "校正方式",
-      relativeOnly: "相對分析",
-      plateDiameter: "槓片直徑",
-      knownDistance: "已知距離",
+      relativeOnly: "只看趨勢",
+      plateDiameter: "用槓片校正",
+      knownDistance: "用已知距離校正",
       knownMeters: "已知公尺",
       pixelDistance: "像素距離",
       platePixels: "槓片像素",
       keepRawVideo: "原始影片保留 30 天",
-      analyzeLocally: "本機分析",
+      analyzeLocally: "開始分析",
       saveAnalysisSummary: "儲存分析摘要",
-      aiWeakPoints: "AI 弱點分析",
-      aiRpeOpinion: "AI RPE 參考",
+      aiWeakPoints: "請 AI 看弱點",
+      aiRpeOpinion: "請 AI 看 RPE",
+      advancedOptions: "進階選項",
       noPoseAnalysis: "尚未產生姿態分析。",
       poseRelativeHelp: "相對分析：不需要填公尺或像素。適合先看節奏、槓路漂移與長期趨勢，但不會是真實 m/s。",
       posePlateHelp: "槓片直徑：預設 0.45 m。若要估算 m/s，請填槓片在畫面中的像素寬度。",
@@ -4781,27 +4887,32 @@
       document.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
         el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
       });
-      const navKeys = ["navToday", "navPlanner", "navCoach", "navDashboard", "navHistory", "navSetup"];
-      document.querySelectorAll(".page-tab").forEach((button, index) => {
-        if (navKeys[index]) button.textContent = t(navKeys[index]);
+      const navKeys = {
+        workout: "navToday",
+        planner: "navPlanner",
+        coach: "navCoach",
+        dashboard: "navDashboard",
+        history: "navHistory",
+        settings: "navSetup"
+      };
+      document.querySelectorAll(".page-tab").forEach((button) => {
+        const key = navKeys[button.dataset.page];
+        if (key) button.textContent = t(key);
       });
       if (lang === "zh") {
-        setText("#page-workout h2", "今日課表");
-        setText("#page-planner h2", "RPE 課表產生器");
-        setText("#page-coach h2", "Readiness 檢查");
-        setText("#page-dashboard h2", "進度儀表板");
-      }
-      if (lang === "zh") {
-        setText("#page-workout h2", "今日課表");
-        setText("#page-planner h2", "RPE 課表產生");
-        setText("#page-coach h2", "Readiness 檢查");
-        setText("#page-dashboard h2", "進度儀表板");
+        setText("#page-workout h2", "今天怎麼練");
+        setText("#page-planner h2", "課表產生");
+        setText("#page-coach h2", "今日狀態");
+        setText("#page-dashboard h2", "訓練回顧");
+        setText("#page-history h2", "完整訓練紀錄");
       } else {
-        setText("#page-workout h2", "Today's schedule");
-        setText("#page-planner h2", "RPE Plan Builder");
-        setText("#page-coach h2", "Readiness check");
-        setText("#page-dashboard h2", "Progress Dashboard");
+        setText("#page-workout h2", "Today's training");
+        setText("#page-planner h2", "Plan builder");
+        setText("#page-coach h2", "Today status");
+        setText("#page-dashboard h2", "Training review");
+        setText("#page-history h2", "Full training history");
       }
+      if (typeof applyTheme === "function") applyTheme(document.documentElement.getAttribute("data-theme") || "light");
       updatePoseCalibrationUi();
     }
 
@@ -6308,12 +6419,21 @@
     }
 
     /* ── Page navigation ── */
+    function prioritizeVideoPage() {
+      const page = document.getElementById("page-coach");
+      const videoPanel = document.getElementById("videoAnalysisPanel");
+      if (page && videoPanel && page.firstElementChild !== videoPanel) {
+        page.insertBefore(videoPanel, page.firstElementChild);
+      }
+    }
+
     function switchPage(pageName) {
       document.querySelectorAll(".page-tab").forEach((t) => t.classList.toggle("active", t.dataset.page === pageName));
       document.querySelectorAll(".page-content").forEach((p) => p.classList.toggle("active", p.id === "page-" + pageName));
       if (pageName === "history") renderHistory();
       if (pageName === "planner") renderPlanner();
       if (pageName === "coach") {
+        prioritizeVideoPage();
         renderReadinessSummary();
         renderCoachDecision();
         renderAiCoachSession();
@@ -6373,14 +6493,15 @@
         || "";
 
       document.getElementById("activeAthleteName").textContent = user.name;
-      document.getElementById("todayFocusSummary").textContent = focus || `W${document.getElementById("logWeek")?.value || 1}D${document.getElementById("logDay")?.value || 1} training`;
+      const zh = currentLanguage() === "zh";
+      document.getElementById("todayFocusSummary").textContent = focus || (zh ? `第 ${document.getElementById("logWeek")?.value || 1} 週 / 第 ${document.getElementById("logDay")?.value || 1} 天` : `W${document.getElementById("logWeek")?.value || 1}D${document.getElementById("logDay")?.value || 1} training`);
       document.getElementById("todaySetCount").textContent = rows.length;
-      document.getElementById("todayLiftSummary").textContent = liftNames.length ? liftNames.join(" / ") : "No saved sets";
+      document.getElementById("todayLiftSummary").textContent = liftNames.length ? liftNames.join(" / ") : (zh ? "尚未儲存組數" : "No saved sets");
       document.getElementById("todayBestE1rm").textContent = bestRow ? `${formatNumber(bestRow.e1rm, 1)} kg` : "--";
-      document.getElementById("todayBestLift").textContent = bestRow ? `${bestRow.lift} ${bestRow.setType || ""}`.trim() : "Waiting for log";
+      document.getElementById("todayBestLift").textContent = bestRow ? `${bestRow.lift} ${bestRow.setType || ""}`.trim() : (zh ? "等待紀錄" : "Waiting for log");
       document.getElementById("activeProgramRows").textContent = (user.program || []).length;
-      document.getElementById("activeProgramStatus").textContent = (user.program || []).length ? "Plan loaded" : "Import or load a plan";
-      document.getElementById("activeBackoffBase").textContent = user.backoffBase === "currentSet" ? "Current set" : "Top set";
+      document.getElementById("activeProgramStatus").textContent = (user.program || []).length ? (zh ? "課表已載入" : "Plan loaded") : (zh ? "尚未載入課表" : "Import or load a plan");
+      document.getElementById("activeBackoffBase").textContent = user.backoffBase === "currentSet" ? (zh ? "目前這組" : "Current set") : (zh ? "頂組" : "Top set");
       const effectiveTarget = getEffectiveFatigueTarget(user);
       document.getElementById("activeFatigueTarget").textContent = `${effectiveTarget.source === "plan" ? t("planTarget") : t("setupTarget")} ${formatNumber(effectiveTarget.value, 1)}%`;
     }
@@ -6633,11 +6754,11 @@
           <summary>${language === "zh" ? "完整細節" : "Full details"}</summary>
           <div class="schedule-line">
             <span>${t("topSet")}</span>
-            <span>${escapeHtml(row.topSetTarget || "Not specified")}</span>
+            <span>${escapeHtml(row.topSetTarget || (language === "zh" ? "未指定" : "Not specified"))}</span>
           </div>
           <div class="schedule-line">
             <span>${t("backoff")}</span>
-            <span>${escapeHtml(row.backoffPlan || "Not specified")}</span>
+            <span>${escapeHtml(row.backoffPlan || (language === "zh" ? "未指定" : "Not specified"))}</span>
           </div>
           <div class="schedule-line">
             <span>${t("planTarget")}</span>
@@ -6646,7 +6767,7 @@
           ${row.protocolName ? `
             <div class="schedule-line">
               <span>${t("protocol")}</span>
-              <span>${escapeHtml(row.protocolName)} / stress ${escapeHtml(row.stressIndex || "--")}/${escapeHtml(row.stressTarget || "--")}</span>
+              <span>${escapeHtml(row.protocolName)} / ${language === "zh" ? "壓力" : "stress"} ${escapeHtml(row.stressIndex || "--")}/${escapeHtml(row.stressTarget || "--")}</span>
             </div>
           ` : ""}
           ${row.coachAdjusted ? `
@@ -6667,8 +6788,9 @@
       const rows = getProgramFor(state.activeUserId, week, day);
       const appliedDecision = getAppliedCoachDecisionForDay(user, week, day);
       const coachBanner = renderCoachAppliedBanner(appliedDecision);
+      const zh = currentLanguage() === "zh";
       if (!rows.length) {
-        container.innerHTML = `${coachBanner}<div class="empty">No imported program row for week ${week}, day ${day}.</div>`;
+        container.innerHTML = `${coachBanner}<div class="empty">${zh ? `第 ${week} 週第 ${day} 天沒有課表。` : `No imported program row for week ${week}, day ${day}.`}</div>`;
         return;
       }
       container.innerHTML = coachBanner + rows.map((sourceRow) => {
@@ -6678,38 +6800,38 @@
         <div class="plan-card schedule-card">
           <div class="schedule-header">
             <div>
-              <div class="schedule-title">W${row.week}D${row.day} schedule</div>
-              <div class="schedule-subtitle">${escapeHtml(row.phase || "Phase not specified")}</div>
+              <div class="schedule-title">${zh ? `第 ${row.week} 週 · 第 ${row.day} 天` : `W${row.week}D${row.day} schedule`}</div>
+              <div class="schedule-subtitle">${escapeHtml(row.phase || (zh ? "未指定階段" : "Phase not specified"))}</div>
             </div>
             <span class="today-plan-ribbon">${row.coachAdjusted ? t("coachAdjusted") : t("todayPlan")}</span>
           </div>
 
           <div class="schedule-focus">
             <span class="label">${t("sessionFocus")}</span>
-            <strong>${escapeHtml(row.focus || "No focus listed")}</strong>
+            <strong>${escapeHtml(row.focus || (zh ? "未填寫重點" : "No focus listed"))}</strong>
           </div>
 
           <div class="schedule-grid">
             <section class="schedule-section primary">
               <div class="schedule-section-label">1. ${t("mainLift")}</div>
-              <h3>${escapeHtml(row.mainLift || "No main lift")}</h3>
+              <h3>${escapeHtml(row.mainLift || (zh ? "未指定主項" : "No main lift"))}</h3>
               ${renderTodaySteps(row, fatigueTarget)}
               ${renderMainScheduleDetails(row, fatigueTarget)}
             </section>
 
             <section class="schedule-section">
               <div class="schedule-section-label">2. ${t("secondary")}</div>
-              <h3>${escapeHtml(row.secondaryLift || "No secondary lift")}</h3>
+              <h3>${escapeHtml(row.secondaryLift || (zh ? "無副項" : "No secondary lift"))}</h3>
               <div class="schedule-line">
                 <span>${t("prescription")}</span>
-                <span>${escapeHtml(row.secondaryPrescription || "Not specified")}</span>
+                <span>${escapeHtml(row.secondaryPrescription || (zh ? "未指定" : "Not specified"))}</span>
               </div>
             </section>
           </div>
 
           <div class="schedule-accessories">
             <span class="label">${t("accessories")}</span>
-            <div>${escapeHtml(row.accessoriesNotes || "No accessories listed")}</div>
+            <div>${escapeHtml(row.accessoriesNotes || (zh ? "未列輔助訓練" : "No accessories listed"))}</div>
           </div>
           ${Array.isArray(row.ruleNotes) && row.ruleNotes.length ? `
             <details class="schedule-details">
@@ -6832,10 +6954,11 @@
       const summary = document.getElementById("planEngineSummary");
       const preview = document.getElementById("generatedPlanPreview");
       if (!summary || !preview) return;
+      const zh = currentLanguage() === "zh";
       if (!plan) {
         summary.innerHTML = `
-          <div class="feature-title"><strong>No generated draft yet</strong><span class="status warn">Waiting</span></div>
-          <div class="compact-list">Choose the inputs and generate a plan.</div>`;
+          <div class="feature-title"><strong>${zh ? "尚未產生課表" : "No generated draft yet"}</strong><span class="status warn">${zh ? "等待中" : "Waiting"}</span></div>
+          <div class="compact-list">${zh ? "填好設定後按「產生課表」。" : "Choose the inputs and generate a plan."}</div>`;
         preview.innerHTML = "";
         return;
       }
@@ -6850,12 +6973,15 @@
       )).join(" | ");
       summary.innerHTML = `
         <div class="feature-title">
-          <strong>${escapeHtml(plan.version || "RTS plan")} · ${rows.length} sessions</strong>
-          <span id="planDraftEditStatus" class="status ${plan.hasUnsavedEdits ? "warn" : "ok"}">${plan.hasUnsavedEdits ? "Unsaved edits" : "Draft saved"}</span>
+          <strong>${zh ? "訓練 block" : "Training block"} · ${rows.length} ${zh ? "堂" : "sessions"}</strong>
+          <span id="planDraftEditStatus" class="status ${plan.hasUnsavedEdits ? "warn" : "ok"}">${plan.hasUnsavedEdits ? (zh ? "尚未儲存" : "Unsaved edits") : (zh ? "草稿已儲存" : "Draft saved")}</span>
         </div>
-        <div class="compact-list">${uniqueWeeks.length} weeks / ${plan.inputs?.daysPerWeek || "?"} days per week · ${escapeHtml(phases.join(" + ") || "Structured block")}</div>
-        <div class="compact-list">v2 protocols: ${escapeHtml(protocols.join(" + ") || "Protocol set")} | avg stress ${avgStress || "--"}</div>
-        <div class="compact-list">${escapeHtml(responseSummary || "Response profile will appear after enough logs.")}</div>
+        <div class="compact-list">${uniqueWeeks.length} ${zh ? "週" : "weeks"} / ${plan.inputs?.daysPerWeek || "?"} ${zh ? "天/週" : "days per week"} · ${escapeHtml(phases.join(" + ") || (zh ? "結構化 block" : "Structured block"))}</div>
+        <details class="schedule-details">
+          <summary>${zh ? "進階說明" : "Advanced details"}</summary>
+          <div class="schedule-detail-copy">${zh ? "協議" : "Protocols"}: ${escapeHtml(protocols.join(" + ") || "Protocol set")} | ${zh ? "平均壓力" : "avg stress"} ${avgStress || "--"}</div>
+          <div class="schedule-detail-copy">${escapeHtml(responseSummary || (zh ? "累積更多紀錄後會顯示個人反應。" : "Response profile will appear after enough logs."))}</div>
+        </details>
         <ul class="reason-list">${(plan.reasons || []).map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>`;
       const visibleRows = planDraftShowAll ? rows : rows.slice(0, Math.max(1, Number(plan.inputs?.daysPerWeek) || 3));
       preview.innerHTML = renderPlanCompactSummary(rows) + `
@@ -6871,20 +6997,20 @@
             <div class="week-badge">W${row.week}<br>D${row.day}</div>
             <div>
               <strong>${escapeHtml(row.focus || row.mainLift)}</strong>
-              <small>${escapeHtml(row.protocolName || "Protocol")} | stress ${escapeHtml(row.stressIndex || "--")}/${escapeHtml(row.stressTarget || "--")} | TTP ${escapeHtml(row.ttpTarget || "--")} exposures | ${escapeHtml(row.responseSignal || "unknown")}</small>
+              <small>${zh ? "進階" : "Advanced"}: ${escapeHtml(row.protocolName || "Protocol")} | ${zh ? "壓力" : "stress"} ${escapeHtml(row.stressIndex || "--")}/${escapeHtml(row.stressTarget || "--")} | TTP ${escapeHtml(row.ttpTarget || "--")} | ${escapeHtml(row.responseSignal || "unknown")}</small>
               <small>${escapeHtml(row.phase)} · ${escapeHtml(row.mainLift)} · ${escapeHtml(row.topSetTarget)}</small>
               <small>${escapeHtml(row.backoffPlan)} · ${escapeHtml(row.secondaryLift || "No secondary")}</small>
             </div>
           </summary>
           <div class="plan-edit-form">
-            ${renderPlanDraftField(row, originalIndex, "phase", "Phase")}
-            ${renderPlanDraftField(row, originalIndex, "focus", "Focus")}
-            ${renderPlanDraftField(row, originalIndex, "mainLift", "Main lift")}
-            ${renderPlanDraftField(row, originalIndex, "topSetTarget", "Top set")}
-            ${renderPlanDraftField(row, originalIndex, "backoffPlan", "Back-off", true)}
-            ${renderPlanDraftField(row, originalIndex, "secondaryLift", "Secondary lift")}
-            ${renderPlanDraftField(row, originalIndex, "secondaryPrescription", "Secondary prescription", true)}
-            ${renderPlanDraftField(row, originalIndex, "accessoriesNotes", "Accessories / notes", true)}
+            ${renderPlanDraftField(row, originalIndex, "phase", zh ? "階段" : "Phase")}
+            ${renderPlanDraftField(row, originalIndex, "focus", zh ? "本日重點" : "Focus")}
+            ${renderPlanDraftField(row, originalIndex, "mainLift", zh ? "主項" : "Main lift")}
+            ${renderPlanDraftField(row, originalIndex, "topSetTarget", zh ? "頂組" : "Top set")}
+            ${renderPlanDraftField(row, originalIndex, "backoffPlan", zh ? "退階組" : "Back-off", true)}
+            ${renderPlanDraftField(row, originalIndex, "secondaryLift", zh ? "副項" : "Secondary lift")}
+            ${renderPlanDraftField(row, originalIndex, "secondaryPrescription", zh ? "副項處方" : "Secondary prescription", true)}
+            ${renderPlanDraftField(row, originalIndex, "accessoriesNotes", zh ? "輔助 / 備註" : "Accessories / notes", true)}
           </div>
         </details>
       `;
@@ -6907,11 +7033,12 @@
       }
       const score = scoreReadiness(check);
       target.className = `feature-band ${score.level === "bad" ? "bad" : score.level === "warn" ? "warn" : ""}`.trim();
-      target.innerHTML = `
-        <div class="score-ring ${score.level}">${score.score}</div>
-        <div class="feature-title"><strong>${score.label} · ${escapeHtml(check.date)}</strong><span class="status ${score.level}">${score.level}</span></div>
-        <div class="compact-list">Sleep ${formatNumber(check.sleep, 1)}h · Stress ${check.stress}/5 · Soreness ${check.soreness}/5 · Pain ${check.pain}/10 · Motivation ${check.motivation}/5</div>
-        <ul class="reason-list">${score.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>`;
+        const zh = currentLanguage() === "zh";
+        target.innerHTML = `
+          <div class="score-ring ${score.level}">${score.score}</div>
+          <div class="feature-title"><strong>${score.label} · ${escapeHtml(check.date)}</strong><span class="status ${score.level}">${zh ? "狀態分數" : score.level}</span></div>
+          <div class="compact-list">${zh ? "睡眠" : "Sleep"} ${formatNumber(check.sleep, 1)}h · ${zh ? "壓力" : "Stress"} ${check.stress}/5 · ${zh ? "痠痛" : "Soreness"} ${check.soreness}/5 · ${zh ? "疼痛" : "Pain"} ${check.pain}/10 · ${zh ? "動機" : "Motivation"} ${check.motivation}/5</div>
+          <ul class="reason-list">${score.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>`;
     }
 
     function renderCoachDecision() {
@@ -6930,17 +7057,18 @@
         return;
       }
       const level = decision.readinessScore?.level || "warn";
+      const zh = currentLanguage() === "zh";
       output.innerHTML = `
         <div class="feature-band ${level === "bad" ? "bad" : level === "warn" ? "warn" : ""}">
           <div class="feature-title">
             <strong>${escapeHtml(decision.action)} · ${escapeHtml(decision.date)}</strong>
-            <span class="status ${level}">${decision.applied ? "Applied" : "Review"}</span>
+            <span class="status ${level}">${decision.applied ? (zh ? "已套用" : "Applied") : (zh ? "待確認" : "Review")}</span>
           </div>
-          <div class="compact-list">Original: ${escapeHtml(decision.originalPlan?.mainLift || "Main lift")} · ${escapeHtml(decision.originalPlan?.topSetTarget || "")}</div>
+          <div class="compact-list">${zh ? "原課表" : "Original"}: ${escapeHtml(decision.originalPlan?.mainLift || (zh ? "主項" : "Main lift"))} · ${escapeHtml(decision.originalPlan?.topSetTarget || "")}</div>
           <div class="metric-strip">
-            <div class="metric"><div class="k">Top set</div><div class="v">${escapeHtml(decision.adjustedPlan?.topSetTarget || "—")}</div></div>
-            <div class="metric"><div class="k">Back-off</div><div class="v">${escapeHtml(decision.adjustedPlan?.backoffPlan || "—")}</div></div>
-            <div class="metric"><div class="k">Target RPE</div><div class="v">${formatNumber(decision.adjustedPlan?.targetRpe, 1)}</div></div>
+            <div class="metric"><div class="k">${zh ? "頂組" : "Top set"}</div><div class="v">${escapeHtml(decision.adjustedPlan?.topSetTarget || "—")}</div></div>
+            <div class="metric"><div class="k">${zh ? "退階組" : "Back-off"}</div><div class="v">${escapeHtml(decision.adjustedPlan?.backoffPlan || "—")}</div></div>
+            <div class="metric"><div class="k">${zh ? "目標 RPE" : "Target RPE"}</div><div class="v">${formatNumber(decision.adjustedPlan?.targetRpe, 1)}</div></div>
           </div>
           <div class="footer-note">${escapeHtml(decision.adjustedPlan?.note || "")}</div>
           <ul class="reason-list">${(decision.reasons || []).map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>
@@ -6971,27 +7099,28 @@
       const suggestion = session.responseJson || {};
       const confidence = Number(suggestion.confidence || 0);
       const level = confidence >= 0.7 ? "ok" : confidence >= 0.45 ? "warn" : "bad";
+      const zh = currentLanguage() === "zh";
       const changes = (suggestion.recommendedChanges || []).map((item) => `
         <div class="suggestion-item">
-          <strong>${escapeHtml(item.target || "Training")}: ${escapeHtml(item.action || "Review")}</strong>
+          <strong>${escapeHtml(item.target || (zh ? "訓練" : "Training"))}: ${escapeHtml(item.action || (zh ? "確認" : "Review"))}</strong>
           <div>${escapeHtml(item.detail || "")}</div>
         </div>
-      `).join("") || `<div class="suggestion-item">No concrete change suggested.</div>`;
+      `).join("") || `<div class="suggestion-item">${zh ? "目前沒有具體調整。" : "No concrete change suggested."}</div>`;
       const risks = (suggestion.riskFlags || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       const why = (suggestion.why || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       output.innerHTML = `
         <div class="ai-coach-card ${level === "ok" ? "" : level}">
           <div class="feature-title">
-            <strong>AI Coach suggestion</strong>
-            <span class="status ${level}">${session.status === "applied" ? "Applied" : "Review"} · ${Math.round(confidence * 100)}%</span>
+            <strong>${zh ? "AI 教練建議" : "AI Coach suggestion"}</strong>
+            <span class="status ${level}">${session.status === "applied" ? (zh ? "已套用" : "Applied") : (zh ? "待確認" : "Review")} · ${Math.round(confidence * 100)}%</span>
           </div>
-          <div class="compact-list">${escapeHtml(suggestion.summary || "Review the suggestion before applying.")}</div>
+          <div class="compact-list">${escapeHtml(suggestion.summary || (zh ? "套用前請先確認建議內容。" : "Review the suggestion before applying."))}</div>
           <div class="suggestion-list">${changes}</div>
-          ${risks ? `<div><strong>Risk flags</strong><ul class="reason-list">${risks}</ul></div>` : ""}
-          ${why ? `<div><strong>Why</strong><ul class="reason-list">${why}</ul></div>` : ""}
-          <div class="footer-note">AI suggestions do not change training data until you press Apply.</div>
+          ${risks ? `<div><strong>${zh ? "風險提醒" : "Risk flags"}</strong><ul class="reason-list">${risks}</ul></div>` : ""}
+          ${why ? `<div><strong>${zh ? "為什麼" : "Why"}</strong><ul class="reason-list">${why}</ul></div>` : ""}
+          <div class="footer-note">${zh ? "AI 建議不會自動改資料，只有按套用後才會寫入。" : "AI suggestions do not change training data until you press Apply."}</div>
         </div>`;
-      if (status) status.textContent = session.status === "applied" ? "Applied" : "Review before applying";
+      if (status) status.textContent = session.status === "applied" ? (zh ? "已套用" : "Applied") : (zh ? "套用前先確認" : "Review before applying");
       if (applyBtn) applyBtn.disabled = session.status === "applied";
     }
 
@@ -7399,24 +7528,25 @@
       if (!target) return;
       const reviews = [...(user.videoReviews || [])].sort((a, b) => String(b.createdAt || b.date).localeCompare(String(a.createdAt || a.date))).slice(0, 6);
       const analyses = [...(user.videoAnalyses || [])].sort((a, b) => String(b.savedAt || b.createdAt || b.date).localeCompare(String(a.savedAt || a.createdAt || a.date))).slice(0, 6);
+      const zh = currentLanguage() === "zh";
       if (!reviews.length && !analyses.length) {
-        target.innerHTML = `<div class="empty">No video review notes or pose analyses yet.</div>`;
+        target.innerHTML = `<div class="empty">${zh ? "尚未有影片分析或 RPE 標註。" : "No video review notes or pose analyses yet."}</div>`;
         return;
       }
       const analysisHtml = analyses.map((analysis) => `
         <div class="video-review-item">
-          <strong>${escapeHtml(analysis.lift)} | ${escapeHtml(analysis.viewAngle)} pose | ${Math.round(Number(analysis.confidence || 0) * 100)}%</strong>
-          <div class="compact-list">${escapeHtml(analysis.date)} | reps ${(analysis.repPhases || []).length} | velocity drop ${analysis.velocityCurveSummary?.velocityDropPct ?? "--"}%</div>
-          <div class="compact-list">Drift ${analysis.barPathSummary?.horizontalDriftPct ?? "--"}% | ${escapeHtml(analysis.calibration?.unit || "relative")}${analysis.rawVideoSaved ? " | raw saved" : ""}</div>
+          <strong>${escapeHtml(analysis.lift)} | ${escapeHtml(analysis.viewAngle === "front" ? (zh ? "正面" : "front") : (zh ? "側面" : "side"))} | ${Math.round(Number(analysis.confidence || 0) * 100)}%</strong>
+          <div class="compact-list">${escapeHtml(analysis.date)} | ${zh ? "次數" : "reps"} ${(analysis.repPhases || []).length} | ${zh ? "速度下降" : "velocity drop"} ${analysis.velocityCurveSummary?.velocityDropPct ?? "--"}%</div>
+          <div class="compact-list">${zh ? "槓路漂移" : "Drift"} ${analysis.barPathSummary?.horizontalDriftPct ?? "--"}% | ${escapeHtml(analysis.calibration?.unit || "relative")}${analysis.rawVideoSaved ? (zh ? " | 已暫存原影片" : " | raw saved") : ""}</div>
           ${(analysis.coachCues || []).length ? `<ul class="reason-list">${analysis.coachCues.slice(0, 3).map((cue) => `<li>${escapeHtml(cue)}</li>`).join("")}</ul>` : ""}
         </div>
       `).join("");
       const reviewHtml = reviews.map((review) => `
         <div class="video-review-item">
           <strong>${escapeHtml(review.lift)} · ${escapeHtml(review.setType)} · RPE ${formatNumber(review.manualRpe, 1)}</strong>
-          <div class="compact-list">${escapeHtml(review.date)} · ${escapeHtml(review.barSpeed)} · ${escapeHtml(review.fileName || "No file label")}</div>
-          <div class="compact-list">Estimated RPE ${formatNumber(review.estimatedRpe, 1)} · confidence ${Math.round(Number(review.confidence || 0) * 100)}%${review.storagePath ? " · uploaded" : ""}</div>
-          <div class="footer-note">${escapeHtml(review.cue || "No cue saved.")}</div>
+          <div class="compact-list">${escapeHtml(review.date)} · ${escapeHtml(review.barSpeed)} · ${escapeHtml(review.fileName || (zh ? "未上傳檔名" : "No file label"))}</div>
+          <div class="compact-list">${zh ? "估算 RPE" : "Estimated RPE"} ${formatNumber(review.estimatedRpe, 1)} · ${zh ? "信心" : "confidence"} ${Math.round(Number(review.confidence || 0) * 100)}%${review.storagePath ? (zh ? " · 已上傳" : " · uploaded") : ""}</div>
+          <div class="footer-note">${escapeHtml(review.cue || (zh ? "尚未儲存提示。" : "No cue saved."))}</div>
           ${(review.why || []).length ? `<ul class="reason-list">${review.why.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>` : ""}
         </div>
       `).join("");
@@ -7439,10 +7569,11 @@
       const videoWithEstimate = videoReviews.filter((review) => Number.isFinite(Number(review.estimatedRpe)));
       const videoAnalyses = user.videoAnalyses || [];
       const calibration = computePersonalCalibration(user);
+      const zh = currentLanguage() === "zh";
       overview.innerHTML = `
-        <div class="metric"><div class="k">28-day sets</div><div class="v">${recent.length}</div></div>
-        <div class="metric"><div class="k">Latest readiness</div><div class="v">${latestReadiness ? readinessScore.score : "—"}</div></div>
-        <div class="metric"><div class="k">Coach decisions</div><div class="v">${decisions.length}</div></div>
+        <div class="metric"><div class="k">${zh ? "28 天組數" : "28-day sets"}</div><div class="v">${recent.length}</div></div>
+        <div class="metric"><div class="k">${zh ? "最近狀態" : "Latest readiness"}</div><div class="v">${latestReadiness ? readinessScore.score : "—"}</div></div>
+        <div class="metric"><div class="k">${zh ? "調整次數" : "Coach decisions"}</div><div class="v">${decisions.length}</div></div>
       `;
       const bestValues = Object.values(best).map((row) => Number(row?.e1rm || 0)).filter(Boolean);
       const maxBest = bestValues.length ? Math.max(...bestValues) : 1;
@@ -7461,43 +7592,43 @@
         .slice(0, 5)
         .map((check) => {
           const score = scoreReadiness(check);
-          return `<div class="compact-list">${escapeHtml(check.date)} · ${score.score}/100 · pain ${check.pain}/10 · sleep ${formatNumber(check.sleep, 1)}h</div>`;
-        }).join("") || `<div class="empty">No readiness checks yet.</div>`;
+          return `<div class="compact-list">${escapeHtml(check.date)} · ${score.score}/100 · ${zh ? "疼痛" : "pain"} ${check.pain}/10 · ${zh ? "睡眠" : "sleep"} ${formatNumber(check.sleep, 1)}h</div>`;
+        }).join("") || `<div class="empty">${zh ? "尚未儲存狀態。" : "No readiness checks yet."}</div>`;
       const decisionHtml = [...decisions]
         .sort((a, b) => String(b.createdAt || b.date).localeCompare(String(a.createdAt || a.date)))
         .slice(0, 5)
-        .map((decision) => `<div class="compact-list">${escapeHtml(decision.date)} · ${escapeHtml(decision.action)} · ${decision.applied ? "applied" : "reviewed"}</div>`)
-        .join("") || `<div class="empty">No coach decisions yet.</div>`;
+        .map((decision) => `<div class="compact-list">${escapeHtml(decision.date)} · ${escapeHtml(decision.action)} · ${decision.applied ? (zh ? "已套用" : "applied") : (zh ? "已查看" : "reviewed")}</div>`)
+        .join("") || `<div class="empty">${zh ? "尚未有調整紀錄。" : "No coach decisions yet."}</div>`;
       const aiHtml = aiSessions.length
-        ? `<div class="metric"><div class="k">AI sessions</div><div class="v">${aiSessions.length}</div></div>
-           <div class="metric"><div class="k">Applied</div><div class="v">${Math.round((appliedAi / Math.max(aiSessions.length, 1)) * 100)}%</div></div>`
-        : `<div class="empty">No AI coach sessions yet.</div>`;
+        ? `<div class="metric"><div class="k">${zh ? "AI 建議" : "AI sessions"}</div><div class="v">${aiSessions.length}</div></div>
+           <div class="metric"><div class="k">${zh ? "採納率" : "Applied"}</div><div class="v">${Math.round((appliedAi / Math.max(aiSessions.length, 1)) * 100)}%</div></div>`
+        : `<div class="empty">${zh ? "尚未有 AI 建議。" : "No AI coach sessions yet."}</div>`;
       const videoDelta = videoWithEstimate
         .filter((review) => Number.isFinite(Number(review.manualRpe)))
         .map((review) => Math.abs(Number(review.estimatedRpe) - Number(review.manualRpe)));
       const avgDelta = videoDelta.length ? videoDelta.reduce((sum, value) => sum + value, 0) / videoDelta.length : null;
       const calibrationBiasText = calibration.signedRpeBias === null ? "--" : `${calibration.signedRpeBias > 0 ? "+" : ""}${formatNumber(calibration.signedRpeBias, 1)}`;
       const videoHtml = videoReviews.length
-        ? `<div class="metric"><div class="k">Video notes</div><div class="v">${videoReviews.length}</div></div>
-           <div class="metric"><div class="k">Avg RPE gap</div><div class="v">${avgDelta === null ? "--" : formatNumber(avgDelta, 1)}</div></div>
-           <div class="metric"><div class="k">Personal bias</div><div class="v">${calibrationBiasText}</div></div>`
-        : `<div class="empty">No video RPE reviews yet.</div>`;
+        ? `<div class="metric"><div class="k">${zh ? "影片標註" : "Video notes"}</div><div class="v">${videoReviews.length}</div></div>
+           <div class="metric"><div class="k">${zh ? "RPE 平均差" : "Avg RPE gap"}</div><div class="v">${avgDelta === null ? "--" : formatNumber(avgDelta, 1)}</div></div>
+           <div class="metric"><div class="k">${zh ? "個人偏差" : "Personal bias"}</div><div class="v">${calibrationBiasText}</div></div>`
+        : `<div class="empty">${zh ? "尚未有影片 RPE 標註。" : "No video RPE reviews yet."}</div>`;
       const concentricValues = videoAnalyses.map((analysis) => Number(analysis.velocityCurveSummary?.avgConcentricSeconds)).filter(Number.isFinite);
       const velocityDrops = videoAnalyses.map((analysis) => Number(analysis.velocityCurveSummary?.velocityDropPct)).filter(Number.isFinite);
       const poseFlagCount = videoAnalyses.reduce((sum, analysis) => sum + (analysis.techniqueFlags || []).length + (analysis.asymmetryFlags || []).length, 0);
       const poseHtml = videoAnalyses.length
-        ? `<div class="metric"><div class="k">Pose analyses</div><div class="v">${videoAnalyses.length}</div></div>
-           <div class="metric"><div class="k">Avg concentric</div><div class="v">${concentricValues.length ? formatNumber(concentricValues.reduce((sum, v) => sum + v, 0) / concentricValues.length, 2) + "s" : "--"}</div></div>
-           <div class="metric"><div class="k">Velocity drop</div><div class="v">${velocityDrops.length ? formatNumber(velocityDrops.reduce((sum, v) => sum + v, 0) / velocityDrops.length, 1) + "%" : "--"}</div></div>
-           <div class="metric"><div class="k">Flags</div><div class="v">${poseFlagCount}</div></div>`
-        : `<div class="empty">No pose analyses yet.</div>`;
+        ? `<div class="metric"><div class="k">${zh ? "動作分析" : "Pose analyses"}</div><div class="v">${videoAnalyses.length}</div></div>
+           <div class="metric"><div class="k">${zh ? "平均向心" : "Avg concentric"}</div><div class="v">${concentricValues.length ? formatNumber(concentricValues.reduce((sum, v) => sum + v, 0) / concentricValues.length, 2) + "s" : "--"}</div></div>
+           <div class="metric"><div class="k">${zh ? "速度下降" : "Velocity drop"}</div><div class="v">${velocityDrops.length ? formatNumber(velocityDrops.reduce((sum, v) => sum + v, 0) / velocityDrops.length, 1) + "%" : "--"}</div></div>
+           <div class="metric"><div class="k">${zh ? "提醒" : "Flags"}</div><div class="v">${poseFlagCount}</div></div>`
+        : `<div class="empty">${zh ? "尚未有動作分析。" : "No pose analyses yet."}</div>`;
       lanes.innerHTML = `
-        <div class="dashboard-lane"><h3>Best e1RM</h3><div class="trend-list">${liftHtml}</div></div>
-        <div class="dashboard-lane"><h3>Readiness</h3>${readinessHtml}</div>
-        <div class="dashboard-lane"><h3>Coach history</h3>${decisionHtml}</div>
-        <div class="dashboard-lane"><h3>AI adoption</h3>${aiHtml}</div>
-        <div class="dashboard-lane"><h3>Video RPE calibration</h3>${videoHtml}</div>
-        <div class="dashboard-lane"><h3>Pose analysis</h3>${poseHtml}</div>
+        <div class="dashboard-lane"><h3>${zh ? "最佳 e1RM" : "Best e1RM"}</h3><div class="trend-list">${liftHtml}</div></div>
+        <div class="dashboard-lane"><h3>${zh ? "恢復狀態" : "Readiness"}</h3>${readinessHtml}</div>
+        <div class="dashboard-lane"><h3>${zh ? "調整紀錄" : "Coach history"}</h3>${decisionHtml}</div>
+        <div class="dashboard-lane"><h3>${zh ? "AI 採納" : "AI adoption"}</h3>${aiHtml}</div>
+        <div class="dashboard-lane"><h3>${zh ? "影片 RPE 校準" : "Video RPE calibration"}</h3>${videoHtml}</div>
+        <div class="dashboard-lane"><h3>${zh ? "動作分析" : "Pose analysis"}</h3>${poseHtml}</div>
       `;
       renderWeeklyReview();
     }
@@ -7505,6 +7636,7 @@
     function renderMetrics() {
       const user = getActiveUser();
       const metrics = computeCurrentMetrics();
+      const zh = currentLanguage() === "zh";
 
       document.getElementById("pct1rmMetric").textContent = metrics.pct ? (metrics.pct * 100).toFixed(1) + "%" : "—";
       document.getElementById("e1rmMetric").textContent = metrics.e1rm ? formatNumber(metrics.e1rm, 1) + " kg" : "—";
@@ -7516,7 +7648,7 @@
         if (metrics.fatiguePct === null) {
           railFill.style.width = "0%";
           railFill.style.background = "linear-gradient(90deg, var(--teal), var(--warn))";
-          railValue.textContent = "Waiting for set";
+          railValue.textContent = zh ? "等待輸入" : "Waiting for set";
         } else {
           const target = Number(metrics.fatigueTargetPct) || Number(user.fatigueDropPct) || 5;
           const railPct = Math.max(0, Math.min(100, (metrics.fatiguePct / target) * 100));
@@ -7532,11 +7664,11 @@
       if (!metrics.referenceTop) {
         status.className = "status warn";
         status.textContent = user.backoffBase === "latestTop"
-          ? "Waiting for a saved top set on this date and lift"
-          : "Using current set e1RM as back-off base";
+          ? (zh ? "先儲存今天同動作的頂組" : "Waiting for a saved top set on this date and lift")
+          : (zh ? "使用目前這組 e1RM 當退階基準" : "Using current set e1RM as back-off base");
       } else if (metrics.fatiguePct === null) {
         status.className = "status warn";
-        status.textContent = "Enter the current set to calculate fatigue drop";
+        status.textContent = zh ? "輸入目前這組後計算疲勞下降" : "Enter the current set to calculate fatigue drop";
       } else if (metrics.fatiguePct >= metrics.fatigueTargetPct) {
         status.className = "status bad";
         status.textContent = `${currentLanguage() === "zh" ? "疲勞下降已達標" : "Fatigue drop reached"}: ${formatNumber(metrics.fatiguePct, 1)}% (${metrics.fatigueTargetSource === "plan" ? t("planTarget") : t("setupTarget")} ${formatNumber(metrics.fatigueTargetPct, 1)}%)`;
@@ -7546,10 +7678,10 @@
       }
 
       const baseText = metrics.referenceTop
-        ? `Back-off recommendation is using the latest saved top set for this session: ${formatNumber(metrics.referenceTop.e1rm, 1)} kg e1RM.`
+        ? (zh ? `退階重量使用本堂最新頂組：${formatNumber(metrics.referenceTop.e1rm, 1)} kg e1RM。` : `Back-off recommendation is using the latest saved top set for this session: ${formatNumber(metrics.referenceTop.e1rm, 1)} kg e1RM.`)
         : metrics.e1rm
-          ? `Back-off recommendation is using the current set e1RM: ${formatNumber(metrics.e1rm, 1)} kg.`
-          : "Enter reps, weight, and RPE to calculate.";
+          ? (zh ? `退階重量使用目前這組 e1RM：${formatNumber(metrics.e1rm, 1)} kg。` : `Back-off recommendation is using the current set e1RM: ${formatNumber(metrics.e1rm, 1)} kg.`)
+          : (zh ? "輸入次數、重量與 RPE 後開始計算。" : "Enter reps, weight, and RPE to calculate.");
       const targetText = metrics.fatigueTargetSource === "plan"
         ? ` ${t("planTarget")}: ${formatNumber(metrics.fatigueTargetPct, 1)}%.`
         : ` ${t("setupTarget")}: ${formatNumber(metrics.fatigueTargetPct, 1)}%.`;
@@ -7562,8 +7694,9 @@
       const rows = getCurrentSessionLogs();
       renderDashboardSummary();
       if (!rows.length) {
-        body.innerHTML = `<tr><td colspan="10" class="empty">No sets saved for the selected date.</td></tr>`;
-        if (cards) cards.innerHTML = `<div class="empty">No sets saved for the selected date.</div>`;
+        const empty = currentLanguage() === "zh" ? "這一天尚未儲存組數。" : "No sets saved for the selected date.";
+        body.innerHTML = `<tr><td colspan="10" class="empty">${empty}</td></tr>`;
+        if (cards) cards.innerHTML = `<div class="empty">${empty}</div>`;
         return;
       }
       if (cards) {
@@ -8974,12 +9107,13 @@
       if (btn) {
         const icon = btn.querySelector(".theme-toggle-icon");
         const label = btn.querySelector(".theme-toggle-label");
+        const zh = typeof currentLanguage === "function" && currentLanguage() === "zh";
         if (theme === "dark") {
           if (icon) icon.textContent = "☀";
-          if (label) label.textContent = "Day";
+          if (label) label.textContent = zh ? "日間" : "Day";
         } else {
           if (icon) icon.textContent = "☾";
-          if (label) label.textContent = "Night";
+          if (label) label.textContent = zh ? "夜間" : "Night";
         }
       }
       const meta = document.querySelector('meta[name="theme-color"]');
