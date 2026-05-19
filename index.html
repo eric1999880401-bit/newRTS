@@ -209,7 +209,13 @@
     .theme-toggle:hover .theme-toggle-icon { color: var(--moss); transform: rotate(-12deg); }
 
     * { box-sizing: border-box; }
-    html { background: var(--paper); }
+    html {
+      min-height: 100%;
+      background: var(--paper);
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
     body {
       margin: 0;
       min-height: 100vh;
@@ -222,6 +228,10 @@
       font-family: var(--font-body);
       font-size: 17px;
       line-height: 1.55;
+      overflow-x: hidden;
+      overflow-y: auto;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
@@ -276,6 +286,8 @@
       width: min(1340px, 100%);
       margin: 0 auto;
       padding: 28px 22px 44px;
+      min-height: 100vh;
+      touch-action: pan-y;
     }
     h1, h2, h3 {
       margin: 0;
@@ -1362,7 +1374,7 @@
     }
     @media (max-width: 760px) {
       body { font-size: 16px; }
-      .app { padding: 18px 14px 96px; }
+      .app { padding: 18px 14px calc(112px + env(safe-area-inset-bottom, 0px)); }
       .app-hero { grid-template-columns: 1fr; padding: 22px; gap: 16px; }
       .login-callout {
         grid-template-columns: 1fr;
