@@ -2444,6 +2444,44 @@
         var(--paper);
       box-shadow: 0 18px 50px rgba(43,36,25,.12);
     }
+    .today-day-picker {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--rule);
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--ivory), var(--paper-warm));
+      box-shadow: var(--shadow);
+    }
+    .today-day-picker strong {
+      display: block;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 21px;
+      line-height: 1.1;
+    }
+    .today-day-picker span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .today-picker-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .today-picker-controls .field {
+      min-width: 0;
+    }
+    .today-picker-controls button {
+      white-space: nowrap;
+    }
     .today-command-top {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
@@ -2733,6 +2771,17 @@
         margin-top: 2px;
         padding: 14px;
         border-radius: 24px;
+      }
+      .today-day-picker {
+        grid-template-columns: 1fr;
+        padding: 14px;
+        border-radius: 22px;
+      }
+      .today-picker-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+      .today-picker-controls button {
+        grid-column: 1 / -1;
       }
       .today-command-top {
         grid-template-columns: auto minmax(0, 1fr);
@@ -3147,6 +3196,24 @@
 
     <!-- PAGE 2: Today's Workout -->
     <div id="page-workout" class="page-content active">
+      <section class="today-day-picker" aria-label="選擇今日訓練日">
+        <div>
+          <strong>先選今天的課表日</strong>
+          <span>換週次或訓練日後，下面的今日任務會一起更新。</span>
+        </div>
+        <div class="today-picker-controls">
+          <div class="field">
+            <label for="filterWeek">週次</label>
+            <select id="filterWeek"></select>
+          </div>
+          <div class="field">
+            <label for="filterDay">訓練日</label>
+            <select id="filterDay"></select>
+          </div>
+          <button id="usePlanForLogBtn" type="button">帶入今天訓練</button>
+        </div>
+      </section>
+
       <section class="today-command-center" aria-label="今日訓練操作台">
         <div class="today-command-top">
           <div class="mission-ring" id="todayCompletionRing" aria-label="今日完成度">
@@ -3201,22 +3268,8 @@
       <div class="grid workout-layout today-detail-grid">
         <section class="panel training-card">
           <div class="panel-header">
-          <h2>今天怎麼練</h2>
-          <div class="hint">先看今天重點與建議組數，再把每一組記錄下來。</div>
-          <div class="grid grid-3">
-            <div class="field">
-              <label for="filterWeek">週次</label>
-              <select id="filterWeek"></select>
-            </div>
-            <div class="field">
-              <label for="filterDay">訓練日</label>
-              <select id="filterDay"></select>
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button id="usePlanForLogBtn" type="button">帶入今天訓練</button>
-            </div>
-          </div>
+          <h2 id="todayPlanDetailsTitle">完整課表細節</h2>
+          <div class="hint">需要看規則、主副項、輔助與疲勞上限時再往下看。</div>
           </div>
           <div id="planCards" style="margin-top:14px"></div>
         </section>
@@ -5685,14 +5738,14 @@
         if (key) button.textContent = t(key);
       });
       if (lang === "zh") {
-        setText("#page-workout h2", "今天怎麼練");
+        setText("#todayPlanDetailsTitle", "完整課表細節");
         setText("#page-planner h2", "課表產生");
         setText("#page-coach h2", "影片與教練");
         setText("#dashboardHistoryTitle", "完整訓練紀錄");
         setText("#dashboardTrendTitle", "訓練趨勢");
         setText("#page-history h2", "完整訓練紀錄");
       } else {
-        setText("#page-workout h2", "Today's training");
+        setText("#todayPlanDetailsTitle", "Full plan details");
         setText("#page-planner h2", "Plan builder");
         setText("#page-coach h2", "Video and coach");
         setText("#dashboardHistoryTitle", "Full training history");
