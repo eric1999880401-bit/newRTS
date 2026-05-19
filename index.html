@@ -1470,10 +1470,13 @@
     }
     .log-console { padding: 22px 26px 26px; }
     .quick-set-shell {
-      padding: 16px;
+      padding: 18px;
       border: 1px solid var(--rule-strong);
-      border-radius: var(--radius);
-      background: var(--paper);
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(198, 221, 169, .16), transparent 34%),
+        linear-gradient(180deg, var(--paper), var(--ivory-soft));
+      box-shadow: 0 18px 42px rgba(45, 38, 25, .08);
     }
     .quick-set-header {
       display: flex;
@@ -1504,6 +1507,168 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
       align-items: end;
+    }
+    .quick-log-preview {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 18px;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--moss);
+      border-radius: 18px;
+      background: var(--ivory);
+    }
+    .quick-log-preview span {
+      display: block;
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .quick-log-preview strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 34px);
+      font-style: italic;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+    .quick-log-preview small {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+    .quick-log-preview .status {
+      white-space: nowrap;
+    }
+    .quick-log-card {
+      padding: 14px;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: rgba(255, 250, 238, .6);
+    }
+    .quick-log-card > label,
+    .quick-number-card > label,
+    .quick-weight-card > label {
+      margin-bottom: 10px;
+    }
+    .quick-log-card .segmented {
+      border-radius: 16px;
+      background: var(--paper);
+    }
+    .quick-log-card .segmented button {
+      min-height: 62px;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      font-style: italic;
+    }
+    .quick-log-card .segmented.set-types {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .quick-log-card .segmented.set-types button {
+      min-height: 54px;
+      font-size: 14px;
+      font-style: normal;
+      font-family: var(--font-label);
+      font-weight: 800;
+    }
+    .quick-dose-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(130px, 1fr) minmax(130px, 1fr);
+      gap: 14px;
+      grid-column: 1 / -1;
+      align-items: stretch;
+    }
+    .quick-weight-card,
+    .quick-number-card {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: var(--ivory);
+    }
+    .select-stepper {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 42px;
+      align-items: stretch;
+      border: 1px solid var(--rule-strong);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--paper);
+    }
+    .select-stepper select {
+      border: none;
+      border-radius: 0;
+      min-height: 60px;
+      background: var(--ivory);
+      color: var(--ink-base);
+      text-align: center;
+      text-align-last: center;
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      font-style: italic;
+    }
+    .select-stepper button {
+      border: none;
+      border-radius: 0;
+      min-height: 60px;
+      background: var(--ivory-soft);
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .select-stepper button:hover {
+      background: var(--paper-warm);
+    }
+    .quick-advanced-controls {
+      grid-column: 1 / -1;
+      margin-top: 0;
+      padding: 0;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: rgba(255, 250, 238, .42);
+      overflow: hidden;
+    }
+    .quick-advanced-controls summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+      list-style: none;
+      cursor: pointer;
+    }
+    .quick-advanced-controls summary::-webkit-details-marker { display: none; }
+    .quick-advanced-controls summary::after {
+      content: "+";
+      color: var(--gold);
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+    .quick-advanced-controls[open] summary::after { content: "-"; }
+    .quick-advanced-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      padding: 0 14px 14px;
     }
     .context-drawer,
     .notes-drawer {
@@ -2423,6 +2588,19 @@
       .schedule-line { grid-template-columns: 88px minmax(0, 1fr); }
       #page-workout .workout-layout > .training-card:nth-child(2) { order: -1; }
       .quick-set-grid, .drawer-grid, .notes-grid { grid-template-columns: 1fr; }
+      .quick-log-preview {
+        grid-template-columns: 1fr;
+      }
+      .quick-log-preview .status {
+        justify-self: start;
+      }
+      .quick-dose-grid,
+      .quick-advanced-grid {
+        grid-template-columns: 1fr;
+      }
+      .quick-log-card .segmented.set-types {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .quick-set-header { display: block; }
       .quick-set-header strong { display: block; margin-top: 4px; text-align: left; }
       .log-console .weight-field { grid-column: 1 / -1; }
@@ -3385,7 +3563,15 @@
               <strong>動作、重量、RPE</strong>
             </div>
             <div class="quick-set-grid">
-              <div class="field span-4">
+              <div class="quick-log-preview span-4" aria-live="polite">
+                <div>
+                  <span>現在準備記錄</span>
+                  <strong id="quickLogPreviewTitle">Squat · Warm up</strong>
+                  <small id="quickLogPreviewMeta">1 下 @8.0 · 輸入重量後會計算 e1RM</small>
+                </div>
+                <div class="status warn" id="quickLogPreviewWeight">等待重量</div>
+              </div>
+              <div class="field quick-log-card span-4">
                 <label for="logLift">動作</label>
                 <div class="segmented" id="liftSegmented" aria-label="Lift quick selector">
                   <button type="button" data-target="logLift" data-value="Squat">Squat</button>
@@ -3398,7 +3584,7 @@
                   <option>Deadlift</option>
                 </select>
               </div>
-              <div class="field span-4">
+              <div class="field quick-log-card span-4">
                 <label for="logSetType">組別</label>
                 <div class="segmented set-types" id="setTypeSegmented" aria-label="Set type quick selector">
                   <button type="button" data-target="logSetType" data-value="Warm up">Warm up</button>
@@ -3417,50 +3603,65 @@
                   <option>Other</option>
                 </select>
               </div>
-              <div class="field">
-                <label for="logReps">次數</label>
-                <select id="logReps"></select>
-              </div>
-              <div class="field weight-field span-2">
-                <label for="logWeight">重量 (kg)</label>
-                <div class="number-stepper">
-                  <button type="button" data-step-target="logWeight" data-step="-2.5">-</button>
-                  <input id="logWeight" type="number" step="0.1" min="0" />
-                  <button type="button" data-step-target="logWeight" data-step="2.5">+</button>
+              <div class="quick-dose-grid">
+                <div class="field quick-weight-card weight-field">
+                  <label for="logWeight">重量 (kg)</label>
+                  <div class="number-stepper">
+                    <button type="button" data-step-target="logWeight" data-step="-2.5">−</button>
+                    <input id="logWeight" type="number" step="0.1" min="0" inputmode="decimal" placeholder="0" />
+                    <button type="button" data-step-target="logWeight" data-step="2.5">+</button>
+                  </div>
+                </div>
+                <div class="field quick-number-card">
+                  <label for="logReps">次數</label>
+                  <div class="select-stepper">
+                    <button type="button" data-select-step-target="logReps" data-step="-1">−</button>
+                    <select id="logReps"></select>
+                    <button type="button" data-select-step-target="logReps" data-step="1">+</button>
+                  </div>
+                </div>
+                <div class="field quick-number-card">
+                  <label for="logRpe">RPE</label>
+                  <div class="select-stepper">
+                    <button type="button" data-select-step-target="logRpe" data-step="-1">−</button>
+                    <select id="logRpe"></select>
+                    <button type="button" data-select-step-target="logRpe" data-step="1">+</button>
+                  </div>
                 </div>
               </div>
-              <div class="field">
-                <label for="logRpe">RPE</label>
-                <select id="logRpe"></select>
-              </div>
-              <div class="field">
-                <label for="logVariation">變化式</label>
-                <select id="logVariation">
-                  <option>Competition</option>
-                  <option>Paused</option>
-                  <option>Board</option>
-                  <option>Pin</option>
-                  <option>Spoto</option>
-                  <option>Box</option>
-                  <option>Tempo</option>
-                  <option>Touch and Go</option>
-                  <option>Close Grip</option>
-                  <option>Deficit</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div class="field" id="variationOtherWrap" style="display:none">
-                <label for="logVariationOther">自訂變化式</label>
-                <input id="logVariationOther" type="text" placeholder="輸入自訂變化式" />
-              </div>
-              <div class="field">
-                <label for="targetReps">退階次數</label>
-                <select id="targetReps"></select>
-              </div>
-              <div class="field">
-                <label for="targetRpe">退階 RPE</label>
-                <select id="targetRpe"></select>
-              </div>
+              <details class="quick-advanced-controls">
+                <summary>進階設定</summary>
+                <div class="quick-advanced-grid">
+                  <div class="field">
+                    <label for="logVariation">變化式</label>
+                    <select id="logVariation">
+                      <option>Competition</option>
+                      <option>Paused</option>
+                      <option>Board</option>
+                      <option>Pin</option>
+                      <option>Spoto</option>
+                      <option>Box</option>
+                      <option>Tempo</option>
+                      <option>Touch and Go</option>
+                      <option>Close Grip</option>
+                      <option>Deficit</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div class="field" id="variationOtherWrap" style="display:none">
+                    <label for="logVariationOther">自訂變化式</label>
+                    <input id="logVariationOther" type="text" placeholder="輸入自訂變化式" />
+                  </div>
+                  <div class="field">
+                    <label for="targetReps">退階次數</label>
+                    <select id="targetReps"></select>
+                  </div>
+                  <div class="field">
+                    <label for="targetRpe">退階 RPE</label>
+                    <select id="targetRpe"></select>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -7992,6 +8193,21 @@
       });
     }
 
+    function setupSelectSteppers() {
+      document.querySelectorAll("button[data-select-step-target]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const select = document.getElementById(button.dataset.selectStepTarget);
+          if (!select) return;
+          const step = Number(button.dataset.step) || 0;
+          const max = select.options.length - 1;
+          const current = select.selectedIndex >= 0 ? select.selectedIndex : 0;
+          select.selectedIndex = Math.max(0, Math.min(max, current + step));
+          select.dispatchEvent(new Event("input", { bubbles: true }));
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+      });
+    }
+
     /* ── Page navigation ── */
     function prioritizeVideoPage() {
       const page = document.getElementById("page-coach");
@@ -9305,6 +9521,25 @@
       renderWeeklyReview();
     }
 
+    function renderQuickLogPreview(metrics) {
+      const title = document.getElementById("quickLogPreviewTitle");
+      const meta = document.getElementById("quickLogPreviewMeta");
+      const weightBadge = document.getElementById("quickLogPreviewWeight");
+      if (!title || !meta || !weightBadge) return;
+      const lift = document.getElementById("logLift")?.value || "Squat";
+      const setType = document.getElementById("logSetType")?.value || "Top";
+      const reps = Number(document.getElementById("logReps")?.value) || 1;
+      const rpe = Number(document.getElementById("logRpe")?.value) || 8;
+      const weight = Number(document.getElementById("logWeight")?.value) || 0;
+      const zh = currentLanguage() === "zh";
+      title.textContent = `${lift} · ${setType}`;
+      meta.textContent = zh
+        ? `${reps} 下 @${formatNumber(rpe, 1)} · ${metrics?.e1rm ? `本組 e1RM ${formatNumber(metrics.e1rm, 1)} kg` : "輸入重量後會計算 e1RM"}`
+        : `${reps} reps @${formatNumber(rpe, 1)} · ${metrics?.e1rm ? `e1RM ${formatNumber(metrics.e1rm, 1)} kg` : "Enter load to calculate e1RM"}`;
+      weightBadge.className = `status ${weight ? "ok" : "warn"}`;
+      weightBadge.textContent = weight ? `${formatNumber(weight, 1)} kg` : (zh ? "等待重量" : "Waiting for load");
+    }
+
     function renderMetrics() {
       const user = getActiveUser();
       const metrics = computeCurrentMetrics();
@@ -9358,6 +9593,7 @@
         ? ` ${t("planTarget")}: ${formatNumber(metrics.fatigueTargetPct, 1)}%.`
         : ` ${t("setupTarget")}: ${formatNumber(metrics.fatigueTargetPct, 1)}%.`;
       document.getElementById("calcSourceNote").textContent = baseText + targetText;
+      renderQuickLogPreview(metrics);
       renderTodayCommandCenter();
     }
 
@@ -11104,6 +11340,7 @@
 
     setupSegmentedControls();
     setupNumberSteppers();
+    setupSelectSteppers();
     populateFixedSelectors();
     loadFbConfigUI();
     refreshAll();
