@@ -933,8 +933,8 @@
     }
     .today-steps {
       display: grid;
-      gap: 8px;
-      margin: 12px 0;
+      gap: 10px;
+      margin: 14px 0;
     }
     .today-steps-heading {
       color: var(--pencil);
@@ -945,31 +945,51 @@
       text-transform: uppercase;
     }
     .today-step {
+      position: relative;
       display: grid;
-      grid-template-columns: 30px minmax(0, 1fr);
-      gap: 10px;
-      align-items: start;
-      padding: 10px 12px;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
       border: 1px solid var(--rule);
       border-radius: var(--radius);
-      background: var(--ivory-soft);
+      background: linear-gradient(135deg, var(--ivory-soft), var(--paper));
+      overflow: hidden;
+    }
+    .today-step::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--gold);
+    }
+    .today-step.is-top::before { background: var(--moss-deep); }
+    .today-step.is-backoff::before { background: var(--gold); }
+    .today-step.is-stop::before { background: var(--terra); }
+    .today-step.is-stop {
+      border-color: rgba(201, 112, 84, .42);
     }
     .today-step-number {
       display: grid;
       place-items: center;
-      width: 26px;
-      height: 26px;
+      width: 32px;
+      height: 32px;
       border: 1px solid var(--rule-strong);
       border-radius: 50%;
-      background: var(--paper-warm);
+      background: var(--paper);
       color: var(--ink-base);
       font-family: var(--font-label);
       font-size: 12px;
       font-weight: 800;
+      z-index: 1;
     }
-    .today-step strong {
+    .today-step-body {
+      min-width: 0;
+      z-index: 1;
+    }
+    .today-step-label {
       display: block;
-      color: var(--ink-base);
+      color: var(--pencil);
       font-family: var(--font-label);
       font-size: 11px;
       font-weight: 800;
@@ -977,13 +997,92 @@
       line-height: 1.15;
       text-transform: uppercase;
     }
-    .today-step span {
+    .today-step-main {
       display: block;
-      margin-top: 4px;
+      margin-top: 3px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-style: italic;
+      font-weight: 700;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+    .today-step-meta {
+      display: block;
+      margin-top: 5px;
       color: var(--ink-soft);
       font-size: 14px;
       line-height: 1.35;
       overflow-wrap: anywhere;
+    }
+    .today-step-tags,
+    .today-step-cues {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .today-step-tags span,
+    .today-step-cues span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: var(--paper-warm);
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      line-height: 1.1;
+    }
+    .today-set-pips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .today-set-pips span,
+    .today-set-pips em {
+      display: grid;
+      place-items: center;
+      min-width: 28px;
+      height: 22px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 6px;
+      background: var(--paper-warm);
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 800;
+    }
+    .today-fatigue-meter {
+      margin-top: 10px;
+    }
+    .today-fatigue-meter .track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(79, 71, 53, .14);
+      overflow: hidden;
+    }
+    .today-fatigue-meter .fill {
+      width: var(--fatigue-cap, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--moss), var(--terra));
+    }
+    .today-fatigue-meter .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 5px;
+      color: var(--pencil);
+      font-size: 11px;
+      line-height: 1.2;
     }
     .schedule-details {
       margin-top: 12px;
@@ -6226,10 +6325,11 @@
 
     function getPlannedSetEstimate(row) {
       if (!row) return { topSets: 1, topReps: Number(document.getElementById("logReps")?.value) || 1, backoffSets: 2, backoffReps: Number(document.getElementById("targetReps")?.value) || 5 };
-      const topSets = Number(row.topSets) || 1;
-      const topReps = Number(row.topReps) || Number(String(row.topSetTarget || "").match(/x\s*(\d+)/i)?.[1]) || 1;
-      const backoffSets = Number(row.backoffSetsMax) || Number(row.backoffSetsMin) || Number(String(row.backoffPlan || "").match(/(\d+)\s*(?:-|to|~)?\s*(?:\d+)?\s*(?:set|組)/i)?.[1]) || 2;
-      const backoffReps = Number(row.backoffReps) || Number(String(row.backoffPlan || "").match(/x\s*(\d+)/i)?.[1]) || Number(document.getElementById("targetReps")?.value) || 5;
+      const structured = getStructuredPrescription(row);
+      const topSets = Number(structured.topSets) || 1;
+      const topReps = Number(structured.topReps) || 1;
+      const backoffSets = Number(structured.backoffSetsMax) || 0;
+      const backoffReps = Number(structured.backoffReps) || Number(document.getElementById("targetReps")?.value) || 5;
       return { topSets, topReps, backoffSets, backoffReps };
     }
 
@@ -8205,28 +8305,116 @@
       return row.coachAdjusted && row.coachAction ? `${base} Applied: ${row.coachAction}` : base;
     }
 
+    function formatVisualSetText(sets, reps, rpe) {
+      const setText = String(sets || 1).replace(/\s+/g, "");
+      const repText = String(reps || 1).replace(/\s+/g, "");
+      const rpeText = String(rpe || "").replace(/\s+/g, "");
+      return `${setText}×${repText}${rpeText ? ` @${rpeText}` : ""}`;
+    }
+
+    function formatSetRangeForVisual(minSets, maxSets) {
+      const max = Number(maxSets) || 0;
+      const min = Number(minSets) || max;
+      return min && min !== max ? `${min}-${max}` : String(max);
+    }
+
+    function getBackoffLoadDropLabel(row, language = "en") {
+      const match = String(row?.backoffPlan || "").match(/[−-]\s*(\d+(?:\.\d+)?)\s*%/);
+      if (!match) return language === "zh" ? "照 RPE 選重" : "Load by RPE";
+      return language === "zh" ? `頂組後 -${match[1]}%` : `-${match[1]}% from top set`;
+    }
+
+    function renderSetPips(maxSets, language = "en") {
+      const count = Math.max(0, Number(maxSets) || 0);
+      if (!count) return "";
+      const visible = Math.min(count, 8);
+      const label = language === "zh" ? "退階組數視覺提示" : "Back-off set visual guide";
+      const pips = Array.from({ length: visible }, (_, index) => `<span>${index + 1}</span>`).join("");
+      const overflow = count > visible ? `<em>+${count - visible}</em>` : "";
+      return `<div class="today-set-pips" aria-label="${escapeHtml(label)}">${pips}${overflow}</div>`;
+    }
+
+    function renderTodayVisualStep(step) {
+      return `
+        <div class="today-step is-${escapeHtml(step.kind)}">
+          <div class="today-step-number">${escapeHtml(step.number)}</div>
+          <div class="today-step-body">
+            <div class="today-step-label">${escapeHtml(step.label)}</div>
+            <div class="today-step-main">${escapeHtml(step.main)}</div>
+            <div class="today-step-meta">${escapeHtml(step.meta)}</div>
+            ${step.tags?.length ? `<div class="today-step-tags">${step.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+            ${step.extra || ""}
+          </div>
+        </div>
+      `;
+    }
+
     function renderTodaySteps(row, fatigueTarget) {
       const language = currentLanguage();
-      const labels = language === "zh"
-        ? { top: "頂組", backoff: "退階組", stop: "停止條件" }
-        : { top: "Top set", backoff: "Back-off", stop: "Stop rule" };
+      const zh = language === "zh";
+      const labels = zh
+        ? { heading: "今日處方", top: "頂組", backoff: "退階組", stop: "停止條件" }
+        : { heading: "Today's prescription", top: "Top set", backoff: "Back-off", stop: "Stop rule" };
+      const plan = getStructuredPrescription(row);
+      const maxBackoffSets = Number(plan.backoffSetsMax) || 0;
+      const minBackoffSets = Number(plan.backoffSetsMin) || maxBackoffSets;
+      const noBackoff = maxBackoffSets <= 0 || /none required|不用硬做退階/i.test(String(row.backoffPlan || ""));
+      const topMain = Number(plan.topSets) <= 0
+        ? (zh ? "不做重頂組" : "No heavy top")
+        : formatVisualSetText(plan.topSets, plan.topReps, plan.topRpe);
+      const backoffMain = noBackoff
+        ? (zh ? "不用硬做退階" : "No required back-off")
+        : formatVisualSetText(formatSetRangeForVisual(minBackoffSets, maxBackoffSets), plan.backoffReps, plan.backoffRpe);
+      const fatigue = Math.max(0, Number(fatigueTarget) || 0);
+      const fatigueFill = Math.max(8, Math.min(100, fatigue * 12.5));
+      const coachTag = row.coachAdjusted
+        ? [zh ? "已套用教練調整" : "Coach adjusted"]
+        : [];
       const steps = [
-        { label: labels.top, text: getTodayTopInstruction(row) },
-        { label: labels.backoff, text: getTodayBackoffInstruction(row) },
-        { label: labels.stop, text: getTodayStopInstruction(row, fatigueTarget) }
+        {
+          kind: "top",
+          number: "1",
+          label: labels.top,
+          main: topMain,
+          meta: zh ? "先暖身，找到今天動作乾淨的目標 RPE。" : "Warm up and find today's clean target RPE.",
+          tags: [getTodayTopInstruction(row), ...coachTag]
+        },
+        {
+          kind: "backoff",
+          number: "2",
+          label: labels.backoff,
+          main: backoffMain,
+          meta: noBackoff
+            ? (zh ? "今天重點是品質，不追額外訓練量。" : "Quality day. Do not chase extra volume.")
+            : (zh ? "頂組後降重或照表補量，每組都看速度與動作品質。" : "After the top set, reduce load or follow the plan while quality stays clean."),
+          tags: noBackoff ? [] : [getBackoffLoadDropLabel(row, language), zh ? `最多 ${maxBackoffSets} 組` : `Up to ${maxBackoffSets} sets`],
+          extra: noBackoff ? "" : renderSetPips(maxBackoffSets, language)
+        },
+        {
+          kind: "stop",
+          number: "3",
+          label: labels.stop,
+          main: noBackoff ? (zh ? "品質下降就停" : "Stop on quality loss") : (zh ? `疲勞上限 ${formatNumber(fatigue, 1)}%` : `Fatigue cap ${formatNumber(fatigue, 1)}%`),
+          meta: getTodayStopInstruction(row, fatigueTarget),
+          extra: `
+            ${noBackoff ? "" : `
+              <div class="today-fatigue-meter" aria-label="${escapeHtml(zh ? "疲勞下降上限" : "Fatigue cap")}">
+                <div class="track"><div class="fill" style="--fatigue-cap:${fatigueFill}%"></div></div>
+                <div class="meta"><span>0%</span><span>${escapeHtml(zh ? "停止點" : "Stop point")}</span></div>
+              </div>
+            `}
+            <div class="today-step-cues">
+              <span>${escapeHtml(zh ? "速度變慢" : "Speed slows")}</span>
+              <span>${escapeHtml(zh ? "動作跑掉" : "Technique slips")}</span>
+              <span>${escapeHtml(zh ? "疼痛就停" : "Stop for pain")}</span>
+            </div>
+          `
+        }
       ];
       return `
-        <div class="today-steps" aria-label="${language === "zh" ? "今日怎麼做" : "How to perform"}">
-          <div class="today-steps-heading">${language === "zh" ? "今日怎麼做" : "How to perform"}</div>
-          ${steps.map((step, index) => `
-            <div class="today-step">
-              <div class="today-step-number">${index + 1}</div>
-              <div>
-                <strong>${escapeHtml(step.label)}</strong>
-                <span>${escapeHtml(step.text)}</span>
-              </div>
-            </div>
-          `).join("")}
+        <div class="today-steps" aria-label="${escapeHtml(labels.heading)}">
+          <div class="today-steps-heading">${escapeHtml(labels.heading)}</div>
+          ${steps.map((step) => renderTodayVisualStep(step)).join("")}
         </div>
       `;
     }
