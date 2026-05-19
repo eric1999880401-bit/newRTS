@@ -2264,6 +2264,180 @@
       margin-top: 0;
       justify-content: flex-end;
     }
+    .plan-builder-panel {
+      padding: 0;
+      overflow: hidden;
+      border-left: 6px solid var(--moss-deep);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(198, 221, 169, .18), transparent 34%),
+        linear-gradient(180deg, var(--paper-warm), var(--ivory-soft));
+    }
+    .builder-console-header {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .builder-console-badge {
+      display: grid;
+      place-items: center;
+      width: 56px;
+      height: 56px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 18px;
+      background: var(--ink-base);
+      color: var(--paper);
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-style: italic;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .builder-console-copy span {
+      display: block;
+      color: var(--moss-deep);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .builder-console-copy h2 {
+      margin: 3px 0 0;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 34px);
+      font-style: italic;
+      line-height: 1.05;
+    }
+    .builder-console-copy small {
+      display: block;
+      margin-top: 6px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .builder-live-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 16px 22px 0;
+    }
+    .builder-stat {
+      min-height: 88px;
+      padding: 12px 14px;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: var(--ivory);
+    }
+    .builder-stat span {
+      display: block;
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .builder-stat strong {
+      display: block;
+      margin-top: 7px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-style: italic;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+    .builder-stat small {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink-soft);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .builder-control-board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 16px 22px 0;
+    }
+    .builder-choice {
+      display: flex;
+      flex-direction: column;
+      min-height: 126px;
+      padding: 14px;
+      border: 1px solid var(--rule);
+      border-radius: 20px;
+      background: var(--ivory);
+    }
+    .builder-choice.is-primary {
+      background: linear-gradient(180deg, var(--ivory), var(--paper-warm));
+      border-color: var(--rule-strong);
+    }
+    .builder-choice label {
+      margin-bottom: 8px;
+    }
+    .builder-choice select,
+    .builder-choice input {
+      margin-top: auto;
+      min-height: 52px;
+      color: var(--ink-base);
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .builder-choice small {
+      display: block;
+      margin-top: 8px;
+      color: var(--pencil);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .builder-advanced-drawer {
+      margin: 16px 22px 0;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: rgba(255, 250, 238, .48);
+      overflow: hidden;
+    }
+    .builder-advanced-drawer summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+      list-style: none;
+      cursor: pointer;
+    }
+    .builder-advanced-drawer summary::-webkit-details-marker { display: none; }
+    .builder-advanced-drawer summary::after {
+      content: "+";
+      color: var(--gold);
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+    .builder-advanced-drawer[open] summary::after { content: "-"; }
+    .builder-advanced-body {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 0 14px 14px;
+    }
+    .builder-action-row {
+      padding: 16px 22px 20px;
+      justify-content: flex-end;
+    }
+    .builder-footer-note {
+      margin: -8px 22px 20px;
+    }
     .paywall-grid,
     .onboarding-grid,
     .admin-grid,
@@ -2798,6 +2972,21 @@
       }
       .quest-step-track {
         grid-template-columns: 1fr 1fr;
+      }
+      .builder-console-header {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      .builder-console-header .status {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+      .builder-live-summary,
+      .builder-control-board,
+      .builder-advanced-body {
+        grid-template-columns: 1fr;
+      }
+      .builder-action-row {
+        align-items: stretch;
       }
       .compact-grid,
       .control-row,
@@ -4020,11 +4209,40 @@
         </details>
       </section>
       <div class="product-grid wide-left">
-        <section class="panel">
-          <h2>課表產生</h2>
-          <div class="hint">依照訓練天數、目標、弱點與近期紀錄，產生可編輯的健力課表。</div>
-          <div class="grid grid-3">
-            <div class="field">
+        <section class="panel plan-builder-panel">
+          <div class="builder-console-header">
+            <div class="builder-console-badge">PB</div>
+            <div class="builder-console-copy">
+              <span>課表控制台</span>
+              <h2 id="planBuilderTitle">課表產生</h2>
+              <small id="builderVisualHint">選 block 長度、訓練天數、目標與弱點，產生可編輯的健力課表。</small>
+            </div>
+            <span class="status warn" id="builderReadyStatus">等待設定</span>
+          </div>
+          <div class="builder-live-summary" aria-label="課表產生摘要">
+            <div class="builder-stat">
+              <span>Block</span>
+              <strong id="builderWeeksPreview">8 週</strong>
+              <small id="builderSessionsPreview">預計 24 堂</small>
+            </div>
+            <div class="builder-stat">
+              <span>頻率</span>
+              <strong id="builderDaysPreview">3 天/週</strong>
+              <small>主項會輪流安排</small>
+            </div>
+            <div class="builder-stat">
+              <span>目標</span>
+              <strong id="builderGoalPreview">力量 / 強化</strong>
+              <small id="builderStrategyPreview">依個人反應調整</small>
+            </div>
+            <div class="builder-stat">
+              <span>限制</span>
+              <strong id="builderWeaknessPreview">恢復管理</strong>
+              <small id="builderStressPreview">壓力：保守</small>
+            </div>
+          </div>
+          <div class="builder-control-board">
+            <div class="field builder-choice is-primary">
               <label for="builderWeeks">Block 長度</label>
               <select id="builderWeeks">
                 <option value="4">4 週</option>
@@ -4033,44 +4251,50 @@
                 <option value="10">10 週</option>
                 <option value="12">12 週</option>
               </select>
+              <small>短週期適合測試，長週期適合完整累積。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice is-primary">
               <label for="builderDays">每週訓練天數</label>
               <select id="builderDays">
                 <option value="3" selected>3 天</option>
                 <option value="4">4 天</option>
                 <option value="5">5 天</option>
               </select>
+              <small>會影響每週主項曝光與恢復空間。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice is-primary">
               <label for="builderGoal">Block 目標</label>
               <select id="builderGoal">
                 <option value="accumulation">累積 / 技術</option>
                 <option value="strength" selected>力量 / 強化</option>
                 <option value="realization">測驗 / 模擬比賽</option>
               </select>
+              <small>決定頂組強度、退階量與 deload 節奏。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice">
               <label for="builderStrategy">規劃模式</label>
               <select id="builderStrategy">
                 <option value="emerging" selected>依個人反應調整</option>
                 <option value="generalized">中階訓練者通用</option>
                 <option value="meet">比賽 / 測驗準備</option>
               </select>
+              <small>預設用你的近期反應來保守調整。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice">
               <label for="builderStressBudget">訓練壓力</label>
               <select id="builderStressBudget">
                 <option value="conservative" selected>保守</option>
                 <option value="moderate">中等</option>
                 <option value="aggressive">較高</option>
               </select>
+              <small>壓力越高，退階與輔助量越多。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice">
               <label for="builderMeetDate">測驗 / 比賽日期</label>
               <input id="builderMeetDate" type="date" />
+              <small>有目標日會讓後段更像測驗準備。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice">
               <label for="builderWeakness">主要弱點</label>
               <select id="builderWeakness">
                 <option value="squat-control">深蹲深度 / 控制</option>
@@ -4079,32 +4303,37 @@
                 <option value="lockout">鎖定力量</option>
                 <option value="recovery" selected>恢復管理</option>
               </select>
+              <small>會影響副項與輔助方向。</small>
             </div>
-            <div class="field">
+            <div class="field builder-choice">
               <label for="builderExperience">訓練年資</label>
               <select id="builderExperience">
                 <option value="novice">新手</option>
                 <option value="intermediate" selected>中階</option>
                 <option value="advanced">進階</option>
               </select>
+              <small>用來調整訓練壓力與變化式保守程度。</small>
             </div>
           </div>
-          <div class="compact-grid" style="margin-top:14px">
-            <div class="field">
-              <label for="builderEquipment">器材 / 限制</label>
-              <textarea id="builderEquipment" placeholder="深蹲架、臥推椅、硬舉平台、腰帶、護具、時間限制等"></textarea>
+          <details class="builder-advanced-drawer">
+            <summary>進階限制與備註</summary>
+            <div class="builder-advanced-body">
+              <div class="field">
+                <label for="builderEquipment">器材 / 限制</label>
+                <textarea id="builderEquipment" placeholder="深蹲架、臥推椅、硬舉平台、腰帶、護具、時間限制等"></textarea>
+              </div>
+              <div class="field">
+                <label for="builderNotes">訓練備註</label>
+                <textarea id="builderNotes" placeholder="例：手腕不適、硬舉容易疲勞、臥推停頓優先等"></textarea>
+              </div>
             </div>
-            <div class="field">
-              <label for="builderNotes">訓練備註</label>
-              <textarea id="builderNotes" placeholder="例：手腕不適、硬舉容易疲勞、臥推停頓優先等"></textarea>
-            </div>
-          </div>
-          <div class="actions-inline">
+          </details>
+          <div class="actions-inline builder-action-row">
             <button class="primary" id="generatePlanBtn" type="button">產生課表</button>
             <button id="savePlanDraftBtn" type="button">儲存草稿</button>
             <button id="applyGeneratedPlanBtn" type="button">套用到今日訓練</button>
           </div>
-          <div class="footer-note">產生後可先編輯草稿；按下套用並確認後，才會成為今日訓練使用的課表。</div>
+          <div class="footer-note builder-footer-note">產生後可先編輯草稿；按下套用並確認後，才會成為今日訓練使用的課表。</div>
         </section>
 
         <section class="panel">
@@ -8959,6 +9188,48 @@
       el.value = value ?? "";
     }
 
+    function selectedLabel(id) {
+      const el = document.getElementById(id);
+      if (!el) return "";
+      if (el.tagName === "SELECT") return el.selectedOptions?.[0]?.textContent?.trim() || el.value || "";
+      return el.value || "";
+    }
+
+    function renderBuilderVisualSummary() {
+      const weeksEl = document.getElementById("builderWeeks");
+      if (!weeksEl) return;
+      const weeks = Number(weeksEl.value) || 8;
+      const days = Number(document.getElementById("builderDays")?.value) || 3;
+      const sessions = weeks * days;
+      const goal = selectedLabel("builderGoal") || "力量 / 強化";
+      const strategy = selectedLabel("builderStrategy") || "依個人反應調整";
+      const weakness = selectedLabel("builderWeakness") || "恢復管理";
+      const stress = selectedLabel("builderStressBudget") || "保守";
+      const meetDate = document.getElementById("builderMeetDate")?.value || "";
+      const status = document.getElementById("builderReadyStatus");
+      const hint = document.getElementById("builderVisualHint");
+      const setTextSafe = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      };
+      setTextSafe("builderWeeksPreview", `${weeks} 週`);
+      setTextSafe("builderSessionsPreview", `預計 ${sessions} 堂`);
+      setTextSafe("builderDaysPreview", `${days} 天/週`);
+      setTextSafe("builderGoalPreview", goal);
+      setTextSafe("builderStrategyPreview", strategy);
+      setTextSafe("builderWeaknessPreview", weakness);
+      setTextSafe("builderStressPreview", `壓力：${stress}`);
+      if (status) {
+        status.className = `status ${meetDate ? "ok" : "warn"}`;
+        status.textContent = meetDate ? "目標日已設定" : "可先產生草稿";
+      }
+      if (hint) {
+        hint.textContent = meetDate
+          ? `${weeks} 週、每週 ${days} 天，往 ${meetDate} 的 ${goal} block。`
+          : `${weeks} 週、每週 ${days} 天，先產生可編輯草稿再決定是否套用。`;
+      }
+    }
+
     function renderPlanner() {
       const user = getActiveUser();
       const profile = user.athleteProfile || defaultAthleteProfile();
@@ -8968,6 +9239,7 @@
       setFieldValue("builderStrategy", profile.strategyModel || "emerging");
       setFieldValue("builderStressBudget", profile.stressBudget || "conservative");
       setFieldValue("builderEquipment", profile.equipment || "");
+      renderBuilderVisualSummary();
       renderGeneratedPlanPreview();
     }
 
@@ -11059,6 +11331,7 @@
           deadlift: Number(document.getElementById("onboardDeadlift")?.value) || null
         }
       });
+      renderBuilderVisualSummary();
       showToast("Onboarding 已帶入 Plan Builder。", "ok");
     }
 
@@ -11366,6 +11639,10 @@
     });
 
     document.getElementById("generatePlanBtn").addEventListener("click", handleGeneratePlan);
+    ["builderWeeks","builderDays","builderGoal","builderStrategy","builderStressBudget","builderMeetDate","builderWeakness","builderExperience","builderEquipment","builderNotes"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("input", renderBuilderVisualSummary);
+      document.getElementById(id)?.addEventListener("change", renderBuilderVisualSummary);
+    });
     document.getElementById("onboardFillBtn").addEventListener("click", applyOnboardingToBuilder);
     document.getElementById("onboardGenerateBtn").addEventListener("click", generateFromOnboarding);
     ["onboardMeetDate","onboardDays","onboardExperience","onboardWeakness","onboardSquat","onboardBench","onboardDeadlift","onboardFatigue","onboardEquipment"].forEach((id) => {
