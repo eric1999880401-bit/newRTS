@@ -8729,7 +8729,8 @@
     document.getElementById("backupProgramBtn").addEventListener("click", backupProgram);
     document.getElementById("backupLogsBtn").addEventListener("click", backupLogs);
     document.getElementById("languageToggleBtn").addEventListener("click", toggleLanguage);
-    document.getElementById("membershipSetupBtn").addEventListener("click", () => {
+    document.getElementById("membershipSetupBtn").addEventListener("click", async () => {
+      await refreshAccountStatus();
       switchPage("settings");
       document.getElementById("membershipSettingsPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
     });

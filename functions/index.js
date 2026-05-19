@@ -716,10 +716,54 @@ exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
 
 exports.claimFirstAdmin = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
+  const email = normalizeEmail(request.auth?.token?.email || "");
   const currentAdmin = await getAdmin(uid);
   if (adminIsActive(currentAdmin)) {
     const entitlement = await getEntitlement(uid);
     return { admin: currentAdmin, entitlement: summarizeEntitlement(entitlement), alreadyAdmin: true };
+  }
+  if (email) {
+    const sameEmailAdmins = await admin.database().ref("admins").orderByChild("email").equalTo(email).get();
+    let matchingAdmin = null;
+    let matchingUid = "";
+    sameEmailAdmins.forEach((snap) => {
+      const record = snap.val();
+      if (!matchingAdmin && adminIsActive(record)) {
+        matchingAdmin = record;
+        matchingUid = snap.key;
+      }
+    });
+    if (matchingAdmin) {
+      const now = new Date().toISOString();
+      const existingEntitlement = matchingUid ? await getEntitlement(matchingUid) : null;
+      const entitlement = entitlementIsActive(existingEntitlement)
+        ? {
+            ...existingEntitlement,
+            source: "same_email_admin_claim",
+            updatedAt: now,
+            notes: safeString(existingEntitlement.notes || "Copied from same-email admin account.", 500)
+          }
+        : buildManualEntitlement({
+            adminUid: matchingUid || uid,
+            days: 3650,
+            notes: "Owner access copied from same-email admin account.",
+            source: "same_email_admin_claim"
+          });
+      const record = {
+        ...matchingAdmin,
+        uid,
+        email,
+        role: safeString(matchingAdmin.role || "owner", 40),
+        active: true,
+        updatedAt: now,
+        source: "same-email-admin-claim"
+      };
+      await admin.database().ref().update({
+        [`admins/${uid}`]: record,
+        [`entitlements/${uid}`]: entitlement
+      });
+      return { admin: record, entitlement: summarizeEntitlement(entitlement), sameEmailAdmin: true };
+    }
   }
   const adminsSnap = await admin.database().ref("admins").limitToFirst(1).get();
   if (adminsSnap.exists()) {
