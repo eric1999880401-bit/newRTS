@@ -1236,6 +1236,67 @@
       font-size: 14px;
       line-height: 1.45;
     }
+    .accessory-visual-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .accessory-card {
+      display: grid;
+      gap: 10px;
+      min-height: 112px;
+      padding: 12px;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      background: var(--ivory);
+    }
+    .accessory-card strong {
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+    .accessory-rx-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      align-items: stretch;
+    }
+    .accessory-rx-row span {
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      min-height: 48px;
+      padding: 7px 6px;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--ivory-soft);
+      text-align: center;
+    }
+    .accessory-rx-row b {
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-style: italic;
+      line-height: 1;
+    }
+    .accessory-rx-row em {
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .accessory-note {
+      color: var(--pencil);
+      font-size: 12px;
+      font-style: italic;
+      line-height: 1.35;
+    }
     .history-date-group {
       border: 1px solid var(--rule);
       border-radius: var(--radius);
@@ -9154,6 +9215,59 @@
       `;
     }
 
+    function parseAccessoryItems(text) {
+      return String(text || "")
+        .split(";")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => {
+          const match = item.match(/(\d+(?:\s*[-–—]\s*\d+)?)\s*(?:sets?|set|組)?\s*[x×]\s*(\d+(?:\s*[-–—]\s*\d+)?)(?:\s*(?:reps?|rep|下))?(?:\s*@\s*([0-9]+(?:\.[0-9]+)?(?:\s*[-–—]\s*[0-9]+(?:\.[0-9]+)?)?))?/i);
+          if (!match) return { raw: item };
+          const normalizeRange = (value) => String(value || "").replace(/[–—]/g, "-").replace(/\s+/g, "");
+          const name = item.slice(0, match.index).trim().replace(/[,:-]+$/, "").trim() || "Accessory";
+          const trailing = item.slice(match.index + match[0].length).trim().replace(/^[,.;:-]+/, "").trim();
+          return {
+            name,
+            sets: normalizeRange(match[1]),
+            reps: normalizeRange(match[2]),
+            rpe: match[3] ? normalizeRange(match[3]) : "",
+            note: trailing,
+            raw: item
+          };
+        });
+    }
+
+    function renderAccessoryVisuals(text, language = currentLanguage(), fallback = "—") {
+      const raw = String(text || "").trim();
+      if (!raw) return `<div>${escapeHtml(fallback)}</div>`;
+      const items = parseAccessoryItems(raw);
+      if (!items.some((item) => item.sets && item.reps)) return `<div>${escapeHtml(raw)}</div>`;
+      const zh = language === "zh";
+      const labels = zh
+        ? { sets: "組數", reps: "次數", rpe: "RPE", byFeel: "自主" }
+        : { sets: "sets", reps: "reps", rpe: "RPE", byFeel: "by feel" };
+      return `
+        <div class="accessory-visual-grid" aria-label="${escapeHtml(raw)}">
+          ${items.map((item) => {
+            if (!item.sets || !item.reps) {
+              return `<div class="accessory-card"><strong>${escapeHtml(item.raw)}</strong><div class="accessory-note">${escapeHtml(zh ? "照備註執行" : "Follow note")}</div></div>`;
+            }
+            return `
+              <div class="accessory-card">
+                <strong>${escapeHtml(item.name)}</strong>
+                <div class="accessory-rx-row">
+                  <span><b>${escapeHtml(item.sets)}</b><em>${escapeHtml(labels.sets)}</em></span>
+                  <span><b>${escapeHtml(item.reps)}</b><em>${escapeHtml(labels.reps)}</em></span>
+                  <span><b>${escapeHtml(item.rpe || labels.byFeel)}</b><em>${escapeHtml(labels.rpe)}</em></span>
+                </div>
+                ${item.note ? `<div class="accessory-note">${escapeHtml(item.note)}</div>` : ""}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
     function formatSetRangeForVisual(minSets, maxSets) {
       const max = Number(maxSets) || 0;
       const min = Number(minSets) || max;
@@ -9352,7 +9466,7 @@
 
           <div class="schedule-accessories">
             <span class="label">${t("accessories")}</span>
-            <div>${escapeHtml(row.accessoriesNotes || (zh ? "未列輔助訓練" : "No accessories listed"))}</div>
+            ${renderAccessoryVisuals(row.accessoriesNotes, currentLanguage(), zh ? "未列輔助訓練" : "No accessories listed")}
           </div>
           ${Array.isArray(row.ruleNotes) && row.ruleNotes.length ? `
             <details class="schedule-details">
