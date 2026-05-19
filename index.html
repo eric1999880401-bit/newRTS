@@ -1015,6 +1015,33 @@
       line-height: 1.55;
     }
     .history-notes strong { color: var(--ink-base); font-style: normal; font-family: var(--font-label); font-weight: 600; font-size: 11px; letter-spacing: var(--tracking-wide); text-transform: uppercase; }
+    .history-athlete-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .history-athlete-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid var(--rule);
+      background: var(--ivory);
+      border-radius: var(--radius);
+    }
+    .history-athlete-card strong {
+      display: block;
+      color: var(--ink-base);
+      font-size: 15px;
+    }
+    .history-athlete-card span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -3076,7 +3103,16 @@
     <!-- PAGE 5: Dashboard -->
     <div id="page-dashboard" class="page-content">
       <section class="panel">
-        <h2>訓練回顧</h2>
+        <h2 id="dashboardHistoryTitle">完整訓練紀錄</h2>
+        <div class="hint">這裡會列出目前選手的所有舊紀錄。找不到時，先確認上方選手是否選到 Camel 或 Pig。</div>
+        <div class="feature-title" style="margin-top:14px">
+          <strong>目前查看</strong>
+          <span class="status ok" id="historyCountStatus">目前選手</span>
+        </div>
+        <div id="historyAccordion" data-history-accordion></div>
+      </section>
+      <section class="panel" style="margin-top:16px">
+        <h2 id="dashboardTrendTitle">訓練趨勢</h2>
         <div class="hint">快速看最近 28 天的 e1RM、訓練量、恢復狀態與教練調整。</div>
         <div id="progressOverview" class="metric-strip"></div>
         <div id="dashboardLanes" class="dashboard-lanes"></div>
@@ -3096,7 +3132,7 @@
       <section class="panel">
         <h2>完整訓練紀錄</h2>
         <div class="hint">依日期整理目前選手的所有訓練紀錄。</div>
-        <div id="historyAccordion"></div>
+        <div id="historyAccordionStandalone" data-history-accordion></div>
       </section>
     </div>
   </div>
@@ -4903,13 +4939,15 @@
         setText("#page-workout h2", "今天怎麼練");
         setText("#page-planner h2", "課表產生");
         setText("#page-coach h2", "今日狀態");
-        setText("#page-dashboard h2", "訓練回顧");
+        setText("#dashboardHistoryTitle", "完整訓練紀錄");
+        setText("#dashboardTrendTitle", "訓練趨勢");
         setText("#page-history h2", "完整訓練紀錄");
       } else {
         setText("#page-workout h2", "Today's training");
         setText("#page-planner h2", "Plan builder");
         setText("#page-coach h2", "Today status");
-        setText("#page-dashboard h2", "Training review");
+        setText("#dashboardHistoryTitle", "Full training history");
+        setText("#dashboardTrendTitle", "Training trends");
         setText("#page-history h2", "Full training history");
       }
       if (typeof applyTheme === "function") applyTheme(document.documentElement.getAttribute("data-theme") || "light");
@@ -6440,7 +6478,10 @@
         renderAiPacket();
         renderVideoReviews();
       }
-      if (pageName === "dashboard") renderProgressDashboard();
+      if (pageName === "dashboard") {
+        renderProgressDashboard();
+        renderHistory();
+      }
     }
 
     document.querySelectorAll(".page-tab").forEach((tab) => {
@@ -6448,6 +6489,14 @@
     });
 
     /* ── Render functions ── */
+    function switchActiveUser(userId, pageName = null) {
+      if (!state.users[userId]) return;
+      state.activeUserId = userId;
+      if (fbRef) saveState();
+      refreshAll();
+      if (pageName) switchPage(pageName);
+    }
+
     function renderUserTabs() {
       const el = document.getElementById("userTabs");
       el.innerHTML = "";
@@ -6461,11 +6510,9 @@
         btn.className = "user-tab" + (state.activeUserId === user.id ? " active" : "");
         btn.type = "button";
         btn.setAttribute("aria-pressed", state.activeUserId === user.id ? "true" : "false");
-        btn.innerHTML = `<strong>${escapeHtml(user.name)}</strong><small>${(user.program || []).length} plan rows / ${(user.logs || []).length} logged sets</small>`;
+        btn.innerHTML = `<strong>${escapeHtml(user.name)}</strong><small>${(user.program || []).length} 個課表動作 / ${(user.logs || []).length} 筆訓練紀錄</small>`;
         btn.onclick = () => {
-          state.activeUserId = user.id;
-          if (fbRef) saveState();
-          refreshAll();
+          switchActiveUser(user.id);
         };
         el.appendChild(btn);
       });
@@ -7735,12 +7782,46 @@
     }
 
     function renderHistory() {
-      const container = document.getElementById("historyAccordion");
+      const containers = [...document.querySelectorAll("[data-history-accordion]")];
       const user = getActiveUser();
+      const zh = currentLanguage() === "zh";
       const logs = [...user.logs].sort((a, b) => new Date(b.date) - new Date(a.date) || b.order - a.order);
+      const status = document.getElementById("historyCountStatus");
+      if (status) {
+        status.className = "status " + (logs.length ? "ok" : "warn");
+        status.textContent = logs.length
+          ? `${user.name} · ${logs.length} ${zh ? "筆" : "sets"}`
+          : (zh ? "目前選手沒有紀錄" : "No logs for active athlete");
+      }
 
       if (!logs.length) {
-        container.innerHTML = `<div class="empty">No log history yet.</div>`;
+        const otherUsers = Object.values(state.users || {})
+          .filter((candidate) => candidate.id !== user.id && (candidate.logs || []).length)
+          .sort((a, b) => (b.logs || []).length - (a.logs || []).length);
+        const switchCards = otherUsers.length
+          ? `<div class="history-athlete-options">
+              ${otherUsers.map((candidate) => `
+                <div class="history-athlete-card">
+                  <div>
+                    <strong>${escapeHtml(candidate.name)}</strong>
+                    <span>${(candidate.logs || []).length} ${zh ? "筆訓練紀錄" : "logged sets"}</span>
+                  </div>
+                  <button type="button" class="history-user-switch" data-user-id="${escapeHtml(candidate.id)}">${zh ? "查看" : "View"}</button>
+                </div>
+              `).join("")}
+            </div>`
+          : "";
+        const emptyHtml = `
+          <div class="empty">
+            ${zh ? `目前選手「${escapeHtml(user.name)}」沒有訓練紀錄。` : `No log history yet for ${escapeHtml(user.name)}.`}
+            ${otherUsers.length ? (zh ? " 其他選手有紀錄，可以直接切換查看。" : " Other athletes have logs.") : ""}
+          </div>
+          ${switchCards}
+        `;
+        containers.forEach((container) => { container.innerHTML = emptyHtml; });
+        document.querySelectorAll(".history-user-switch").forEach((button) => {
+          button.addEventListener("click", () => switchActiveUser(button.dataset.userId, "dashboard"));
+        });
         return;
       }
 
@@ -7773,7 +7854,7 @@
             <div>
               <div class="date-label">${escapeHtml(date)}</div>
               <div style="color:var(--muted);font-size:12px;margin-top:2px">
-                ${focus ? escapeHtml(focus) + " — " : ""}W${week}D${day} — ${setCount} set${setCount > 1 ? "s" : ""}
+                ${focus ? escapeHtml(focus) + " — " : ""}W${week}D${day} — ${setCount} ${zh ? "組" : `set${setCount > 1 ? "s" : ""}`}
               </div>
             </div>
             <div class="date-meta">
@@ -7787,14 +7868,14 @@
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Lift</th>
-                    <th>Variation</th>
-                    <th>Type</th>
-                    <th class="right">Reps</th>
-                    <th class="right">Weight</th>
+                    <th>${zh ? "動作" : "Lift"}</th>
+                    <th>${zh ? "變化式" : "Variation"}</th>
+                    <th>${zh ? "組別" : "Type"}</th>
+                    <th class="right">${zh ? "次數" : "Reps"}</th>
+                    <th class="right">${zh ? "重量" : "Weight"}</th>
                     <th class="right">RPE</th>
                     <th class="right">e1RM</th>
-                    <th class="right">Fatigue %</th>
+                    <th class="right">${zh ? "疲勞%" : "Fatigue %"}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -7810,7 +7891,7 @@
                       <td class="right">${formatNumber(row.rpe, 1)}</td>
                       <td class="right">${formatNumber(row.e1rm, 1)}</td>
                       <td class="right">${row.fatiguePct === null ? "—" : formatNumber(row.fatiguePct, 1)}</td>
-                      <td style="white-space:nowrap"><button class="edit-btn" onclick="editLog('${row.id}')">Edit</button> <button class="danger" style="padding:5px 10px;font-size:12px" onclick="if(confirm('Delete this set?'))deleteLog('${row.id}')">Delete</button></td>
+                      <td style="white-space:nowrap"><button class="edit-btn" onclick="editLog('${row.id}')">${zh ? "編輯" : "Edit"}</button> <button class="danger" style="padding:5px 10px;font-size:12px" onclick="if(confirm('${zh ? "確定刪除這一組？" : "Delete this set?"}'))deleteLog('${row.id}')">${zh ? "刪除" : "Delete"}</button></td>
                     </tr>
                   `).join("")}
                 </tbody>
@@ -7818,15 +7899,15 @@
             </div>
             ${(techNotes.length || generalNotes.length) ? `
               <div class="history-notes">
-                ${techNotes.length ? `<div><strong>Technique:</strong> ${escapeHtml(techNotes.join(" | "))}</div>` : ""}
-                ${generalNotes.length ? `<div style="margin-top:4px"><strong>General:</strong> ${escapeHtml(generalNotes.join(" | "))}</div>` : ""}
+                ${techNotes.length ? `<div><strong>${zh ? "技術" : "Technique"}:</strong> ${escapeHtml(techNotes.join(" | "))}</div>` : ""}
+                ${generalNotes.length ? `<div style="margin-top:4px"><strong>${zh ? "備註" : "General"}:</strong> ${escapeHtml(generalNotes.join(" | "))}</div>` : ""}
               </div>
             ` : ""}
           </div>
         </div>`;
       }
 
-      container.innerHTML = html;
+      containers.forEach((container) => { container.innerHTML = html; });
     }
 
     function refreshAll() {
