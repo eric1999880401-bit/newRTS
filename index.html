@@ -2086,6 +2086,184 @@
       border-left: 6px solid var(--terra);
       background: var(--paper-warm);
     }
+    .onboarding-panel {
+      padding: 0;
+      overflow: hidden;
+      border-left-color: var(--gold);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(198, 221, 169, .22), transparent 32%),
+        linear-gradient(180deg, var(--paper-warm), var(--ivory-soft));
+    }
+    .onboarding-quest {
+      margin: 0;
+    }
+    .onboarding-quest summary {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 20px;
+      list-style: none;
+      cursor: pointer;
+    }
+    .onboarding-quest summary::-webkit-details-marker { display: none; }
+    .quest-badge {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 16px;
+      background: var(--ink-base);
+      color: var(--paper);
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-style: italic;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .quest-summary-copy span {
+      display: block;
+      color: var(--moss-deep);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .quest-summary-copy strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: clamp(22px, 3vw, 32px);
+      font-style: italic;
+      line-height: 1.05;
+    }
+    .quest-summary-copy small {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .quest-summary-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .quest-summary-action::after {
+      content: "+";
+      color: var(--gold);
+      font-size: 16px;
+      line-height: 1;
+    }
+    .onboarding-quest[open] .quest-summary-action::after { content: "-"; }
+    .quest-progress-bar {
+      grid-column: 1 / -1;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(79, 71, 53, .14);
+      overflow: hidden;
+    }
+    .quest-progress-fill {
+      width: var(--quest-progress, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--moss), var(--gold), var(--terra));
+      transition: width .25s ease;
+    }
+    .onboarding-quest-body {
+      display: grid;
+      gap: 14px;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--rule-soft);
+    }
+    .quest-step-track {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .quest-step {
+      min-height: 76px;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      background: rgba(255,250,238,.58);
+    }
+    .quest-step span {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid var(--rule-strong);
+      background: var(--paper);
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .quest-step strong {
+      display: block;
+      margin-top: 7px;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 16px;
+      line-height: 1.1;
+    }
+    .quest-step small {
+      display: block;
+      margin-top: 4px;
+      color: var(--pencil);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .onboarding-grid {
+      align-items: stretch;
+    }
+    .quest-field {
+      display: flex;
+      flex-direction: column;
+      min-height: 112px;
+      padding: 13px;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: var(--ivory);
+    }
+    .quest-field input,
+    .quest-field select {
+      margin-top: auto;
+      min-height: 48px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .quest-field.is-lift {
+      background: linear-gradient(180deg, var(--ivory), var(--paper-warm));
+    }
+    .quest-equipment {
+      margin-top: 0;
+      padding: 13px;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: var(--paper);
+    }
+    .quest-actions {
+      margin-top: 0;
+      justify-content: flex-end;
+    }
     .paywall-grid,
     .onboarding-grid,
     .admin-grid,
@@ -2611,6 +2789,16 @@
       .data-actions-grid { grid-template-columns: 1fr; }
       .top-command-dock { grid-template-columns: 1fr; }
       .command-tile { min-height: 58px; }
+      .onboarding-quest summary {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      .quest-summary-action {
+        grid-column: 1 / -1;
+        justify-content: center;
+      }
+      .quest-step-track {
+        grid-template-columns: 1fr 1fr;
+      }
       .compact-grid,
       .control-row,
       .paywall-grid,
@@ -3767,54 +3955,69 @@
 
     <!-- PAGE 3: Plan Builder -->
     <div id="page-planner" class="page-content">
-      <section class="panel paywall-panel" id="onboardingPanel" style="margin-bottom:16px">
-        <div class="feature-title">
-          <strong>10 分鐘建立第一份訓練 block</strong>
-          <span class="status warn" id="onboardingStatus">新手引導</span>
-        </div>
-        <div class="compact-list">填入三項 e1RM、目標與弱點後，系統會帶你產生第一份可編輯課表。</div>
-        <div class="onboarding-grid">
-          <div class="field">
-            <label for="onboardMeetDate">目標/測驗日期</label>
-            <input id="onboardMeetDate" type="date" />
+      <section class="panel paywall-panel onboarding-panel" id="onboardingPanel" style="margin-bottom:16px">
+        <details class="onboarding-quest" id="onboardingQuestDrawer">
+          <summary>
+            <div class="quest-badge">01</div>
+            <div class="quest-summary-copy">
+              <span>新手任務</span>
+              <strong>10 分鐘建立第一份訓練 block</strong>
+              <small id="onboardingQuestHint">填入目標、天數、弱點與三項 e1RM，產生第一份可編輯課表。</small>
+            </div>
+            <div class="quest-summary-action"><span id="onboardingStatus">任務 0/4</span></div>
+            <div class="quest-progress-bar"><div class="quest-progress-fill" id="onboardingProgressFill"></div></div>
+          </summary>
+          <div class="onboarding-quest-body">
+            <div class="quest-step-track" aria-label="新手任務步驟">
+              <div class="quest-step"><span>1</span><strong>設定目標</strong><small>目標日與每週天數</small></div>
+              <div class="quest-step"><span>2</span><strong>選訓練者</strong><small>年資、弱點與疲勞</small></div>
+              <div class="quest-step"><span>3</span><strong>輸入三項</strong><small>Squat / Bench / Deadlift</small></div>
+              <div class="quest-step"><span>4</span><strong>產生課表</strong><small>可先預覽再套用</small></div>
+            </div>
+            <div class="onboarding-grid">
+              <div class="field quest-field">
+                <label for="onboardMeetDate">目標/測驗日期</label>
+                <input id="onboardMeetDate" type="date" />
+              </div>
+              <div class="field quest-field">
+                <label for="onboardDays">每週訓練天數</label>
+                <select id="onboardDays"><option value="3">3 天</option><option value="4" selected>4 天</option><option value="5">5 天</option></select>
+              </div>
+              <div class="field quest-field">
+                <label for="onboardExperience">訓練年資</label>
+                <select id="onboardExperience"><option value="novice">新手</option><option value="intermediate" selected>中階</option><option value="advanced">進階</option></select>
+              </div>
+              <div class="field quest-field">
+                <label for="onboardWeakness">主要弱點</label>
+                <select id="onboardWeakness"><option value="squat-control">深度/控制</option><option value="bench-pause">臥推停頓</option><option value="deadlift-floor">硬舉離地</option><option value="lockout">鎖定</option><option value="recovery" selected>恢復管理</option></select>
+              </div>
+              <div class="field quest-field is-lift">
+                <label for="onboardSquat">Squat e1RM kg</label>
+                <input id="onboardSquat" type="number" min="0" step="0.5" placeholder="可先空白" />
+              </div>
+              <div class="field quest-field is-lift">
+                <label for="onboardBench">Bench e1RM kg</label>
+                <input id="onboardBench" type="number" min="0" step="0.5" placeholder="可先空白" />
+              </div>
+              <div class="field quest-field is-lift">
+                <label for="onboardDeadlift">Deadlift e1RM kg</label>
+                <input id="onboardDeadlift" type="number" min="0" step="0.5" placeholder="可先空白" />
+              </div>
+              <div class="field quest-field">
+                <label for="onboardFatigue">疲勞耐受度</label>
+                <select id="onboardFatigue"><option value="conservative" selected>保守</option><option value="moderate">中等</option><option value="aggressive">高</option></select>
+              </div>
+            </div>
+            <div class="field quest-equipment">
+              <label for="onboardEquipment">器材 / 限制</label>
+              <textarea id="onboardEquipment" placeholder="例：只有一般槓、護腕，臥推手腕不舒服，每次 90 分鐘內。"></textarea>
+            </div>
+            <div class="actions-inline quest-actions">
+              <button class="primary" id="onboardGenerateBtn" type="button">套用並產生課表</button>
+              <button id="onboardFillBtn" type="button">只填入課表設定</button>
+            </div>
           </div>
-          <div class="field">
-            <label for="onboardDays">每週訓練天數</label>
-            <select id="onboardDays"><option value="3">3 天</option><option value="4" selected>4 天</option><option value="5">5 天</option></select>
-          </div>
-          <div class="field">
-            <label for="onboardExperience">訓練年資</label>
-            <select id="onboardExperience"><option value="novice">新手</option><option value="intermediate" selected>中階</option><option value="advanced">進階</option></select>
-          </div>
-          <div class="field">
-            <label for="onboardWeakness">主要弱點</label>
-            <select id="onboardWeakness"><option value="squat-control">深度/控制</option><option value="bench-pause">臥推停頓</option><option value="deadlift-floor">硬舉離地</option><option value="lockout">鎖定</option><option value="recovery" selected>恢復管理</option></select>
-          </div>
-          <div class="field">
-            <label for="onboardSquat">Squat e1RM kg</label>
-            <input id="onboardSquat" type="number" min="0" step="0.5" placeholder="Optional" />
-          </div>
-          <div class="field">
-            <label for="onboardBench">Bench e1RM kg</label>
-            <input id="onboardBench" type="number" min="0" step="0.5" placeholder="Optional" />
-          </div>
-          <div class="field">
-            <label for="onboardDeadlift">Deadlift e1RM kg</label>
-            <input id="onboardDeadlift" type="number" min="0" step="0.5" placeholder="Optional" />
-          </div>
-          <div class="field">
-            <label for="onboardFatigue">疲勞耐受度</label>
-            <select id="onboardFatigue"><option value="conservative" selected>保守</option><option value="moderate">中等</option><option value="aggressive">高</option></select>
-          </div>
-        </div>
-        <div class="field" style="margin-top:12px">
-          <label for="onboardEquipment">器材 / 限制</label>
-          <textarea id="onboardEquipment" placeholder="例：只有一般槓、護腕，臥推手腕不舒服，每次 90 分鐘內。"></textarea>
-        </div>
-        <div class="actions-inline">
-          <button class="primary" id="onboardGenerateBtn" type="button">套用並產生課表</button>
-          <button id="onboardFillBtn" type="button">只填入課表設定</button>
-        </div>
+        </details>
       </section>
       <div class="product-grid wide-left">
         <section class="panel">
@@ -9990,6 +10193,7 @@
       renderSessionLog();
       renderHistory();
       syncAllSegmentedControls();
+      renderOnboardingQuestProgress();
       applyLanguage();
       renderTopActionDock();
       renderAuthMigrationStatus();
@@ -10858,6 +11062,26 @@
       showToast("Onboarding 已帶入 Plan Builder。", "ok");
     }
 
+    function renderOnboardingQuestProgress() {
+      const status = document.getElementById("onboardingStatus");
+      const fill = document.getElementById("onboardingProgressFill");
+      const hint = document.getElementById("onboardingQuestHint");
+      if (!status || !fill || !hint) return;
+      const hasGoal = Boolean(document.getElementById("onboardMeetDate")?.value);
+      const hasPlanProfile = Boolean(document.getElementById("onboardDays")?.value && document.getElementById("onboardExperience")?.value);
+      const hasWeakness = Boolean(document.getElementById("onboardWeakness")?.value && document.getElementById("onboardFatigue")?.value);
+      const hasE1rm = ["onboardSquat", "onboardBench", "onboardDeadlift"].some((id) => Number(document.getElementById(id)?.value) > 0);
+      const done = [hasGoal, hasPlanProfile, hasWeakness, hasE1rm].filter(Boolean).length;
+      const pct = Math.round((done / 4) * 100);
+      status.textContent = `任務 ${done}/4`;
+      fill.style.setProperty("--quest-progress", `${pct}%`);
+      hint.textContent = done >= 4
+        ? "任務資料已就緒，可以產生第一份可編輯課表。"
+        : done >= 2
+          ? "快完成了：補上目標日或三項 e1RM，課表會更個人化。"
+          : "填入目標、天數、弱點與三項 e1RM，產生第一份可編輯課表。";
+    }
+
     async function generateFromOnboarding() {
       if (!canWriteFirebase()) return;
       applyOnboardingToBuilder();
@@ -11144,6 +11368,10 @@
     document.getElementById("generatePlanBtn").addEventListener("click", handleGeneratePlan);
     document.getElementById("onboardFillBtn").addEventListener("click", applyOnboardingToBuilder);
     document.getElementById("onboardGenerateBtn").addEventListener("click", generateFromOnboarding);
+    ["onboardMeetDate","onboardDays","onboardExperience","onboardWeakness","onboardSquat","onboardBench","onboardDeadlift","onboardFatigue","onboardEquipment"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("input", renderOnboardingQuestProgress);
+      document.getElementById(id)?.addEventListener("change", renderOnboardingQuestProgress);
+    });
     document.getElementById("savePlanDraftBtn").addEventListener("click", savePlanDraftEdits);
     document.getElementById("applyGeneratedPlanBtn").addEventListener("click", applyGeneratedPlan);
     document.getElementById("saveReadinessBtn").addEventListener("click", saveReadinessCheck);
