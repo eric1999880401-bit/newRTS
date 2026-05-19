@@ -235,6 +235,50 @@ async function materializePendingEntitlement(uid, email) {
   return entitlement;
 }
 
+async function copySameEmailAdminAccess(uid, email) {
+  if (!uid || !email) return null;
+  const adminsSnap = await admin.database().ref("admins").orderByChild("email").equalTo(email).get();
+  let matchingAdmin = null;
+  let matchingUid = "";
+  adminsSnap.forEach((snap) => {
+    const record = snap.val();
+    if (!matchingAdmin && adminIsActive(record)) {
+      matchingAdmin = record;
+      matchingUid = snap.key;
+    }
+  });
+  if (!matchingAdmin) return null;
+  const now = new Date().toISOString();
+  const sourceEntitlement = matchingUid ? await getEntitlement(matchingUid) : null;
+  const entitlement = entitlementIsActive(sourceEntitlement)
+    ? {
+        ...sourceEntitlement,
+        source: matchingUid === uid ? sourceEntitlement.source || "same_email_admin" : "same_email_admin_claim",
+        updatedAt: now,
+        notes: safeString(sourceEntitlement.notes || "Copied from same-email admin account.", 500)
+      }
+    : buildManualEntitlement({
+        adminUid: matchingUid || uid,
+        days: 3650,
+        notes: matchingUid === uid ? "Owner access refreshed." : "Owner access copied from same-email admin account.",
+        source: "same_email_admin_claim"
+      });
+  const record = {
+    ...matchingAdmin,
+    uid,
+    email,
+    role: safeString(matchingAdmin.role || "owner", 40),
+    active: true,
+    updatedAt: now,
+    source: matchingUid === uid ? matchingAdmin.source || "same-email-admin" : "same-email-admin-claim"
+  };
+  await admin.database().ref().update({
+    [`admins/${uid}`]: record,
+    [`entitlements/${uid}`]: entitlement
+  });
+  return { admin: record, entitlement };
+}
+
 async function assertActiveEntitlement(uid, feature = "paid feature") {
   const [entitlement, adminRecord] = await Promise.all([getEntitlement(uid), getAdmin(uid)]);
   if (adminIsActive(adminRecord) || entitlementIsActive(entitlement)) {
@@ -690,6 +734,7 @@ exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
   const email = normalizeEmail(request.auth?.token?.email || "");
   await materializePendingEntitlement(uid, email);
+  await copySameEmailAdminAccess(uid, email);
   const [entitlement, adminRecord, usageSnap] = await Promise.all([
     getEntitlement(uid),
     getAdmin(uid),
@@ -723,47 +768,8 @@ exports.claimFirstAdmin = onCall(CALLABLE_DEFAULTS, async (request) => {
     return { admin: currentAdmin, entitlement: summarizeEntitlement(entitlement), alreadyAdmin: true };
   }
   if (email) {
-    const sameEmailAdmins = await admin.database().ref("admins").orderByChild("email").equalTo(email).get();
-    let matchingAdmin = null;
-    let matchingUid = "";
-    sameEmailAdmins.forEach((snap) => {
-      const record = snap.val();
-      if (!matchingAdmin && adminIsActive(record)) {
-        matchingAdmin = record;
-        matchingUid = snap.key;
-      }
-    });
-    if (matchingAdmin) {
-      const now = new Date().toISOString();
-      const existingEntitlement = matchingUid ? await getEntitlement(matchingUid) : null;
-      const entitlement = entitlementIsActive(existingEntitlement)
-        ? {
-            ...existingEntitlement,
-            source: "same_email_admin_claim",
-            updatedAt: now,
-            notes: safeString(existingEntitlement.notes || "Copied from same-email admin account.", 500)
-          }
-        : buildManualEntitlement({
-            adminUid: matchingUid || uid,
-            days: 3650,
-            notes: "Owner access copied from same-email admin account.",
-            source: "same_email_admin_claim"
-          });
-      const record = {
-        ...matchingAdmin,
-        uid,
-        email,
-        role: safeString(matchingAdmin.role || "owner", 40),
-        active: true,
-        updatedAt: now,
-        source: "same-email-admin-claim"
-      };
-      await admin.database().ref().update({
-        [`admins/${uid}`]: record,
-        [`entitlements/${uid}`]: entitlement
-      });
-      return { admin: record, entitlement: summarizeEntitlement(entitlement), sameEmailAdmin: true };
-    }
+    const copied = await copySameEmailAdminAccess(uid, email);
+    if (copied) return { admin: copied.admin, entitlement: summarizeEntitlement(copied.entitlement), sameEmailAdmin: true };
   }
   const adminsSnap = await admin.database().ref("admins").limitToFirst(1).get();
   if (adminsSnap.exists()) {

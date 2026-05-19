@@ -3797,6 +3797,37 @@
       return access;
     }
 
+    function setAccountDebug(message, level = "warn") {
+      const target = document.getElementById("adminOutput");
+      if (!target || !message) return;
+      target.innerHTML = `<div class="empty ${level === "bad" ? "bad" : ""}">${escapeHtml(message)}</div>`;
+    }
+
+    function databaseRestBase() {
+      return String(DEFAULT_FB_CONFIG.databaseURL || "").replace(/\/+$/, "");
+    }
+
+    async function readAccountAccessDirect() {
+      if (!authUser || !databaseRestBase()) return null;
+      const token = await authUser.getIdToken(true);
+      const uid = encodeURIComponent(authUser.uid);
+      const [adminResp, entitlementResp] = await Promise.all([
+        fetch(`${databaseRestBase()}/admins/${uid}.json?auth=${encodeURIComponent(token)}`),
+        fetch(`${databaseRestBase()}/entitlements/${uid}.json?auth=${encodeURIComponent(token)}`)
+      ]);
+      if (!adminResp.ok && !entitlementResp.ok) {
+        throw new Error(`Direct account read failed (${adminResp.status}/${entitlementResp.status})`);
+      }
+      const [adminValue, entitlementValue] = await Promise.all([
+        adminResp.ok ? adminResp.json() : null,
+        entitlementResp.ok ? entitlementResp.json() : null
+      ]);
+      adminData = adminValue || adminData;
+      entitlementData = entitlementValue || entitlementData;
+      renderMembershipStatus();
+      return { admin: adminValue, entitlement: entitlementValue };
+    }
+
     function attachAccountAccessListeners() {
       if (entitlementRef && entitlementListener) entitlementRef.off("value", entitlementListener);
       if (adminRef && adminListener) adminRef.off("value", adminListener);
@@ -3830,21 +3861,35 @@
     }
 
     async function refreshAccountStatus() {
-      if (!authUser || !fbFunctions) {
+      if (!authUser) {
         renderMembershipStatus();
         return null;
+      }
+      const status = document.getElementById("settingsMembershipStatus");
+      if (status) {
+        status.className = "status warn";
+        status.textContent = "刷新中";
+      }
+      let functionData = null;
+      try {
+        if (fbFunctions) {
+          const result = await callCloudFunction("getAccountStatus", {});
+          functionData = result.data || null;
+          if (functionData?.entitlement) entitlementData = functionData.entitlement;
+          if (functionData?.admin) adminData = functionData.admin;
+        }
+      } catch (err) {
+        console.warn("Account status function refresh failed:", err);
+        setAccountDebug(`權限刷新失敗：${err.message || err.code || err}`, "bad");
       }
       try {
-        const result = await callCloudFunction("getAccountStatus", {});
-        if (result.data?.entitlement) entitlementData = result.data.entitlement;
-        if (result.data?.admin) adminData = result.data.admin;
-        renderMembershipStatus();
-        return result.data;
+        await readAccountAccessDirect();
       } catch (err) {
-        console.warn("Account status refresh failed:", err);
+        console.warn("Direct account status read failed:", err);
+      } finally {
         renderMembershipStatus();
-        return null;
       }
+      return functionData;
     }
 
     function renderAuthMigrationStatus() {
@@ -4225,11 +4270,12 @@
 
         if (normalizedConfig.apiKey && normalizedConfig.authDomain && firebase.auth) {
           fbAuth = fbApp.auth();
-          authUnsubscribe = fbAuth.onAuthStateChanged((user) => {
+            authUnsubscribe = fbAuth.onAuthStateChanged((user) => {
             authUser = user || null;
             attachAccountAccessListeners();
             attachScopedUserListener();
             if (authUser) refreshLegacyClaimPreview().catch(() => {});
+            if (authUser) window.setTimeout(() => refreshAccountStatus().catch(() => {}), 1200);
             renderAuthMigrationStatus();
           });
           fbAuth.getRedirectResult().then((result) => {
@@ -8565,19 +8611,48 @@
     }
 
     async function claimFirstAdmin() {
+      const button = document.getElementById("claimFirstAdminBtn");
       if (!authUser) {
-        showToast("Sign in before claiming first admin.", "bad");
+        const message = "請先用 Google 登入，再開通管理員。";
+        setAccountDebug(message, "bad");
+        showToast(message, "bad");
         return;
       }
+      const originalText = button?.textContent || "成為第一位管理員";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "處理中...";
+      }
+      setAccountDebug("正在檢查管理員權限...", "warn");
       try {
         const result = await callCloudFunction("claimFirstAdmin", {});
         adminData = result.data?.admin || adminData;
         entitlementData = result.data?.entitlement || entitlementData;
+        await refreshAccountStatus();
         renderMembershipStatus();
-        showToast("First admin enabled for this account.", "ok");
+        setAccountDebug("管理員權限已啟用。", "ok");
+        showToast("管理員權限已啟用。", "ok");
       } catch (err) {
         console.error("First admin claim failed:", err);
-        showToast("First admin claim failed: " + (err.message || err.code), "bad");
+        try {
+          await readAccountAccessDirect();
+        } catch (directErr) {
+          console.warn("Admin direct read after failed claim also failed:", directErr);
+        }
+        const access = getAccessState();
+        if (access.active) {
+          setAccountDebug("你其實已經有權限了，畫面已重新整理。", "ok");
+          showToast("你其實已經有權限了，畫面已重新整理。", "ok");
+        } else {
+          const message = "管理員開通失敗：" + (err.message || err.code || err);
+          setAccountDebug(message, "bad");
+          showToast(message, "bad");
+        }
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
       }
     }
 
