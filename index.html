@@ -3717,7 +3717,7 @@
       display: none;
     }
     .app-pocket-bar {
-      display: grid;
+      display: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       margin-top: 12px;
@@ -3745,6 +3745,9 @@
       font-family: var(--font-display);
       font-size: clamp(20px, 4vw, 30px);
       line-height: 1;
+    }
+    .mobile-quick-fab {
+      display: none;
     }
     .today-command-center {
       display: grid;
@@ -4027,7 +4030,10 @@
       to { transform: translateY(0); opacity: 1; }
     }
     @media (max-width: 760px) {
-      .app { max-width: 100%; }
+      .app {
+        max-width: 100%;
+        padding: 14px 14px calc(156px + env(safe-area-inset-bottom, 0px));
+      }
       .app-hero {
         padding: 16px;
         border-radius: 24px;
@@ -4069,18 +4075,110 @@
         display: none;
       }
       .page-tabs {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 4px;
-        border-radius: 24px;
+        gap: 5px;
+        padding: 6px;
+        border-radius: 28px;
+        background: rgba(251,246,234,.92);
+        box-shadow: 0 18px 48px rgba(43,36,25,.22);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
       }
       .page-tab {
-        min-height: 50px;
-        padding: 8px 4px;
-        font-size: 13px;
+        min-height: 54px;
+        display: grid;
+        place-items: center;
+        gap: 2px;
+        padding: 6px 4px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0;
+        touch-action: manipulation;
+      }
+      .page-tab::before {
+        content: attr(data-icon);
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 20px;
+        border-radius: 999px;
+        color: var(--pencil);
+        font-family: var(--font-label);
+        font-size: 14px;
+        line-height: 1;
+        transition: transform .18s ease, color .18s ease, background .18s ease;
+      }
+      .page-tab.active::before {
+        color: var(--ivory);
+        transform: translateY(-1px) scale(1.04);
       }
       .consumer-hidden-tab {
         display: none;
+      }
+      .app-pocket-bar {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 10px 0 14px;
+      }
+      .pocket-card {
+        min-height: 68px;
+        padding: 11px 10px;
+        border-radius: 20px;
+        touch-action: manipulation;
+      }
+      .pocket-card strong {
+        font-size: clamp(19px, 5vw, 24px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mobile-quick-fab {
+        position: fixed;
+        left: 22px;
+        right: 22px;
+        bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+        z-index: 88;
+        min-height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        border-radius: 999px;
+        border-color: var(--ink-base);
+        background: var(--ink-base);
+        color: var(--ivory);
+        box-shadow: 0 18px 42px rgba(43,36,25,.30);
+        touch-action: manipulation;
+      }
+      .mobile-quick-fab:active {
+        transform: translateY(1px) scale(.99);
+      }
+      .mobile-fab-icon {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: rgba(251,246,234,.16);
+        font-size: 18px;
+        line-height: 1;
+      }
+      .mobile-fab-copy {
+        display: grid;
+        text-align: left;
+        line-height: 1.15;
+      }
+      .mobile-fab-text {
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .mobile-fab-hint {
+        color: rgba(251,246,234,.68);
+        font-size: 11px;
+        font-weight: 500;
       }
       .today-command-center {
         margin-top: 2px;
@@ -4102,8 +4200,7 @@
         grid-template-columns: auto minmax(0, 1fr);
       }
       .today-primary-action {
-        grid-column: 1 / -1;
-        width: 100%;
+        display: none;
       }
       .mission-ring {
         width: 68px;
@@ -4135,8 +4232,7 @@
       .rx-metric span {
         margin-top: 0;
       }
-      .today-visual-grid,
-      .app-pocket-bar {
+      .today-visual-grid {
         grid-template-columns: 1fr;
       }
       .today-detail-grid {
@@ -4247,6 +4343,21 @@
       <div class="user-tabs" id="userTabs"></div>
     </section>
 
+    <section class="app-pocket-bar" aria-label="Today quick stats">
+      <button class="pocket-card" id="mobilePocketPlanBtn" type="button">
+        <span>任務</span>
+        <strong id="mobilePocketMission">--</strong>
+      </button>
+      <button class="pocket-card" id="mobilePocketQuickLogBtn" type="button">
+        <span>組數</span>
+        <strong id="mobilePocketSets">0/0</strong>
+      </button>
+      <button class="pocket-card" id="mobilePocketTrendBtn" type="button">
+        <span>e1RM</span>
+        <strong id="mobilePocketE1rm">--</strong>
+      </button>
+    </section>
+
     <section class="overview" aria-label="Today overview">
       <div class="overview-card dark">
         <div class="card-label">目前選手</div>
@@ -4277,13 +4388,21 @@
     </section>
 
     <div class="page-tabs">
-      <button class="page-tab active" data-page="workout">今日</button>
-      <button class="page-tab" data-page="planner">課表</button>
-      <button class="page-tab" data-page="coach">影片</button>
-      <button class="page-tab" data-page="dashboard">回顧</button>
-      <button class="page-tab consumer-hidden-tab" data-page="history">紀錄</button>
-      <button class="page-tab" data-page="settings">我的</button>
+      <button class="page-tab active" data-page="workout" data-icon="●">今日</button>
+      <button class="page-tab" data-page="planner" data-icon="▦">課表</button>
+      <button class="page-tab" data-page="coach" data-icon="▷">影片</button>
+      <button class="page-tab" data-page="dashboard" data-icon="⌁">回顧</button>
+      <button class="page-tab consumer-hidden-tab" data-page="history" data-icon="≡">紀錄</button>
+      <button class="page-tab" data-page="settings" data-icon="◎">我的</button>
     </div>
+
+    <button class="mobile-quick-fab" id="mobileQuickLogFab" type="button" aria-label="記錄一組">
+      <span class="mobile-fab-icon" aria-hidden="true">＋</span>
+      <span class="mobile-fab-copy">
+        <span class="mobile-fab-text">記錄一組</span>
+        <span class="mobile-fab-hint">重量、次數、RPE</span>
+      </span>
+    </button>
 
     <!-- PAGE 1: Settings & Import -->
     <div id="page-settings" class="page-content">
@@ -7251,6 +7370,10 @@
       todayMissionTitleDefault: "Today’s work",
       todayMissionSubtitleDefault: "Check the main lift, suggested load, then log each set.",
       quickLogButton: "Log a set",
+      mobileFabHint: "Load, reps, RPE",
+      missionPocketLabel: "Mission",
+      setsPocketLabel: "Sets",
+      e1rmPocketLabel: "e1RM",
       noMissionSelected: "Choose a week and training day to see the mission",
       plannedSavedSets: "Planned {planned} sets, saved {saved} sets",
       viewMission: "View mission",
@@ -7471,6 +7594,10 @@
       todayMissionTitleDefault: "今天怎麼練",
       todayMissionSubtitleDefault: "先確認主項、建議重量，再記錄每一組。",
       quickLogButton: "記錄一組",
+      mobileFabHint: "重量、次數、RPE",
+      missionPocketLabel: "任務",
+      setsPocketLabel: "組數",
+      e1rmPocketLabel: "e1RM",
       noMissionSelected: "選週次與訓練日後查看任務",
       plannedSavedSets: "預計 {planned} 組，已存 {saved} 組",
       viewMission: "查看任務",
@@ -7725,6 +7852,11 @@
         "#todayMissionTitle": "todayMissionTitleDefault",
         "#todayMissionSubtitle": "todayMissionSubtitleDefault",
         "#openQuickLogSheetBtn": "quickLogButton",
+        "#mobileQuickLogFab .mobile-fab-text": "quickLogButton",
+        "#mobileQuickLogFab .mobile-fab-hint": "mobileFabHint",
+        "#mobilePocketPlanBtn span": "missionPocketLabel",
+        "#mobilePocketQuickLogBtn span": "setsPocketLabel",
+        "#mobilePocketTrendBtn span": "e1rmPocketLabel",
         "#openTodayPlanSheetBtn .mini-label": "todayPlanMiniLabel",
         "#todayPlanCardHint": "todayPlanMiniHint",
         "#openQuickLogSheetBtnAlt .mini-label": "quickActionMiniLabel",
@@ -8352,6 +8484,12 @@
       if (fatigueMini) fatigueMini.textContent = metrics.fatiguePct === null ? "—" : `${formatNumber(metrics.fatiguePct, 1)}%`;
       const fatigueBar = document.getElementById("todayFatigueBar");
       if (fatigueBar) fatigueBar.style.width = `${fatigueValue}%`;
+      const pocketMission = document.getElementById("mobilePocketMission");
+      if (pocketMission) pocketMission.textContent = row?.mainLift ? liftFamily(row.mainLift) : (zh ? `第 ${week} 週` : `Week ${week}`);
+      const pocketSets = document.getElementById("mobilePocketSets");
+      if (pocketSets) pocketSets.textContent = `${rows.length}/${plannedSets}`;
+      const pocketE1rm = document.getElementById("mobilePocketE1rm");
+      if (pocketE1rm) pocketE1rm.textContent = bestToday?.e1rm ? `${formatNumber(bestToday.e1rm, 0)}` : fallbackBest ? `${formatNumber(fallbackBest, 0)}` : "--";
     }
 
     function buildSelectOptions(values, selectedValue) {
@@ -13430,6 +13568,10 @@
     document.getElementById("openTodayPlanSheetBtn")?.addEventListener("click", openTodayPlanSheet);
     document.getElementById("openQuickLogSheetBtn")?.addEventListener("click", openQuickLogSheet);
     document.getElementById("openQuickLogSheetBtnAlt")?.addEventListener("click", openQuickLogSheet);
+    document.getElementById("mobileQuickLogFab")?.addEventListener("click", openQuickLogSheet);
+    document.getElementById("mobilePocketPlanBtn")?.addEventListener("click", openTodayPlanSheet);
+    document.getElementById("mobilePocketQuickLogBtn")?.addEventListener("click", openQuickLogSheet);
+    document.getElementById("mobilePocketTrendBtn")?.addEventListener("click", () => openE1rmTrendModal());
     document.getElementById("openReadySheetBtn")?.addEventListener("click", openReadinessSheet);
     document.getElementById("openCoachSheetBtn")?.addEventListener("click", openCoachSheet);
     document.getElementById("toggleHistoryBtn").addEventListener("click", openHistoryCenterModal);
