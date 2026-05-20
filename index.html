@@ -6085,18 +6085,36 @@
     }
 
     function getAccessState() {
-      if (!authUser) return { active: false, level: "warn", label: "請先登入", detail: "登入後可保存訓練資料；會員可使用課表、AI 教練與影片分析。" };
-      if (!isScopedMigrationComplete()) return { active: false, level: "warn", label: "需要建立資料", detail: "請先選擇或建立你的訓練資料。" };
-      if (isAdminActive()) return { active: true, level: "ok", label: "會員有效", detail: "會員有效中，可使用完整訓練功能。" };
-      if (isEntitlementActive()) {
-        const end = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : "未設定到期日";
-        return { active: true, level: "ok", label: "會員有效", detail: `會員可使用課表、AI 教練、影片分析與資料匯出。到期日 ${end}。` };
+      const zh = currentLanguage() === "zh";
+      if (!authUser) {
+        return zh
+          ? { active: false, level: "warn", label: "請先登入", detail: "登入後可保存訓練資料；會員可使用課表、AI 教練與影片分析。" }
+          : { active: false, level: "warn", label: "Sign in", detail: "Sign in to save training data. Members can use plans, AI coach, and video analysis." };
       }
-      return { active: false, level: "bad", label: "會員未開通", detail: "你仍可查看與匯出資料；開通後可新增訓練、產生課表與使用 AI/影片功能。" };
+      if (!isScopedMigrationComplete()) {
+        return zh
+          ? { active: false, level: "warn", label: "需要建立資料", detail: "請先選擇或建立你的訓練資料。" }
+          : { active: false, level: "warn", label: "Choose profile", detail: "Choose or create the training data for this account." };
+      }
+      if (isAdminActive()) {
+        return zh
+          ? { active: true, level: "ok", label: "會員有效", detail: "會員有效中，可使用完整訓練功能。" }
+          : { active: true, level: "ok", label: "Active", detail: "Membership is active. Full training tools are unlocked." };
+      }
+      if (isEntitlementActive()) {
+        const end = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (zh ? "未設定到期日" : "No end date");
+        return zh
+          ? { active: true, level: "ok", label: "會員有效", detail: `會員可使用課表、AI 教練、影片分析與資料匯出。到期日 ${end}。` }
+          : { active: true, level: "ok", label: "Active", detail: `Plans, AI coach, video analysis, and data export are unlocked. Valid until ${end}.` };
+      }
+      return zh
+        ? { active: false, level: "bad", label: "會員未開通", detail: "你仍可查看與匯出資料；開通後可新增訓練、產生課表與使用 AI/影片功能。" }
+        : { active: false, level: "bad", label: "Not active", detail: "You can still view and export existing data. Membership unlocks new logs, plan generation, AI, and video tools." };
     }
 
     function renderMembershipStatus() {
       const access = getAccessState();
+      const zh = currentLanguage() === "zh";
       const statusEls = [document.getElementById("membershipStatus"), document.getElementById("settingsMembershipStatus")].filter(Boolean);
       statusEls.forEach((el) => {
         el.className = "status " + access.level;
@@ -6107,11 +6125,11 @@
       const settingsCopy = document.getElementById("settingsMembershipCopy");
       if (settingsCopy) settingsCopy.textContent = access.detail;
       const planLabel = document.getElementById("entitlementPlanLabel");
-      if (planLabel) planLabel.textContent = entitlementData?.plan || (isAdminActive() ? "管理員" : "—");
+      if (planLabel) planLabel.textContent = entitlementData?.plan || (isAdminActive() ? t("adminLabel") : t("noneLabel"));
       const untilLabel = document.getElementById("entitlementUntilLabel");
-      if (untilLabel) untilLabel.textContent = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isOwnerRecoveryIdentity() ? OWNER_RECOVERY_ACCESS.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? "管理員" : "—"));
+      if (untilLabel) untilLabel.textContent = entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isOwnerRecoveryIdentity() ? OWNER_RECOVERY_ACCESS.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? t("adminLabel") : t("noneLabel")));
       const adminLabel = document.getElementById("adminRoleLabel");
-      if (adminLabel) adminLabel.textContent = isAdminActive() ? (adminData?.role || "owner") : "否";
+      if (adminLabel) adminLabel.textContent = isAdminActive() ? (adminData?.role || "owner") : (zh ? "一般" : "Member");
       const adminPanel = document.getElementById("adminPanel");
       const adminDrawer = document.getElementById("adminToolsDrawer");
       const adminStatus = document.getElementById("adminPanelStatus");
@@ -6119,14 +6137,16 @@
       if (adminDrawer) adminDrawer.hidden = !isAdminActive();
       if (adminStatus) {
         adminStatus.className = "status " + (isAdminActive() ? "ok" : "warn");
-        adminStatus.textContent = isAdminActive() ? "管理員可用" : "限管理員";
+        adminStatus.textContent = isAdminActive() ? (zh ? "管理員可用" : "Admin tools") : t("adminOnly");
       }
       renderTopActionDock();
     }
 
     function showPaidFeatureLock(feature = "此功能") {
+      const zh = currentLanguage() === "zh";
       const access = getAccessState();
-      showToast(`${feature} 需要會員權限。你仍可查看與匯出既有資料。`, "bad");
+      const label = feature || (zh ? "此功能" : "This feature");
+      showToast(t("paidLockMessage").replace("{feature}", label), "bad");
       openMembershipModal();
       return access;
     }
@@ -7110,6 +7130,446 @@
       filmingQuickRule: "快速原則：畫面中只留一位選手、光線夠亮、手機固定、30-60 fps、不要鏡子角度、不要移動鏡頭。信心低時，AI/RPE 只當提示。"
     });
 
+    Object.assign(UI_TEXT.en, {
+      syncTileTitle: "Training sync",
+      syncTileDetailSignedOut: "Sign in to save training data",
+      syncTileDetailReady: "Training data is synced to your account",
+      syncTileDetailClaim: "Choose which athlete data to sync",
+      syncReady: "Synced",
+      syncChooseProfile: "Choose profile",
+      syncSignedOut: "Sign in",
+      membershipTileTitle: "Membership",
+      membershipTileDetailActive: "Full tools unlocked",
+      membershipTileDetailInactive: "View access and safety notes",
+      membershipProductTitle: "Powerlifting Training Assistant",
+      membershipValueTodayTitle: "Today’s work",
+      membershipValueTodayCopy: "See your main lift, back-off sets, and suggested load clearly.",
+      membershipValueCoachTitle: "Training guidance",
+      membershipValueCoachCopy: "Adjust today’s work using RPE, e1RM, and readiness.",
+      membershipValueVideoTitle: "Video feedback",
+      membershipValueVideoCopy: "Track speed, depth, and stability with fixed-angle video.",
+      viewMembershipStatus: "View membership status",
+      membershipSafetyNotes: "Membership and safety notes",
+      overviewActiveAthlete: "Active athlete",
+      overviewTodaySets: "Today sets",
+      overviewTopE1rm: "Best e1RM today",
+      overviewProgramRows: "Plan rows",
+      overviewBackoffBase: "Back-off base",
+      trendButton: "Trend",
+      settingsTrainingTitle: "Basic training settings",
+      settingsTrainingHint: "Set your display name, plate rounding, back-off calculation, and fatigue-drop target.",
+      athleteNameLabel: "Display name",
+      athleteNamePlaceholder: "Athlete name",
+      roundingKgLabel: "Rounding increment (kg)",
+      fatigueDropPctLabel: "Fatigue-drop target (%)",
+      defaultTopSetSourceLabel: "Back-off load reference",
+      latestTopOption: "Latest top set in this session",
+      currentSetOption: "Current set e1RM",
+      saveSettingsButton: "Save settings",
+      loadExampleProgram: "Load example plan",
+      clearCurrentLogs: "Clear current athlete logs",
+      deleteCurrentAthlete: "Delete current athlete",
+      importProgramTitle: "Import plan",
+      importProgramHint: "If you already have a plan, import it for the active athlete. Most users can generate a new block from Plan.",
+      importProgramFileLabel: "Import plan file (.xlsx, .xls, .csv)",
+      programStatusLabel: "Plan status",
+      activeProgramRowsLabel: "Current plan rows",
+      importProgramNote: "Most users can ignore this unless they are importing their own Excel or CSV plan.",
+      downloadTemplate: "Download plan template",
+      advancedFormulaTitle: "Advanced: calculation notes",
+      myDataTitle: "My data",
+      myDataHint: "You can export your training data anytime. Advanced backup tools stay tucked away from daily training.",
+      exportMyData: "Export my data",
+      backupProgram: "Back up plan",
+      backupLogs: "Back up logs",
+      advancedDataTools: "Advanced data tools",
+      restoreProgramBackup: "Restore plan backup",
+      restoreLogBackup: "Restore log backup",
+      backupAdvice: "Export an Excel backup before large edits or switching browsers.",
+      accountMembershipTitle: "Account and membership",
+      accountMembershipHint: "View login, membership status, and data rights. Daily training does not require sync details.",
+      membershipStatusLabel: "Membership status",
+      planLabel: "Plan",
+      validUntilLabel: "Valid until",
+      roleLabel: "Role",
+      normalRole: "Member",
+      refreshMembershipStatus: "Refresh membership status",
+      loginLegacyTitle: "Login and old data import",
+      loginAccountTitle: "Login account",
+      loginAccountNote: "Google sign-in is recommended. Old training data stays preserved and is imported only after confirmation.",
+      passwordLabel: "Password",
+      emailSignInButton: "Email sign in / create account",
+      googleSignInButton: "Continue with Google",
+      signOutButton: "Sign out",
+      loginAccountLabel: "Login account",
+      dataStatusLabel: "Data status",
+      importStatusLabel: "Import status",
+      notEnabled: "Not enabled",
+      notImported: "Not imported",
+      importLegacyTitle: "Import old training data",
+      waiting: "Waiting",
+      importLegacyNote: "Choose which old athlete data should move into this account. Unselected data stays in backup and is not deleted.",
+      claimLegacyAthleteLabel: "Athlete to import",
+      refreshPreview: "Refresh preview",
+      createBackupBeforeImport: "Create pre-import backup",
+      importSelectedData: "Import selected data",
+      startFreshAccount: "Start a fresh training account",
+      needLoginToImport: "Sign in before importing old data.",
+      advancedSyncSettings: "Advanced sync settings",
+      advancedSyncNote: "This area is for deployment or debugging. Most users do not need to change it.",
+      adminTools: "Admin tools",
+      adminGrantTitle: "Membership access tool",
+      adminOnly: "Admin only",
+      adminGrantNote: "After receiving payment, grant membership access by email or uid. This only manages access, not payment processing.",
+      adminEmailLabel: "User email",
+      adminUidLabel: "Advanced: Firebase UID",
+      adminDaysLabel: "Access days",
+      adminNotesLabel: "Notes",
+      adminNotesPlaceholder: "Payment, refund, or support notes",
+      adminGrantButton: "Grant / extend access",
+      adminLookupButton: "Look up user",
+      adminRevokeButton: "Revoke access",
+      claimFirstAdminButton: "Become first admin",
+      termsTitle: "Membership and safety notes",
+      trainingAid: "Training aid",
+      refundTitle: "7-day refund",
+      refundCopy: "Manual refund and access cancellation are available within 7 days after paid activation.",
+      notMedicalTitle: "Not medical diagnosis",
+      notMedicalCopy: "Pain or injury features only suggest training adjustments and red-flag reminders. Stop and contact a professional for serious symptoms.",
+      trainingLogicTitle: "Training logic",
+      trainingLogicCopy: "Guidance is based on RPE, autoregulation, e1RM, and your own training data.",
+      dataRightsTitle: "Data rights",
+      dataRightsCopy: "You can export data anytime. Raw video is not permanently saved by default; saved videos expire after 30 days.",
+      todayPickerAria: "Choose today's training day",
+      todayPickerTitle: "Choose today’s plan day first",
+      todayPickerHint: "Changing week or training day updates the mission below.",
+      weekLabel: "Week",
+      trainingDayLabel: "Training day",
+      usePlanForToday: "Load into today",
+      todayCompletion: "Done",
+      todayMissionEyebrowDefault: "Today mission",
+      todayMissionTitleDefault: "Today’s work",
+      todayMissionSubtitleDefault: "Check the main lift, suggested load, then log each set.",
+      quickLogButton: "Log a set",
+      noMissionSelected: "Choose a week and training day to see the mission",
+      plannedSavedSets: "Planned {planned} sets, saved {saved} sets",
+      viewMission: "View mission",
+      topBackoffPlan: "Top {topSets}x{topReps} · Back-off {backoffSets}x{backoffReps}",
+      noPlanLoaded: "No plan loaded",
+      unchecked: "Not checked",
+      checkTodayStatusFirst: "Check today's status before deciding whether to adjust.",
+      pendingReview: "Needs review",
+      applied: "Applied",
+      viewAdvice: "View advice",
+      adjustFromReadiness: "Adjust using sleep, pain, and fatigue.",
+      todayPlanMiniLabel: "Today’s work",
+      todayPlanMiniHint: "Main lift, secondary lift, and back-off sets",
+      quickActionMiniLabel: "Quick action",
+      quickActionTitle: "Save a set",
+      quickActionHint: "Weight, reps, and RPE in one step",
+      readyMiniLabel: "Today status",
+      readyMiniHint: "Sleep, pain, fatigue",
+      coachMiniLabel: "Coach adjustment",
+      coachMiniHint: "Preview before applying",
+      e1rmTrendMiniLabel: "e1RM trend",
+      suggestedBackoffMiniLabel: "Suggested back-off",
+      fatigueDropMiniLabel: "Fatigue drop",
+      todayPlanDetailsHint: "Open this only when you want rules, secondary work, accessories, and fatigue limits.",
+      logPanelTitle: "Log this set",
+      logPanelHint: "Choose a lift, enter load and RPE, then save before the next set.",
+      quickLogHeader: "Quick log",
+      quickLogSubheader: "Lift, load, RPE",
+      quickLogReadyLabel: "Ready to log",
+      liftLabel: "Lift",
+      setTypeLabel: "Set type",
+      weightLabel: "Weight (kg)",
+      repsLabel: "Reps",
+      advancedSettings: "Advanced settings",
+      variationLabel: "Variation",
+      customVariationLabel: "Custom variation",
+      customVariationPlaceholder: "Enter custom variation",
+      backoffRepsLabel: "Back-off reps",
+      backoffRpeLabel: "Back-off RPE",
+      currentSetE1rmLabel: "This set e1RM",
+      suggestedBackoffLoadLabel: "Suggested back-off load",
+      fatigueGaugeLabel: "Fatigue gauge",
+      applySuggestedLoad: "Use suggested load",
+      saveThisSet: "Save this set",
+      trainingContextAdvanced: "Advanced: training context",
+      dateLabel: "Date",
+      sessionFocusLabel: "Session focus",
+      sessionFocusPlaceholder: "Auto-filled when a plan is loaded",
+      notesLabel: "Notes",
+      techniqueNotesLabel: "Technique notes",
+      techniqueNotesPlaceholder: "Bar path, depth, lockout, stability, pain...",
+      generalNotesLabel: "General notes",
+      generalNotesPlaceholder: "Sleep, recovery, accessories, session feel...",
+      todayLogTitle: "Today log",
+      todayLogHint: "Saved sets for the active athlete and date.",
+      variationTableHeader: "Variation",
+      fatiguePctHeader: "Fatigue %",
+      syncModalTitle: "Training sync",
+      syncModalAccount: "Signed-in account",
+      syncModalData: "Data sync",
+      syncModalAthlete: "Active athlete",
+      syncModalSignedOut: "Not signed in",
+      syncModalReady: "Enabled",
+      syncModalLocked: "Needs setup",
+      syncModalReadyCopy: "Your training data is saved to your private account space.",
+      syncModalLockedCopy: "Sign in, choose or create training data, then sync will start.",
+      switchGoogleAccount: "Switch Google account",
+      continueGoogle: "Continue with Google",
+      accountDataSettings: "Account and data settings",
+      membershipModalTitle: "Membership status",
+      statusLabel: "Status",
+      availableUntil: "Available until",
+      adminLabel: "Admin",
+      noneLabel: "—",
+      refreshStatus: "Refresh status",
+      membershipSettings: "Membership settings",
+      safetyNotes: "Safety notes",
+      deleteAthleteTitle: "Delete athlete",
+      deleteAthleteIrreversible: "Cannot be undone",
+      deleteAthleteIntro: "You are deleting",
+      deleteAthleteOnlyThis: "This only deletes the active athlete’s plan, logs, video analysis, and coach data. It does not delete your Google account, membership, or other athletes in this account.",
+      deleteAthleteAcknowledge: "I understand this permanently deletes this athlete’s data. If I only need a new cycle, I should archive the cycle from Review first.",
+      deleteAthleteInputLabel: "Type the athlete name to confirm deletion",
+      deleteAthleteConfirmButton: "Delete this athlete",
+      cancel: "Cancel",
+      athleteDeleteKeepOne: "Keep at least one athlete. You can rename or clear logs, but you cannot delete the final athlete.",
+      athleteDeleteNeedCheck: "Check the confirmation box first.",
+      athleteDeleteNeedName: "Type the full athlete name to delete.",
+      athleteDeleteRestored: "Delete did not finish, so your data was restored.",
+      athleteDeletedToast: "Deleted athlete:",
+      trainingLogs: "Training logs",
+      planRows: "Plan rows",
+      archivedCyclesLabel: "Archived cycles",
+      archivedSets: "Archived sets",
+      aiCoachLabel: "AI / coach",
+      videoData: "Video data",
+      paidLockMessage: "{feature} requires membership. You can still view and export existing data."
+    });
+
+    Object.assign(UI_TEXT.zh, {
+      syncTileTitle: "訓練同步",
+      syncTileDetailSignedOut: "登入後同步訓練資料",
+      syncTileDetailReady: "訓練資料已跟著帳號走",
+      syncTileDetailClaim: "選擇要同步的選手資料",
+      syncReady: "已同步",
+      syncChooseProfile: "選擇資料",
+      syncSignedOut: "尚未登入",
+      membershipTileTitle: "會員狀態",
+      membershipTileDetailActive: "完整功能可用",
+      membershipTileDetailInactive: "點開查看權限與說明",
+      membershipProductTitle: "健力訓練助手",
+      membershipValueTodayTitle: "今天怎麼練",
+      membershipValueTodayCopy: "看清楚主項、退階組與建議重量。",
+      membershipValueCoachTitle: "訓練建議",
+      membershipValueCoachCopy: "依照 RPE、e1RM 與恢復狀態調整今天訓練。",
+      membershipValueVideoTitle: "影片回饋",
+      membershipValueVideoCopy: "用固定角度影片追蹤速度、深度與動作穩定度。",
+      viewMembershipStatus: "查看會員狀態",
+      membershipSafetyNotes: "會員與安全說明",
+      overviewActiveAthlete: "目前選手",
+      overviewTodaySets: "今日組數",
+      overviewTopE1rm: "今日最佳 e1RM",
+      overviewProgramRows: "課表列數",
+      overviewBackoffBase: "退階基準",
+      trendButton: "看趨勢",
+      settingsTrainingTitle: "基本訓練設定",
+      settingsTrainingHint: "設定你的顯示名稱、重量進位、退階組計算方式與疲勞下降目標。",
+      athleteNameLabel: "顯示名稱",
+      athleteNamePlaceholder: "選手名稱",
+      roundingKgLabel: "重量進位 (kg)",
+      fatigueDropPctLabel: "疲勞下降目標 (%)",
+      defaultTopSetSourceLabel: "退階重量基準",
+      latestTopOption: "本堂最新頂組",
+      currentSetOption: "目前這組 e1RM",
+      saveSettingsButton: "儲存設定",
+      loadExampleProgram: "載入範例課表",
+      clearCurrentLogs: "清除目前選手紀錄",
+      deleteCurrentAthlete: "刪除目前選手",
+      importProgramTitle: "匯入課表",
+      importProgramHint: "如果你已有自己的課表，可以匯入給目前選手使用；一般使用者可直接到「課表」產生新 block。",
+      importProgramFileLabel: "匯入課表檔 (.xlsx, .xls, .csv)",
+      programStatusLabel: "課表狀態",
+      activeProgramRowsLabel: "目前課表列數",
+      importProgramNote: "一般不用碰這裡；只有要匯入自己的 Excel/CSV 課表時才需要。",
+      downloadTemplate: "下載課表範本",
+      advancedFormulaTitle: "進階：計算方式",
+      myDataTitle: "我的資料",
+      myDataHint: "你可以隨時匯出訓練紀錄；進階備份工具先收起來，避免日常訓練時被打擾。",
+      exportMyData: "匯出我的資料",
+      backupProgram: "備份課表",
+      backupLogs: "備份紀錄",
+      advancedDataTools: "進階資料工具",
+      restoreProgramBackup: "匯入課表備份",
+      restoreLogBackup: "匯入紀錄備份",
+      backupAdvice: "大量修改或更換瀏覽器前，建議先匯出一份 Excel 備份。",
+      accountMembershipTitle: "帳號與會員",
+      accountMembershipHint: "查看登入、會員狀態與資料權利；一般訓練不需要理解底層同步細節。",
+      membershipStatusLabel: "會員狀態",
+      planLabel: "方案",
+      validUntilLabel: "可用到",
+      roleLabel: "身份",
+      normalRole: "一般",
+      refreshMembershipStatus: "重新整理會員狀態",
+      loginLegacyTitle: "登入與舊資料匯入",
+      loginAccountTitle: "登入帳號",
+      loginAccountNote: "建議使用 Google 登入。舊訓練資料會先保留，確認後才匯入你的帳號。",
+      passwordLabel: "密碼",
+      emailSignInButton: "Email 登入 / 建立帳號",
+      googleSignInButton: "使用 Google 登入",
+      signOutButton: "登出",
+      loginAccountLabel: "登入帳號",
+      dataStatusLabel: "資料狀態",
+      importStatusLabel: "匯入狀態",
+      notEnabled: "未啟用",
+      notImported: "尚未匯入",
+      importLegacyTitle: "匯入舊訓練資料",
+      waiting: "等待中",
+      importLegacyNote: "選擇要放進目前帳號的舊選手資料。未選到的資料會留在備份中，不會被刪除。",
+      claimLegacyAthleteLabel: "要匯入的選手",
+      refreshPreview: "重新整理預覽",
+      createBackupBeforeImport: "建立匯入前備份",
+      importSelectedData: "匯入選取資料",
+      startFreshAccount: "建立全新訓練帳號",
+      needLoginToImport: "登入後才能匯入舊資料。",
+      advancedSyncSettings: "進階同步設定",
+      advancedSyncNote: "這區是部署或除錯用。一般使用者不需要修改。",
+      adminTools: "管理員工具",
+      adminGrantTitle: "會員開通工具",
+      adminOnly: "限管理員",
+      adminGrantNote: "收到款項後，用 email 或 uid 開通會員權限。這裡只管理權限，不處理刷卡。",
+      adminEmailLabel: "使用者 Email",
+      adminUidLabel: "進階：Firebase UID",
+      adminDaysLabel: "開通天數",
+      adminNotesLabel: "備註",
+      adminNotesPlaceholder: "收款、退款或客服備註",
+      adminGrantButton: "開通 / 延長權限",
+      adminLookupButton: "查詢使用者",
+      adminRevokeButton: "取消權限",
+      claimFirstAdminButton: "成為第一位管理員",
+      termsTitle: "會員與安全說明",
+      trainingAid: "訓練輔助",
+      refundTitle: "7 天退款",
+      refundCopy: "付費開通後 7 天內可人工退款並取消權限。",
+      notMedicalTitle: "不是醫療診斷",
+      notMedicalCopy: "疼痛/受傷只做訓練調整與紅旗提醒；嚴重症狀請停止並找專業人員。",
+      trainingLogicTitle: "訓練邏輯",
+      trainingLogicCopy: "基於 RPE、自動調節、e1RM 與你的訓練資料提供建議。",
+      dataRightsTitle: "資料權利",
+      dataRightsCopy: "你可以隨時匯出資料。原始影片預設不永久保存，選存影片也只保留 30 天。",
+      todayPickerAria: "選擇今日訓練日",
+      todayPickerTitle: "先選今天的課表日",
+      todayPickerHint: "換週次或訓練日後，下面的今日任務會一起更新。",
+      weekLabel: "週次",
+      trainingDayLabel: "訓練日",
+      usePlanForToday: "帶入今天訓練",
+      todayCompletion: "完成",
+      todayMissionEyebrowDefault: "今日任務",
+      todayMissionTitleDefault: "今天怎麼練",
+      todayMissionSubtitleDefault: "先確認主項、建議重量，再記錄每一組。",
+      quickLogButton: "記錄一組",
+      noMissionSelected: "選週次與訓練日後查看任務",
+      plannedSavedSets: "預計 {planned} 組，已存 {saved} 組",
+      viewMission: "查看任務",
+      topBackoffPlan: "頂組 {topSets}x{topReps} · 退階 {backoffSets}x{backoffReps}",
+      noPlanLoaded: "尚未載入課表",
+      unchecked: "未檢查",
+      checkTodayStatusFirst: "先填今天狀態再決定是否調整",
+      pendingReview: "待確認",
+      applied: "已套用",
+      viewAdvice: "查看建議",
+      adjustFromReadiness: "可依睡眠、疼痛、疲勞調整",
+      todayPlanMiniLabel: "今天做什麼",
+      todayPlanMiniHint: "主項、副項與退階組數",
+      quickActionMiniLabel: "快速操作",
+      quickActionTitle: "存一組",
+      quickActionHint: "重量、次數、RPE 一次完成",
+      readyMiniLabel: "今天狀態",
+      readyMiniHint: "睡眠、疼痛、疲勞",
+      coachMiniLabel: "教練調整",
+      coachMiniHint: "套用前可先預覽",
+      e1rmTrendMiniLabel: "e1RM 趨勢",
+      suggestedBackoffMiniLabel: "建議退階",
+      fatigueDropMiniLabel: "疲勞下降",
+      todayPlanDetailsHint: "需要看規則、主副項、輔助與疲勞上限時再往下看。",
+      logPanelTitle: "記錄這一組",
+      logPanelHint: "選動作、輸入重量與 RPE，下一組前先存起來。",
+      quickLogHeader: "快速記錄",
+      quickLogSubheader: "動作、重量、RPE",
+      quickLogReadyLabel: "現在準備記錄",
+      liftLabel: "動作",
+      setTypeLabel: "組別",
+      weightLabel: "重量 (kg)",
+      repsLabel: "次數",
+      advancedSettings: "進階設定",
+      variationLabel: "變化式",
+      customVariationLabel: "自訂變化式",
+      customVariationPlaceholder: "輸入自訂變化式",
+      backoffRepsLabel: "退階次數",
+      backoffRpeLabel: "退階 RPE",
+      currentSetE1rmLabel: "本組 e1RM",
+      suggestedBackoffLoadLabel: "建議退階重量",
+      fatigueGaugeLabel: "疲勞指標",
+      applySuggestedLoad: "套用建議重量",
+      saveThisSet: "儲存這一組",
+      trainingContextAdvanced: "進階：訓練背景",
+      dateLabel: "日期",
+      sessionFocusLabel: "本堂重點",
+      sessionFocusPlaceholder: "有課表時會自動帶入",
+      notesLabel: "備註",
+      techniqueNotesLabel: "技術備註",
+      techniqueNotesPlaceholder: "槓路、深度、鎖定、穩定度、疼痛等",
+      generalNotesLabel: "一般備註",
+      generalNotesPlaceholder: "睡眠、恢復、輔助訓練、本堂感受等",
+      todayLogTitle: "今日紀錄",
+      todayLogHint: "目前選手與日期的訓練組數。",
+      variationTableHeader: "變化式",
+      fatiguePctHeader: "疲勞 %",
+      syncModalTitle: "訓練同步",
+      syncModalAccount: "登入帳號",
+      syncModalData: "資料同步",
+      syncModalAthlete: "目前選手",
+      syncModalSignedOut: "尚未登入",
+      syncModalReady: "已啟用",
+      syncModalLocked: "待設定",
+      syncModalReadyCopy: "你的訓練紀錄會保存到私人帳號空間。",
+      syncModalLockedCopy: "登入後先建立或匯入訓練資料，再開始同步。",
+      switchGoogleAccount: "切換 Google 帳號",
+      continueGoogle: "使用 Google 登入",
+      accountDataSettings: "帳號與資料設定",
+      membershipModalTitle: "會員狀態",
+      statusLabel: "狀態",
+      availableUntil: "可用到",
+      adminLabel: "管理員",
+      noneLabel: "—",
+      refreshStatus: "重新整理狀態",
+      membershipSettings: "會員設定",
+      safetyNotes: "安全說明",
+      deleteAthleteTitle: "刪除選手",
+      deleteAthleteIrreversible: "不可復原",
+      deleteAthleteIntro: "你要刪除",
+      deleteAthleteOnlyThis: "這只會刪除目前選手底下的課表、訓練紀錄、影片分析與教練資料；不會刪除 Google 帳號、會員權限，也不會刪除同帳號裡其他選手。",
+      deleteAthleteAcknowledge: "我知道這會永久刪除這位選手的資料；如果只是換週期，我應該先去回顧頁封存週期。",
+      deleteAthleteInputLabel: "輸入選手名稱確認刪除",
+      deleteAthleteConfirmButton: "刪除這位選手",
+      cancel: "取消",
+      athleteDeleteKeepOne: "至少要保留一位選手。你可以改名或清除紀錄，但不能刪掉最後一位。",
+      athleteDeleteNeedCheck: "請先勾選確認，避免誤刪。",
+      athleteDeleteNeedName: "請完整輸入選手名稱才會刪除。",
+      athleteDeleteRestored: "刪除沒有完成，資料已復原。",
+      athleteDeletedToast: "已刪除選手：",
+      trainingLogs: "訓練紀錄",
+      planRows: "課表列",
+      archivedCyclesLabel: "封存週期",
+      archivedSets: "封存組數",
+      aiCoachLabel: "AI / 教練",
+      videoData: "影片資料",
+      paidLockMessage: "{feature} 需要會員權限。你仍可查看與匯出既有資料。"
+    });
+
     function currentLanguage() {
       return state.uiLanguage === "zh" ? "zh" : "en";
     }
@@ -7122,6 +7582,11 @@
     function setText(selector, value) {
       const el = document.querySelector(selector);
       if (el) el.textContent = value;
+    }
+
+    function setAttr(selector, attr, value) {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
     }
 
     function applyLanguage() {
@@ -7153,6 +7618,171 @@
         const key = navKeys[button.dataset.page];
         if (key) button.textContent = t(key);
       });
+      const staticTextBindings = {
+        "#openSyncModalBtn > span:first-child > strong": "syncTileTitle",
+        "#openMembershipModalBtn > span:first-child > strong": "membershipTileTitle",
+        "#membershipTitle": "membershipProductTitle",
+        "#membershipPanel .paywall-grid .value-card:nth-child(1) strong": "membershipValueTodayTitle",
+        "#membershipPanel .paywall-grid .value-card:nth-child(1) span": "membershipValueTodayCopy",
+        "#membershipPanel .paywall-grid .value-card:nth-child(2) strong": "membershipValueCoachTitle",
+        "#membershipPanel .paywall-grid .value-card:nth-child(2) span": "membershipValueCoachCopy",
+        "#membershipPanel .paywall-grid .value-card:nth-child(3) strong": "membershipValueVideoTitle",
+        "#membershipPanel .paywall-grid .value-card:nth-child(3) span": "membershipValueVideoCopy",
+        "#membershipSetupBtn": "viewMembershipStatus",
+        "#membershipTermsBtn": "membershipSafetyNotes",
+        ".overview-card:nth-child(1) .card-label": "overviewActiveAthlete",
+        ".overview-card:nth-child(2) .card-label": "overviewTodaySets",
+        ".overview-card:nth-child(3) .card-label": "overviewTopE1rm",
+        ".overview-card:nth-child(4) .card-label": "overviewProgramRows",
+        ".overview-card:nth-child(5) .card-label": "overviewBackoffBase",
+        "#openE1rmTrendBtn": "trendButton",
+        "#page-settings .grid.grid-2 > section:nth-child(1) h2": "settingsTrainingTitle",
+        "#page-settings .grid.grid-2 > section:nth-child(1) > .hint": "settingsTrainingHint",
+        "label[for='userName']": "athleteNameLabel",
+        "label[for='roundingKg']": "roundingKgLabel",
+        "label[for='fatigueDropPct']": "fatigueDropPctLabel",
+        "label[for='defaultTopSetSource']": "defaultTopSetSourceLabel",
+        "#defaultTopSetSource option[value='latestTop']": "latestTopOption",
+        "#defaultTopSetSource option[value='currentSet']": "currentSetOption",
+        "#saveSettingsBtn": "saveSettingsButton",
+        "#loadBundledProgramBtn": "loadExampleProgram",
+        "#clearActiveDataBtn": "clearCurrentLogs",
+        "#deleteAthleteBtn": "deleteCurrentAthlete",
+        "#page-settings .grid.grid-2 > section:nth-child(2) h2": "importProgramTitle",
+        "#page-settings .grid.grid-2 > section:nth-child(2) > .hint": "importProgramHint",
+        "label[for='programImport']": "importProgramFileLabel",
+        "#page-settings .grid.grid-2 > section:nth-child(2) .field:nth-child(2) > label": "programStatusLabel",
+        "#page-settings .grid.grid-2 > section:nth-child(2) .metric .k": "activeProgramRowsLabel",
+        "#page-settings .grid.grid-2 > section:nth-child(2) .inline-note": "importProgramNote",
+        "#downloadTemplateBtn": "downloadTemplate",
+        "#page-settings .grid.grid-2 > section:nth-child(2) details summary": "advancedFormulaTitle",
+        "#page-settings > section:nth-of-type(1) h2": "myDataTitle",
+        "#page-settings > section:nth-of-type(1) > .hint": "myDataHint",
+        "#exportAllBtn": "exportMyData",
+        "#backupProgramBtn": "backupProgram",
+        "#backupLogsBtn": "backupLogs",
+        "#page-settings > section:nth-of-type(1) details summary": "advancedDataTools",
+        "label[for='restoreProgramInput']": "restoreProgramBackup",
+        "label[for='restoreLogsInput']": "restoreLogBackup",
+        "#page-settings > section:nth-of-type(1) .technical-copy": "backupAdvice",
+        "#page-settings > section:nth-of-type(2) h2": "accountMembershipTitle",
+        "#page-settings > section:nth-of-type(2) > .hint": "accountMembershipHint",
+        "#membershipSettingsPanel .feature-title strong": "membershipStatusLabel",
+        "#membershipSettingsPanel .auth-status-grid .migration-count:nth-child(1) .k": "planLabel",
+        "#membershipSettingsPanel .auth-status-grid .migration-count:nth-child(2) .k": "validUntilLabel",
+        "#membershipSettingsPanel .auth-status-grid .migration-count:nth-child(3) .k": "roleLabel",
+        "#refreshAccountStatusBtn": "refreshMembershipStatus",
+        "#page-settings > section:nth-of-type(2) details:nth-of-type(1) summary": "loginLegacyTitle",
+        "#authPanel .feature-title strong": "loginAccountTitle",
+        "#authPanel .consumer-mini-note": "loginAccountNote",
+        "label[for='authPassword']": "passwordLabel",
+        "#emailSignInBtn": "emailSignInButton",
+        "#googleSignInBtn": "googleSignInButton",
+        "#signOutBtn": "signOutButton",
+        "#authPanel .auth-status-grid .migration-count:nth-child(1) .k": "loginAccountLabel",
+        "#authPanel .auth-status-grid .migration-count:nth-child(2) .k": "dataStatusLabel",
+        "#authPanel .auth-status-grid .migration-count:nth-child(3) .k": "importStatusLabel",
+        "#migrationPanel .feature-title strong": "importLegacyTitle",
+        "#migrationPreviewStatus": "waiting",
+        "#migrationPanel .consumer-mini-note": "importLegacyNote",
+        "label[for='claimLegacyAthlete']": "claimLegacyAthleteLabel",
+        "#refreshMigrationPreviewBtn": "refreshPreview",
+        "#backupLegacyBtn": "createBackupBeforeImport",
+        "#claimLegacyBtn": "importSelectedData",
+        "#startFreshAccountBtn": "startFreshAccount",
+        "#migrationTargetLabel": "needLoginToImport",
+        "#page-settings > section:nth-of-type(2) details:nth-of-type(2) summary": "advancedSyncSettings",
+        "#page-settings > section:nth-of-type(2) details:nth-of-type(2) .technical-copy": "advancedSyncNote",
+        "#adminToolsDrawer > summary": "adminTools",
+        "#adminPanel .feature-title strong": "adminGrantTitle",
+        "#adminPanelStatus": "adminOnly",
+        "#adminPanel > .compact-list": "adminGrantNote",
+        "label[for='adminTargetEmail']": "adminEmailLabel",
+        "label[for='adminTargetUid']": "adminUidLabel",
+        "label[for='adminGrantDays']": "adminDaysLabel",
+        "label[for='adminGrantNotes']": "adminNotesLabel",
+        "#adminGrantBtn": "adminGrantButton",
+        "#adminLookupBtn": "adminLookupButton",
+        "#adminRevokeBtn": "adminRevokeButton",
+        "#claimFirstAdminBtn": "claimFirstAdminButton",
+        "#termsPanel .feature-title strong": "termsTitle",
+        "#termsPanel .feature-title .status": "trainingAid",
+        "#termsPanel .paywall-grid .value-card:nth-child(1) strong": "refundTitle",
+        "#termsPanel .paywall-grid .value-card:nth-child(1) span": "refundCopy",
+        "#termsPanel .paywall-grid .value-card:nth-child(2) strong": "notMedicalTitle",
+        "#termsPanel .paywall-grid .value-card:nth-child(2) span": "notMedicalCopy",
+        "#termsPanel .paywall-grid .value-card:nth-child(3) strong": "trainingLogicTitle",
+        "#termsPanel .paywall-grid .value-card:nth-child(3) span": "trainingLogicCopy",
+        "#termsPanel .paywall-grid .value-card:nth-child(4) strong": "dataRightsTitle",
+        "#termsPanel .paywall-grid .value-card:nth-child(4) span": "dataRightsCopy",
+        ".today-day-picker > div:first-child strong": "todayPickerTitle",
+        ".today-day-picker > div:first-child span": "todayPickerHint",
+        "label[for='filterWeek']": "weekLabel",
+        "label[for='filterDay']": "trainingDayLabel",
+        "#usePlanForLogBtn": "usePlanForToday",
+        "#todayCompletionRing small": "todayCompletion",
+        "#todayMissionEyebrow": "todayMissionEyebrowDefault",
+        "#todayMissionTitle": "todayMissionTitleDefault",
+        "#todayMissionSubtitle": "todayMissionSubtitleDefault",
+        "#openQuickLogSheetBtn": "quickLogButton",
+        "#openTodayPlanSheetBtn .mini-label": "todayPlanMiniLabel",
+        "#todayPlanCardHint": "todayPlanMiniHint",
+        "#openQuickLogSheetBtnAlt .mini-label": "quickActionMiniLabel",
+        "#openQuickLogSheetBtnAlt strong": "quickActionTitle",
+        "#openQuickLogSheetBtnAlt small": "quickActionHint",
+        "#openReadySheetBtn .mini-label": "readyMiniLabel",
+        "#todayReadyCardHint": "readyMiniHint",
+        "#openCoachSheetBtn .mini-label": "coachMiniLabel",
+        "#todayCoachCardHint": "coachMiniHint",
+        "#openE1rmTrendBtnToday span": "e1rmTrendMiniLabel",
+        ".today-visual-grid .mini-visual:nth-child(2) span": "suggestedBackoffMiniLabel",
+        ".today-visual-grid .mini-visual:nth-child(3) span": "fatigueDropMiniLabel",
+        ".today-detail-grid .panel-header .hint": "todayPlanDetailsHint",
+        ".today-detail-grid section:nth-child(2) .panel-header h2": "logPanelTitle",
+        ".today-detail-grid section:nth-child(2) .panel-header .hint": "logPanelHint",
+        ".quick-set-header span": "quickLogHeader",
+        ".quick-set-header strong": "quickLogSubheader",
+        ".quick-log-preview span": "quickLogReadyLabel",
+        "label[for='logLift']": "liftLabel",
+        "label[for='logSetType']": "setTypeLabel",
+        "label[for='logWeight']": "weightLabel",
+        "label[for='logReps']": "repsLabel",
+        ".quick-advanced-controls summary": "advancedSettings",
+        "label[for='logVariation']": "variationLabel",
+        "label[for='logVariationOther']": "customVariationLabel",
+        "label[for='targetReps']": "backoffRepsLabel",
+        "label[for='targetRpe']": "backoffRpeLabel",
+        ".metrics .metric:nth-child(2) .k": "currentSetE1rmLabel",
+        ".metrics .metric:nth-child(3) .k": "suggestedBackoffLoadLabel",
+        ".metrics .metric:nth-child(4) .k": "fatigueDropMiniLabel",
+        ".fatigue-rail-meta span:first-child": "fatigueGaugeLabel",
+        "#applySuggestedBtn": "applySuggestedLoad",
+        "#saveSetBtn": "saveThisSet",
+        ".context-drawer summary": "trainingContextAdvanced",
+        "label[for='logDate']": "dateLabel",
+        "label[for='logWeek']": "weekLabel",
+        "label[for='logDay']": "trainingDayLabel",
+        "label[for='logSessionFocus']": "sessionFocusLabel",
+        ".notes-drawer summary": "notesLabel",
+        "label[for='logTechNotes']": "techniqueNotesLabel",
+        "label[for='logGeneralNotes']": "generalNotesLabel",
+        ".today-secondary-log h2": "todayLogTitle",
+        ".today-secondary-log .hint": "todayLogHint",
+        ".session-table th:nth-child(2)": "liftLabel",
+        ".session-table th:nth-child(3)": "variationTableHeader",
+        ".session-table th:nth-child(4)": "setTypeLabel",
+        ".session-table th:nth-child(5)": "repsLabel",
+        ".session-table th:nth-child(6)": "weightLabel",
+        ".session-table th:nth-child(9)": "fatiguePctHeader"
+      };
+      Object.entries(staticTextBindings).forEach(([selector, key]) => setText(selector, t(key)));
+      setAttr("#userName", "placeholder", t("athleteNamePlaceholder"));
+      setAttr("#adminGrantNotes", "placeholder", t("adminNotesPlaceholder"));
+      setAttr("#logVariationOther", "placeholder", t("customVariationPlaceholder"));
+      setAttr("#logSessionFocus", "placeholder", t("sessionFocusPlaceholder"));
+      setAttr("#logTechNotes", "placeholder", t("techniqueNotesPlaceholder"));
+      setAttr("#logGeneralNotes", "placeholder", t("generalNotesPlaceholder"));
+      setAttr(".today-day-picker", "aria-label", t("todayPickerAria"));
       if (lang === "zh") {
         setText("#todayPlanDetailsTitle", "完整課表細節");
         setText("#page-planner h2", "課表產生");
@@ -7170,6 +7800,11 @@
       }
       if (typeof applyTheme === "function") applyTheme(document.documentElement.getAttribute("data-theme") || "light");
       updatePoseCalibrationUi();
+      if (typeof updateSyncStatusText === "function") {
+        updateSyncStatusText(authUser ? (isScopedMigrationComplete() ? "synced" : "claim required") : "sign in");
+      }
+      renderMembershipStatus();
+      renderTopActionDock();
     }
 
     async function toggleLanguage() {
@@ -7671,12 +8306,13 @@
       const readiness = getLatestReadiness(user, date);
       const readinessScore = readiness ? scoreReadiness(readiness) : null;
       const decision = getLatestCoachDecision(user, date);
+      const zh = currentLanguage() === "zh";
       const fatigueTarget = Number(metrics.fatigueTargetPct) || Number(user.fatigueDropPct) || 5;
       const fatigueValue = metrics.fatiguePct === null ? 0 : Math.max(0, Math.min(100, (metrics.fatiguePct / fatigueTarget) * 100));
       const subtitleParts = [];
       if (row?.mainLift) subtitleParts.push(row.mainLift);
       if (row?.secondaryLift) subtitleParts.push(row.secondaryLift);
-      if (!subtitleParts.length) subtitleParts.push("選週次與訓練日後查看任務");
+      if (!subtitleParts.length) subtitleParts.push(t("noMissionSelected"));
 
       const ring = document.getElementById("todayCompletionRing");
       if (ring) ring.style.setProperty("--pct", completion);
@@ -7685,21 +8321,29 @@
       const eyebrow = document.getElementById("todayMissionEyebrow");
       if (eyebrow) eyebrow.textContent = `${user.name} · ${date}`;
       const title = document.getElementById("todayMissionTitle");
-      if (title) title.textContent = row?.focus || `第 ${week} 週 · 第 ${day} 天`;
+      if (title) title.textContent = row?.focus || (zh ? `第 ${week} 週 · 第 ${day} 天` : `Week ${week} · Day ${day}`);
       const subtitle = document.getElementById("todayMissionSubtitle");
-      if (subtitle) subtitle.textContent = `${subtitleParts.join(" + ")} · 預計 ${plannedSets} 組，已存 ${rows.length} 組`;
+      if (subtitle) subtitle.textContent = `${subtitleParts.join(" + ")} · ${t("plannedSavedSets").replace("{planned}", plannedSets).replace("{saved}", rows.length)}`;
       const planCardTitle = document.getElementById("todayPlanCardTitle");
-      if (planCardTitle) planCardTitle.textContent = row?.mainLift || "查看任務";
+      if (planCardTitle) planCardTitle.textContent = row?.mainLift || t("viewMission");
       const planCardHint = document.getElementById("todayPlanCardHint");
-      if (planCardHint) planCardHint.textContent = row ? `頂組 ${estimate.topSets}x${estimate.topReps} · 退階 ${estimate.backoffSets}x${estimate.backoffReps}` : "尚未載入課表";
+      if (planCardHint) {
+        planCardHint.textContent = row
+          ? t("topBackoffPlan")
+            .replace("{topSets}", estimate.topSets)
+            .replace("{topReps}", estimate.topReps)
+            .replace("{backoffSets}", estimate.backoffSets)
+            .replace("{backoffReps}", estimate.backoffReps)
+          : t("noPlanLoaded");
+      }
       const readyTitle = document.getElementById("todayReadyCardTitle");
-      if (readyTitle) readyTitle.textContent = readinessScore ? `${readinessScore.score} / 100` : "未檢查";
+      if (readyTitle) readyTitle.textContent = readinessScore ? `${readinessScore.score} / 100` : t("unchecked");
       const readyHint = document.getElementById("todayReadyCardHint");
-      if (readyHint) readyHint.textContent = readinessScore ? readinessScore.reasons[0] : "先填今天狀態再決定是否調整";
+      if (readyHint) readyHint.textContent = readinessScore ? readinessScore.reasons[0] : t("checkTodayStatusFirst");
       const coachTitle = document.getElementById("todayCoachCardTitle");
-      if (coachTitle) coachTitle.textContent = decision ? (decision.applied ? "已套用" : "待確認") : "查看建議";
+      if (coachTitle) coachTitle.textContent = decision ? (decision.applied ? t("applied") : t("pendingReview")) : t("viewAdvice");
       const coachHint = document.getElementById("todayCoachCardHint");
-      if (coachHint) coachHint.textContent = decision?.action || "可依睡眠、疼痛、疲勞調整";
+      if (coachHint) coachHint.textContent = decision?.action || t("adjustFromReadiness");
       const e1rmMini = document.getElementById("todayE1rmMini");
       if (e1rmMini) e1rmMini.textContent = bestToday?.e1rm ? `${formatNumber(bestToday.e1rm, 1)} kg` : fallbackBest ? `${formatNumber(fallbackBest, 1)} kg` : "—";
       const suggestedMini = document.getElementById("todaySuggestedMini");
@@ -7759,11 +8403,12 @@
     }
 
     function buildScheduleSheetHtml(row, rows) {
+      const zh = currentLanguage() === "zh";
       if (!row) {
         return `
-          <div class="empty">這一天還沒有課表。可以到「課表」產生新 block，或用上方週次/訓練日切換。</div>
+          <div class="empty">${zh ? "這一天還沒有課表。可以到「課表」產生新 block，或用上方週次/訓練日切換。" : "No plan for this day yet. Generate a new block from Plan, or switch week/training day above."}</div>
           <div class="modal-action-grid">
-            <button class="primary" id="sheetGoPlannerBtn" type="button">去產生課表</button>
+            <button class="primary" id="sheetGoPlannerBtn" type="button">${zh ? "去產生課表" : "Generate plan"}</button>
           </div>`;
       }
       const estimate = getPlannedSetEstimate(row);
@@ -7773,25 +8418,25 @@
         return `
           <div class="record-center-item">
             <div>
-              <strong>${index + 1}. ${escapeHtml(item.mainLift || "主項")}</strong>
+              <strong>${index + 1}. ${escapeHtml(item.mainLift || (zh ? "主項" : "Main lift"))}</strong>
               <span>${escapeHtml(item.focus || "")}</span>
-              <span>頂組 ${itemEstimate.topSets} 組 x ${itemEstimate.topReps} 下 · 退階 ${itemEstimate.backoffSets} 組 x ${itemEstimate.backoffReps} 下</span>
-              <span>${escapeHtml(item.secondaryLift || "副項")} · ${escapeHtml(item.secondaryPrescription || "")}</span>
+              <span>${zh ? "頂組" : "Top"} ${itemEstimate.topSets} x ${itemEstimate.topReps} · ${zh ? "退階" : "Back-off"} ${itemEstimate.backoffSets} x ${itemEstimate.backoffReps}</span>
+              <span>${escapeHtml(item.secondaryLift || (zh ? "副項" : "Secondary"))} · ${escapeHtml(item.secondaryPrescription || "")}</span>
             </div>
-            <span class="status ${item.coachAdjusted ? "warn" : "ok"}">${item.coachAdjusted ? "已調整" : "原課表"}</span>
+            <span class="status ${item.coachAdjusted ? "warn" : "ok"}">${item.coachAdjusted ? (zh ? "已調整" : "Adjusted") : (zh ? "原課表" : "Original")}</span>
           </div>`;
       }).join("");
       return `
         <div class="modal-stat-grid">
-          <div class="modal-stat"><div class="k">主項</div><div class="v">${escapeHtml(row.mainLift || "—")}</div></div>
-          <div class="modal-stat"><div class="k">頂組</div><div class="v">${estimate.topSets}x${estimate.topReps}</div></div>
-          <div class="modal-stat"><div class="k">退階</div><div class="v">${estimate.backoffSets}x${estimate.backoffReps}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "主項" : "Main lift"}</div><div class="v">${escapeHtml(row.mainLift || "—")}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "頂組" : "Top set"}</div><div class="v">${estimate.topSets}x${estimate.topReps}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "退階" : "Back-off"}</div><div class="v">${estimate.backoffSets}x${estimate.backoffReps}</div></div>
         </div>
-        <div class="compact-list">${escapeHtml(row.backoffPlan || row.prescriptionSummary || "照 RPE 選重，動作品質下降時停止退階組。")}</div>
+        <div class="compact-list">${escapeHtml(row.backoffPlan || row.prescriptionSummary || (zh ? "照 RPE 選重，動作品質下降時停止退階組。" : "Choose load by RPE and stop back-off sets when movement quality drops."))}</div>
         <div class="record-center-list" style="margin-top:12px">${rowCards}</div>
         <div class="modal-action-grid">
-          <button class="primary" id="sheetUsePlanBtn" type="button">帶入今天訓練</button>
-          <button id="sheetOpenPlannerBtn" type="button">看完整課表</button>
+          <button class="primary" id="sheetUsePlanBtn" type="button">${t("usePlanForToday")}</button>
+          <button id="sheetOpenPlannerBtn" type="button">${zh ? "看完整課表" : "View full plan"}</button>
         </div>`;
     }
 
@@ -7801,11 +8446,12 @@
       const appliedDecision = getAppliedCoachDecisionForDay(user, week, day);
       const rows = getProgramFor(state.activeUserId, week, day).map((source) => getScheduleDisplayRow(source, appliedDecision));
       const row = getTodayScheduleRow();
-      openInteractionModal("今天怎麼練", buildScheduleSheetHtml(row, rows), (body) => {
+      const zh = currentLanguage() === "zh";
+      openInteractionModal(zh ? "今天怎麼練" : "Today’s work", buildScheduleSheetHtml(row, rows), (body) => {
         body.querySelector("#sheetUsePlanBtn")?.addEventListener("click", () => {
           selectTrainingDay(week, day);
           closeInteractionModal();
-          showToast("已帶入今天訓練。", "ok");
+          showToast(zh ? "已帶入今天訓練。" : "Today’s training is loaded.", "ok");
         });
         body.querySelector("#sheetOpenPlannerBtn")?.addEventListener("click", () => {
           closeInteractionModal();
@@ -7819,6 +8465,7 @@
     }
 
     function openQuickLogSheet() {
+      const zh = currentLanguage() === "zh";
       const reps = Number(document.getElementById("logReps")?.value) || 1;
       const rpe = Number(document.getElementById("logRpe")?.value) || 8;
       const weight = document.getElementById("logWeight")?.value || "";
@@ -7828,17 +8475,17 @@
       const rpeValues = Array.from({ length: 19 }, (_, i) => ((i + 2) / 2).toFixed(1)).filter((value) => Number(value) >= 1 && Number(value) <= 10);
       const repValues = Array.from({ length: 10 }, (_, i) => i + 1);
       const variationValues = ["Competition", "Paused", "Tempo", "Close Grip", "Deficit", "Board", "Pin", "Spoto", "Box", "Touch and Go", "Other"];
-      openInteractionModal("記錄一組", `
+      openInteractionModal(zh ? "記錄一組" : "Log a set", `
         <div class="choice-row" data-sheet-lift>
           ${["Squat", "Bench", "Deadlift"].map((item) => `<button type="button" data-value="${item}" class="${item === lift ? "active" : ""}">${item}</button>`).join("")}
         </div>
         <div class="quick-sheet-grid" style="margin-top:14px">
           <div class="field">
-            <label for="sheetSetType">組別</label>
+            <label for="sheetSetType">${zh ? "組別" : "Set type"}</label>
             <select id="sheetSetType">${buildSelectOptions(["Warm up", "Top", "Back off", "Secondary", "Deload", "Accessory", "Other"], setType)}</select>
           </div>
           <div class="field">
-            <label for="sheetReps">次數</label>
+            <label for="sheetReps">${zh ? "次數" : "Reps"}</label>
             <select id="sheetReps">${buildSelectOptions(repValues, reps)}</select>
           </div>
           <div class="field">
@@ -7846,17 +8493,17 @@
             <select id="sheetRpe">${buildSelectOptions(rpeValues, Number(rpe).toFixed(1))}</select>
           </div>
           <div class="field wide">
-            <label for="sheetWeight">重量 kg</label>
+            <label for="sheetWeight">${zh ? "重量 kg" : "Weight kg"}</label>
             <input id="sheetWeight" type="number" min="0" step="0.1" value="${escapeHtml(weight)}" inputmode="decimal" />
           </div>
           <div class="field wide">
-            <label for="sheetVariation">變化式</label>
+            <label for="sheetVariation">${zh ? "變化式" : "Variation"}</label>
             <select id="sheetVariation">${buildSelectOptions(variationValues, variation)}</select>
           </div>
         </div>
         <div class="quick-sheet-save">
-          <div class="compact-list" id="sheetMetricPreview">輸入重量後會同步計算 e1RM 與退階建議。</div>
-          <button class="primary" id="sheetSaveSetBtn" type="button">儲存這一組</button>
+          <div class="compact-list" id="sheetMetricPreview">${zh ? "輸入重量後會同步計算 e1RM 與退階建議。" : "Enter weight to calculate e1RM and back-off guidance."}</div>
+          <button class="primary" id="sheetSaveSetBtn" type="button">${zh ? "儲存這一組" : "Save this set"}</button>
         </div>
       `, (body) => {
         let selectedLift = lift;
@@ -7866,7 +8513,9 @@
           const tempReps = Number(body.querySelector("#sheetReps")?.value);
           const tempRpe = Number(body.querySelector("#sheetRpe")?.value);
           const tempE1rm = calcE1RM(tempWeight, tempReps, tempRpe);
-          if (preview) preview.textContent = tempE1rm ? `本組約 ${formatNumber(tempE1rm, 1)} kg e1RM。儲存後會回到今日進度。` : "輸入重量後會同步計算 e1RM 與退階建議。";
+          if (preview) preview.textContent = tempE1rm
+            ? (zh ? `本組約 ${formatNumber(tempE1rm, 1)} kg e1RM。儲存後會回到今日進度。` : `This set is about ${formatNumber(tempE1rm, 1)} kg e1RM. Saving returns you to today’s progress.`)
+            : (zh ? "輸入重量後會同步計算 e1RM 與退階建議。" : "Enter weight to calculate e1RM and back-off guidance.");
         };
         body.querySelectorAll("[data-sheet-lift] button").forEach((button) => {
           button.addEventListener("click", () => {
@@ -7888,7 +8537,7 @@
           const saved = await saveSet();
           if (saved) {
             closeInteractionModal();
-            showToast("這一組已儲存。", "ok");
+            showToast(zh ? "這一組已儲存。" : "Set saved.", "ok");
           }
         });
       }, { mode: "sheet" });
@@ -7907,6 +8556,7 @@
     }
 
     function openReadinessSheet() {
+      const zh = currentLanguage() === "zh";
       const user = getActiveUser();
       const date = document.getElementById("logDate")?.value || todayString();
       const latest = getLatestReadiness(user, date);
@@ -7917,20 +8567,20 @@
       const motivation = latest?.motivation ?? document.getElementById("readyMotivation")?.value ?? 3;
       const previousCompletion = latest?.previousCompletion ?? document.getElementById("readyCompletion")?.value ?? "completed";
       const freeText = latest?.freeText ?? document.getElementById("readyNotes")?.value ?? "";
-      openInteractionModal("今天狀態", `
+      openInteractionModal(zh ? "今天狀態" : "Today status", `
         <div class="quick-sheet-grid">
-          <div class="field"><label for="sheetReadySleep">睡眠小時</label><input id="sheetReadySleep" type="number" min="0" max="14" step="0.5" value="${escapeHtml(sleep)}" /></div>
-          <div class="field"><label for="sheetReadyPain">疼痛 0-10</label><input id="sheetReadyPain" type="number" min="0" max="10" step="1" value="${escapeHtml(pain)}" /></div>
-          <div class="field"><label for="sheetReadyStress">壓力</label><select id="sheetReadyStress">${buildSelectOptions([1,2,3,4,5], stress)}</select></div>
-          <div class="field"><label for="sheetReadySoreness">痠痛</label><select id="sheetReadySoreness">${buildSelectOptions([1,2,3,4,5], soreness)}</select></div>
-          <div class="field"><label for="sheetReadyMotivation">想練程度</label><select id="sheetReadyMotivation">${buildSelectOptions([1,2,3,4,5], motivation)}</select></div>
-          <div class="field"><label for="sheetReadyCompletion">上次訓練</label><select id="sheetReadyCompletion">${buildSelectOptions(["completed", "overshot", "missed", "deloaded"], previousCompletion)}</select></div>
-          <div class="field wide"><label for="sheetReadyNotes">疼痛或特殊狀況</label><textarea id="sheetReadyNotes">${escapeHtml(freeText)}</textarea></div>
+          <div class="field"><label for="sheetReadySleep">${zh ? "睡眠小時" : "Sleep hours"}</label><input id="sheetReadySleep" type="number" min="0" max="14" step="0.5" value="${escapeHtml(sleep)}" /></div>
+          <div class="field"><label for="sheetReadyPain">${zh ? "疼痛 0-10" : "Pain 0-10"}</label><input id="sheetReadyPain" type="number" min="0" max="10" step="1" value="${escapeHtml(pain)}" /></div>
+          <div class="field"><label for="sheetReadyStress">${zh ? "壓力" : "Stress"}</label><select id="sheetReadyStress">${buildSelectOptions([1,2,3,4,5], stress)}</select></div>
+          <div class="field"><label for="sheetReadySoreness">${zh ? "痠痛" : "Soreness"}</label><select id="sheetReadySoreness">${buildSelectOptions([1,2,3,4,5], soreness)}</select></div>
+          <div class="field"><label for="sheetReadyMotivation">${zh ? "想練程度" : "Motivation"}</label><select id="sheetReadyMotivation">${buildSelectOptions([1,2,3,4,5], motivation)}</select></div>
+          <div class="field"><label for="sheetReadyCompletion">${zh ? "上次訓練" : "Previous session"}</label><select id="sheetReadyCompletion">${buildSelectOptions(["completed", "overshot", "missed", "deloaded"], previousCompletion)}</select></div>
+          <div class="field wide"><label for="sheetReadyNotes">${zh ? "疼痛或特殊狀況" : "Pain or special context"}</label><textarea id="sheetReadyNotes">${escapeHtml(freeText)}</textarea></div>
         </div>
         <div class="feature-band" id="sheetReadyPreview" style="margin-top:12px"></div>
         <div class="modal-action-grid">
-          <button class="primary" id="sheetSaveReadyBtn" type="button">儲存狀態</button>
-          <button id="sheetBuildCoachBtn" type="button">順便產生調整建議</button>
+          <button class="primary" id="sheetSaveReadyBtn" type="button">${zh ? "儲存狀態" : "Save status"}</button>
+          <button id="sheetBuildCoachBtn" type="button">${zh ? "順便產生調整建議" : "Also build adjustment"}</button>
         </div>
       `, (body) => {
         const updatePreview = () => {
@@ -7967,7 +8617,7 @@
           if (saved) {
             renderTodayCommandCenter();
             closeInteractionModal();
-            showToast("今天狀態已儲存。", "ok");
+            showToast(zh ? "今天狀態已儲存。" : "Today status saved.", "ok");
           }
         });
         body.querySelector("#sheetBuildCoachBtn")?.addEventListener("click", async () => {
@@ -7977,31 +8627,32 @@
           if (decisionSaved) {
             renderTodayCommandCenter();
             closeInteractionModal();
-            showToast("已產生今日調整建議。", "ok");
+            showToast(zh ? "已產生今日調整建議。" : "Today adjustment is ready.", "ok");
           }
         });
       }, { mode: "sheet" });
     }
 
     function openCoachSheet() {
+      const zh = currentLanguage() === "zh";
       const user = getActiveUser();
       const date = document.getElementById("logDate")?.value || todayString();
       const readiness = getLatestReadiness(user, date);
       const readinessScore = readiness ? scoreReadiness(readiness) : null;
       const decision = getLatestCoachDecision(user, date);
-      openInteractionModal("今日調整建議", `
+      openInteractionModal(zh ? "今日調整建議" : "Today adjustment", `
         <div class="modal-stat-grid">
-          <div class="modal-stat"><div class="k">狀態分數</div><div class="v">${readinessScore ? readinessScore.score : "—"}</div></div>
-          <div class="modal-stat"><div class="k">建議狀態</div><div class="v">${decision ? (decision.applied ? "已套用" : "待確認") : "尚未產生"}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "狀態分數" : "Readiness score"}</div><div class="v">${readinessScore ? readinessScore.score : "—"}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "建議狀態" : "Suggestion status"}</div><div class="v">${decision ? (decision.applied ? t("applied") : t("pendingReview")) : (zh ? "尚未產生" : "Not generated")}</div></div>
         </div>
         <div class="feature-band ${decision ? "" : "warn"}">
-          <div class="feature-title"><strong>${escapeHtml(decision?.action || "先建立今天狀態，再產生調整建議")}</strong><span class="status ${decision?.applied ? "ok" : "warn"}">${decision?.applied ? "已套用" : "手動套用"}</span></div>
-          <div class="compact-list">${escapeHtml(decision?.adjustedPlan?.note || decision?.reason || readinessScore?.reasons?.[0] || "規則引擎會依睡眠、疼痛、前次完成度與課表壓力給出保守調整。")}</div>
+          <div class="feature-title"><strong>${escapeHtml(decision?.action || (zh ? "先建立今天狀態，再產生調整建議" : "Check today’s status first, then build an adjustment"))}</strong><span class="status ${decision?.applied ? "ok" : "warn"}">${decision?.applied ? t("applied") : t("manualApplyOnly")}</span></div>
+          <div class="compact-list">${escapeHtml(decision?.adjustedPlan?.note || decision?.reason || readinessScore?.reasons?.[0] || (zh ? "規則引擎會依睡眠、疼痛、前次完成度與課表壓力給出保守調整。" : "The rule engine uses sleep, pain, previous completion, and plan stress to suggest conservative adjustments."))}</div>
         </div>
         <div class="modal-action-grid">
-          <button class="primary" id="sheetBuildDecisionBtn" type="button">產生規則建議</button>
-          <button id="sheetApplyDecisionBtn" type="button">套用到今日表單</button>
-          <button id="sheetOpenAiCoachBtn" type="button">打開 AI 教練</button>
+          <button class="primary" id="sheetBuildDecisionBtn" type="button">${zh ? "產生規則建議" : "Build rule suggestion"}</button>
+          <button id="sheetApplyDecisionBtn" type="button">${zh ? "套用到今日表單" : "Apply to today’s form"}</button>
+          <button id="sheetOpenAiCoachBtn" type="button">${zh ? "打開 AI 教練" : "Open AI coach"}</button>
         </div>
       `, (body) => {
         body.querySelector("#sheetBuildDecisionBtn")?.addEventListener("click", async () => {
@@ -8009,7 +8660,7 @@
           if (saved) {
             renderTodayCommandCenter();
             closeInteractionModal();
-            showToast("已產生今日調整建議。", "ok");
+            showToast(zh ? "已產生今日調整建議。" : "Today adjustment is ready.", "ok");
           }
         });
         body.querySelector("#sheetApplyDecisionBtn")?.addEventListener("click", async () => {
@@ -9191,38 +9842,38 @@
       const access = getAccessState();
       if (syncStatus) {
         syncStatus.className = "status " + (scopedReady ? "ok" : authUser ? "warn" : "warn");
-        syncStatus.textContent = scopedReady ? "已同步" : authUser ? "選擇資料" : "尚未登入";
+        syncStatus.textContent = scopedReady ? t("syncReady") : authUser ? t("syncChooseProfile") : t("syncSignedOut");
       }
       if (syncDetail) {
         syncDetail.textContent = scopedReady
-          ? "訓練資料已跟著帳號走"
+          ? t("syncTileDetailReady")
           : authUser
-            ? "完成資料建立後開始同步"
-            : "登入後同步訓練資料";
+            ? t("syncTileDetailClaim")
+            : t("syncTileDetailSignedOut");
       }
       if (membershipStatus) {
         membershipStatus.className = "status " + access.level;
         membershipStatus.textContent = access.label;
       }
       if (membershipDetail) {
-        membershipDetail.textContent = access.active ? "完整功能可用" : "點開查看權限與說明";
+        membershipDetail.textContent = access.active ? t("membershipTileDetailActive") : t("membershipTileDetailInactive");
       }
     }
 
     function openSyncModal() {
       const scopedReady = Boolean(authUser && scopedRef && isScopedMigrationComplete());
-      const signedLabel = authUser?.email || authUser?.uid || "尚未登入";
-      openInteractionModal("訓練同步", `
+      const signedLabel = authUser?.email || authUser?.uid || t("syncModalSignedOut");
+      openInteractionModal(t("syncModalTitle"), `
         <div class="modal-stat-grid">
-          <div class="modal-stat"><div class="k">登入帳號</div><div class="v">${escapeHtml(authUser ? signedLabel : "未登入")}</div></div>
-          <div class="modal-stat"><div class="k">資料同步</div><div class="v">${scopedReady ? "已啟用" : "待設定"}</div></div>
-          <div class="modal-stat"><div class="k">目前選手</div><div class="v">${escapeHtml(getActiveUser().name)}</div></div>
+          <div class="modal-stat"><div class="k">${t("syncModalAccount")}</div><div class="v">${escapeHtml(authUser ? signedLabel : t("syncModalSignedOut"))}</div></div>
+          <div class="modal-stat"><div class="k">${t("syncModalData")}</div><div class="v">${scopedReady ? t("syncModalReady") : t("syncModalLocked")}</div></div>
+          <div class="modal-stat"><div class="k">${t("syncModalAthlete")}</div><div class="v">${escapeHtml(getActiveUser().name)}</div></div>
         </div>
-        <div class="compact-list">${scopedReady ? "你的訓練紀錄會保存到私人帳號空間。" : "登入後先建立或匯入訓練資料，再開始同步。"}</div>
+        <div class="compact-list">${scopedReady ? t("syncModalReadyCopy") : t("syncModalLockedCopy")}</div>
         <div class="modal-action-grid">
-          <button class="primary" id="modalGoogleSignInBtn" type="button">${authUser ? "切換 Google 帳號" : "使用 Google 登入"}</button>
-          <button id="modalAccountSettingsBtn" type="button">帳號與資料設定</button>
-          ${authUser ? `<button id="modalSignOutBtn" type="button">登出</button>` : ""}
+          <button class="primary" id="modalGoogleSignInBtn" type="button">${authUser ? t("switchGoogleAccount") : t("continueGoogle")}</button>
+          <button id="modalAccountSettingsBtn" type="button">${t("accountDataSettings")}</button>
+          ${authUser ? `<button id="modalSignOutBtn" type="button">${t("signOutButton")}</button>` : ""}
         </div>
       `, (body) => {
         body.querySelector("#modalGoogleSignInBtn")?.addEventListener("click", () => signInWithGoogle());
@@ -9241,17 +9892,17 @@
     async function openMembershipModal() {
       await refreshAccountStatus();
       const access = getAccessState();
-      openInteractionModal("會員狀態", `
+      openInteractionModal(t("membershipModalTitle"), `
         <div class="modal-stat-grid">
-          <div class="modal-stat"><div class="k">狀態</div><div class="v">${escapeHtml(access.label)}</div></div>
-          <div class="modal-stat"><div class="k">方案</div><div class="v">${escapeHtml(entitlementData?.plan || (isAdminActive() ? "管理員" : "—"))}</div></div>
-          <div class="modal-stat"><div class="k">可用到</div><div class="v">${escapeHtml(entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? "管理員" : "—"))}</div></div>
+          <div class="modal-stat"><div class="k">${t("statusLabel")}</div><div class="v">${escapeHtml(access.label)}</div></div>
+          <div class="modal-stat"><div class="k">${t("planLabel")}</div><div class="v">${escapeHtml(entitlementData?.plan || (isAdminActive() ? t("adminLabel") : t("noneLabel")))}</div></div>
+          <div class="modal-stat"><div class="k">${t("availableUntil")}</div><div class="v">${escapeHtml(entitlementData?.currentPeriodEnd ? entitlementData.currentPeriodEnd.slice(0, 10) : (isAdminActive() ? t("adminLabel") : t("noneLabel")))}</div></div>
         </div>
         <div class="compact-list">${escapeHtml(access.detail)}</div>
         <div class="modal-action-grid">
-          <button class="primary" id="modalRefreshAccountBtn" type="button">重新整理狀態</button>
-          <button id="modalMembershipSettingsBtn" type="button">會員設定</button>
-          <button id="modalTermsBtn" type="button">安全說明</button>
+          <button class="primary" id="modalRefreshAccountBtn" type="button">${t("refreshStatus")}</button>
+          <button id="modalMembershipSettingsBtn" type="button">${t("membershipSettings")}</button>
+          <button id="modalTermsBtn" type="button">${t("safetyNotes")}</button>
         </div>
       `, (body) => {
         body.querySelector("#modalRefreshAccountBtn")?.addEventListener("click", () => openMembershipModal());
@@ -11426,40 +12077,40 @@
     function openDeleteAthleteModal() {
       const userIds = Object.keys(state.users || {});
       if (userIds.length <= 1) {
-        showToast("至少要保留一位選手。你可以改名或清除紀錄，但不能刪掉最後一位。", "warn");
+        showToast(t("athleteDeleteKeepOne"), "warn");
         return;
       }
       const user = getActiveUser();
       const confirmName = String(user.name || user.id || "").trim();
       const counts = getAthleteDataCounts(user);
       const statHtml = [
-        ["訓練紀錄", counts.logs],
-        ["課表列", counts.programRows],
-        ["封存週期", counts.archivedCycles],
-        ["封存組數", counts.archivedLogs],
-        ["AI / 教練", counts.aiSessions + counts.coachDecisions],
-        ["影片資料", counts.videoItems]
+        [t("trainingLogs"), counts.logs],
+        [t("planRows"), counts.programRows],
+        [t("archivedCyclesLabel"), counts.archivedCycles],
+        [t("archivedSets"), counts.archivedLogs],
+        [t("aiCoachLabel"), counts.aiSessions + counts.coachDecisions],
+        [t("videoData"), counts.videoItems]
       ].map(([label, value]) => `<div class="modal-stat"><div class="k">${label}</div><div class="v">${value}</div></div>`).join("");
-      openInteractionModal("刪除選手", `
+      openInteractionModal(t("deleteAthleteTitle"), `
         <div class="feature-band bad">
           <div class="feature-title">
-            <strong>你要刪除「${escapeHtml(confirmName)}」這位選手</strong>
-            <span class="status bad">不可復原</span>
+            <strong>${t("deleteAthleteIntro")}「${escapeHtml(confirmName)}」</strong>
+            <span class="status bad">${t("deleteAthleteIrreversible")}</span>
           </div>
-          <div class="compact-list">這只會刪除目前選手底下的課表、訓練紀錄、影片分析與教練資料；不會刪除 Google 帳號、會員權限，也不會刪除同帳號裡其他選手。</div>
+          <div class="compact-list">${t("deleteAthleteOnlyThis")}</div>
         </div>
         <div class="modal-stat-grid">${statHtml}</div>
         <label class="check-row" style="margin-top:14px">
           <input id="deleteAthleteAcknowledge" type="checkbox" />
-          <span>我知道這會永久刪除這位選手的資料；如果只是換週期，我應該先去回顧頁封存週期。</span>
+          <span>${t("deleteAthleteAcknowledge")}</span>
         </label>
         <div class="field" style="margin-top:14px">
-          <label for="deleteAthleteConfirm">輸入選手名稱「${escapeHtml(confirmName)}」確認刪除</label>
+          <label for="deleteAthleteConfirm">${t("deleteAthleteInputLabel")}「${escapeHtml(confirmName)}」</label>
           <input id="deleteAthleteConfirm" type="text" placeholder="${escapeHtml(confirmName)}" autocomplete="off" />
         </div>
         <div class="modal-action-grid">
-          <button class="danger" id="confirmDeleteAthleteBtn" type="button">刪除這位選手</button>
-          <button id="cancelDeleteAthleteBtn" type="button">取消</button>
+          <button class="danger" id="confirmDeleteAthleteBtn" type="button">${t("deleteAthleteConfirmButton")}</button>
+          <button id="cancelDeleteAthleteBtn" type="button">${t("cancel")}</button>
         </div>
       `, (body) => {
         body.querySelector("#confirmDeleteAthleteBtn")?.addEventListener("click", deleteActiveAthlete);
@@ -11472,18 +12123,18 @@
       const user = getActiveUser();
       const userIds = Object.keys(state.users || {});
       if (userIds.length <= 1) {
-        showToast("至少要保留一位選手。", "warn");
+        showToast(t("athleteDeleteKeepOne"), "warn");
         return;
       }
       const confirmName = String(user.name || user.id || "").trim();
       const typedName = document.getElementById("deleteAthleteConfirm")?.value.trim();
       const acknowledged = Boolean(document.getElementById("deleteAthleteAcknowledge")?.checked);
       if (!acknowledged) {
-        showToast("請先勾選確認，避免誤刪。", "warn");
+        showToast(t("athleteDeleteNeedCheck"), "warn");
         return;
       }
       if (typedName !== confirmName) {
-        showToast(`請完整輸入「${confirmName}」才會刪除。`, "warn");
+        showToast(`${t("athleteDeleteNeedName")}「${confirmName}」`, "warn");
         return;
       }
       const previousUsers = cloneData(state.users);
@@ -11497,11 +12148,11 @@
         })[0];
       delete state.users[user.id];
       state.activeUserId = nextId;
-      const saved = await saveState(`已刪除選手：${confirmName}`);
+      const saved = await saveState(`${t("athleteDeletedToast")}${confirmName}`);
       if (!saved) {
         state.users = previousUsers;
         state.activeUserId = previousActiveUserId;
-        showToast("刪除沒有完成，資料已復原。", "bad");
+        showToast(t("athleteDeleteRestored"), "bad");
         return;
       }
       closeInteractionModal();
