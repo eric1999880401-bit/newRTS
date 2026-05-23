@@ -67,6 +67,24 @@ assert.strictEqual(visualBar.barTrackingSource, "visual");
 assert(visualBar.visualBarFrameCount >= 70);
 assert(Math.abs(visualBar.curvePreview[0].barX - 0.2) < 0.02);
 
+const twoRepVisualFrames = engine.buildSyntheticFrames("bench-side", 144).map((frame, index) => {
+  const phase = index / 143;
+  const twoRepWave = 0.5 - 0.5 * Math.cos(phase * Math.PI * 4);
+  const jitter = Math.sin(index * 1.7) * 0.002;
+  return {
+    ...frame,
+    barPoint: { x: 0.42, y: 0.34 + twoRepWave * 0.1 + jitter, visibility: 0.98 }
+  };
+});
+const twoRepLimited = engine.analyzeLandmarkFrames(twoRepVisualFrames, {
+  lift: "Bench",
+  setType: "Top",
+  viewAngle: "side",
+  reps: 2
+});
+assert.strictEqual(twoRepLimited.repPhases.length, 2);
+assert(twoRepLimited.repPhases.every((rep) => rep.relativeDisplacement >= 0.04));
+
 const benchFront = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("bench-front", 72), {
   lift: "Comp Bench",
   setType: "Top",

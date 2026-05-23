@@ -190,6 +190,16 @@
     return clean.length % 2 ? clean[mid] : (clean[mid - 1] + clean[mid]) / 2;
   }
 
+  function percentile(values, ratio) {
+    const clean = values.map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+    if (!clean.length) return null;
+    const index = clamp(Number(ratio) || 0, 0, 1) * (clean.length - 1);
+    const lower = Math.floor(index);
+    const upper = Math.ceil(index);
+    if (lower === upper) return clean[lower];
+    return clean[lower] + (clean[upper] - clean[lower]) * (index - lower);
+  }
+
   function plausibleBenchElbowAngle(value) {
     const number = Number(value);
     return Number.isFinite(number) && number >= 45 && number <= 180;
@@ -277,12 +287,20 @@
 
   function detectRepPhases(metrics, options = {}) {
     if (metrics.length < 5) return [];
-    const yValues = movingAverage(metrics.map((m) => Number(m.barProxy?.y)), 5);
-    const minGap = Number(options.minRepGapSeconds) || 0.7;
+    const yValues = movingAverage(metrics.map((m) => Number(m.barProxy?.y)), 7);
+    const cleanY = yValues.filter(Number.isFinite);
+    const yRange = cleanY.length ? Math.max(0, percentile(cleanY, 0.95) - percentile(cleanY, 0.05)) : 0;
+    const minGap = Number(options.minRepGapSeconds) || 1.15;
+    const minConcentricSeconds = Number(options.minConcentricSeconds) || 0.24;
+    const manualRepLimit = Number.isFinite(Number(options.reps)) && Number(options.reps) > 0
+      ? Math.min(20, Math.max(1, Math.round(Number(options.reps))))
+      : null;
+    const minDisplacement = Number(options.minRepDisplacement) || Math.max(0.015, yRange * 0.18);
     const bottoms = [];
-    for (let i = 2; i < yValues.length - 2; i += 1) {
+    for (let i = 3; i < yValues.length - 3; i += 1) {
       if (!Number.isFinite(yValues[i])) continue;
-      const isLocalBottom = yValues[i] >= yValues[i - 1] && yValues[i] >= yValues[i + 1] && yValues[i] >= yValues[i - 2] && yValues[i] >= yValues[i + 2];
+      const localWindow = yValues.slice(i - 3, i + 4).filter(Number.isFinite);
+      const isLocalBottom = localWindow.length && yValues[i] >= Math.max(...localWindow);
       if (!isLocalBottom) continue;
       const previous = bottoms[bottoms.length - 1];
       if (!previous || (metrics[i].time - metrics[previous].time) >= minGap) {
@@ -297,16 +315,16 @@
       if (idx >= 0) bottoms.push(idx);
     }
 
-    return bottoms.slice(0, 8).map((bottomIndex, repIndex) => {
+    const candidates = bottoms.map((bottomIndex, repIndex) => {
       const prevBound = repIndex ? bottoms[repIndex - 1] : 0;
       const nextBound = repIndex < bottoms.length - 1 ? bottoms[repIndex + 1] : metrics.length - 1;
       const eccentricStart = findMinIndex(yValues, prevBound, bottomIndex);
       const lockout = findMinIndex(yValues, bottomIndex, nextBound);
       const concentricSeconds = Math.max(0, metrics[lockout].time - metrics[bottomIndex].time);
       const eccentricSeconds = Math.max(0, metrics[bottomIndex].time - metrics[eccentricStart].time);
-      const displacement = Math.abs(yValues[bottomIndex] - yValues[lockout]);
+      const displacement = Math.max(0, Number(yValues[bottomIndex]) - Number(yValues[lockout]));
       return {
-        rep: repIndex + 1,
+        rep: 0,
         eccentricStartTime: round(metrics[eccentricStart].time, 2),
         bottomTime: round(metrics[bottomIndex].time, 2),
         lockoutTime: round(metrics[lockout].time, 2),
@@ -316,7 +334,17 @@
         bottomFrameIndex: bottomIndex,
         lockoutFrameIndex: lockout
       };
-    });
+    }).filter((rep) => (
+      Number(rep.relativeDisplacement) >= minDisplacement
+      && Number(rep.concentricSeconds) >= minConcentricSeconds
+      && Number(rep.lockoutFrameIndex) > Number(rep.bottomFrameIndex)
+    ));
+
+    const selected = manualRepLimit && candidates.length > manualRepLimit
+      ? [...candidates].sort((a, b) => Number(b.relativeDisplacement) - Number(a.relativeDisplacement)).slice(0, manualRepLimit).sort((a, b) => Number(a.bottomFrameIndex) - Number(b.bottomFrameIndex))
+      : candidates.slice(0, manualRepLimit || 8);
+
+    return selected.map((rep, index) => ({ ...rep, rep: index + 1 }));
   }
 
   function findMinIndex(values, start, end) {

@@ -5276,7 +5276,7 @@
               </div>
               <div class="field">
                 <label for="videoReps" data-i18n="reps">Reps</label>
-                <input id="videoReps" type="number" min="1" max="12" step="1" value="1" />
+                <input id="videoReps" type="number" min="1" max="12" step="1" placeholder="Optional" />
               </div>
               <div class="field">
                 <label for="videoWeight" data-i18n="weightKg">Weight kg</label>
@@ -12026,8 +12026,8 @@
         const trackingCtx = trackingCanvas.getContext("2d", { willReadFrequently: true });
         let previousVisualBarPoint = poseManualBarPoint || null;
         const enableVisualBarTracking = true;
-        const duration = Math.min(Number(video.duration) || 0, 30);
-        const targetFrames = Math.min(180, Math.max(24, Math.ceil(duration * 8)));
+        const duration = Math.min(Number(video.duration) || 0, 75);
+        const targetFrames = Math.min(300, Math.max(36, Math.ceil(duration * 6)));
         const step = duration / Math.max(targetFrames - 1, 1);
         const frames = [];
         for (let i = 0; i < targetFrames; i += 1) {
@@ -12048,7 +12048,8 @@
               width: video.videoWidth,
               height: video.videoHeight,
               landmarks,
-              visualBarPoint: visualBarPoint?.source === "visual" ? visualBarPoint : undefined
+              visualBarPoint: visualBarPoint?.source === "visual" ? visualBarPoint : undefined,
+              barPoint: poseManualBarPoint && visualBarPoint?.source === "visual" ? visualBarPoint : undefined
             });
           }
           if (i % 12 === 0) setPoseStatus(`Analyzing ${Math.round((i / targetFrames) * 100)}%`, "warn");
