@@ -3416,8 +3416,10 @@
     }
     .pose-preview-shell canvas {
       position: absolute;
-      inset: 0;
+      inset: 0 auto auto 0;
       height: 100%;
+      max-height: none;
+      object-fit: fill;
       z-index: 2;
       pointer-events: none;
     }
@@ -5334,6 +5336,10 @@
                   <label for="poseCalibrationMode" data-i18n="calibration">Calibration</label>
                   <select id="poseCalibrationMode"><option value="relative" data-i18n="relativeOnly">Relative only</option><option value="plate" data-i18n="plateDiameter">Plate diameter</option><option value="custom" data-i18n="knownDistance">Known distance</option></select>
                 </div>
+                <div class="field">
+                  <label for="poseTrackedSide" data-i18n="trackedSide">Tracked arm</label>
+                  <select id="poseTrackedSide"><option value="auto" data-i18n="trackedSideAuto">Auto</option><option value="left" data-i18n="trackedSideLeft">Left</option><option value="right" data-i18n="trackedSideRight">Right</option></select>
+                </div>
                 <div class="field" id="poseRealDistanceField">
                   <label for="poseRealDistance" id="poseRealDistanceLabel" data-i18n="knownMeters">Known meters</label>
                   <input id="poseRealDistance" type="number" min="0" step="0.01" value="0.45" />
@@ -5719,6 +5725,7 @@
     let poseLandmarkerPromise = null;
     let lastPoseAnalysis = null;
     let poseVideoObjectUrl = "";
+    let poseVideoFileKey = "";
     let lastPoseFrames = [];
     let poseOverlayRaf = 0;
     let poseOverlayListenersAttached = false;
@@ -7097,6 +7104,13 @@
       poseAnalysisTitle: "Movement analysis",
       localOnly: "Local only",
       barMarkerHint: "For the most accurate bar path, click the bar or plate center in the video, then run analysis.",
+      trackedSide: "Tracked arm",
+      trackedSideAuto: "Auto",
+      trackedSideLeft: "Left",
+      trackedSideRight: "Right",
+      previewReady: "Video loaded. Click the bar or plate center before analysis for a tighter bar path.",
+      barMarkerSet: "Bar marker set. Re-run analysis for a tighter trace.",
+      barMarkerOutside: "Click inside the visible video frame to mark the bar.",
       fixedFilmingSetup: "Fixed filming setup",
       distance: "Distance",
       distanceHint: "2.5-4 m from the lifter.",
@@ -7248,6 +7262,13 @@
       poseAnalysisTitle: "動作分析",
       localOnly: "本機分析",
       barMarkerHint: "要讓槓路最準，先點影片中的槓或槓片中心，再開始分析。",
+      trackedSide: "追蹤手臂",
+      trackedSideAuto: "自動",
+      trackedSideLeft: "左手",
+      trackedSideRight: "右手",
+      previewReady: "影片已載入。分析前先點槓或槓片中心，槓路會更準。",
+      barMarkerSet: "已標記槓/槓片位置，重新分析會更準。",
+      barMarkerOutside: "請點在影片畫面內的槓或槓片中心。",
       fixedFilmingSetup: "固定拍攝設定",
       distance: "距離",
       distanceHint: "離選手約 2.5-4 公尺。",
@@ -11471,6 +11492,7 @@
         lift: document.getElementById("videoLift")?.value || "Lift",
         setType: document.getElementById("videoSetType")?.value || "Set",
         viewAngle: document.getElementById("poseViewAngle")?.value || "side",
+        preferredSide: document.getElementById("poseTrackedSide")?.value || "auto",
         calibrationMode,
         pixelToMeter,
         realDistanceMeters: usesMetricCalibration && realDistance ? realDistance : null,
@@ -11528,11 +11550,66 @@
       return { x: (Number(a.x) + Number(b.x)) / 2, y: (Number(a.y) + Number(b.y)) / 2 };
     }
 
+    function poseFileKey(file) {
+      if (!file) return "";
+      return `${file.name || ""}:${file.size || 0}:${file.lastModified || 0}`;
+    }
+
+    function videoContentRect(video) {
+      const rect = video?.getBoundingClientRect?.();
+      if (!rect || !rect.width || !rect.height || !video.videoWidth || !video.videoHeight) return rect || null;
+      const sourceAspect = video.videoWidth / video.videoHeight;
+      const boxAspect = rect.width / rect.height;
+      let width = rect.width;
+      let height = rect.height;
+      let left = rect.left;
+      let top = rect.top;
+      if (boxAspect > sourceAspect) {
+        height = rect.height;
+        width = height * sourceAspect;
+        left = rect.left + (rect.width - width) / 2;
+      } else {
+        width = rect.width;
+        height = width / sourceAspect;
+        top = rect.top + (rect.height - height) / 2;
+      }
+      return { left, top, width, height };
+    }
+
+    function videoEventPoint(event, video) {
+      const content = videoContentRect(video);
+      if (!content?.width || !content?.height) return null;
+      const x = (event.clientX - content.left) / content.width;
+      const y = (event.clientY - content.top) / content.height;
+      if (x < 0 || x > 1 || y < 0 || y > 1) return null;
+      return { x, y, visibility: 1, source: "manual" };
+    }
+
+    function syncPoseCanvasToVideo(video, canvas) {
+      const shell = canvas?.closest(".pose-preview-shell");
+      const content = videoContentRect(video);
+      if (!shell || !content?.width || !content?.height) return;
+      const shellRect = shell.getBoundingClientRect();
+      canvas.style.left = `${content.left - shellRect.left}px`;
+      canvas.style.top = `${content.top - shellRect.top}px`;
+      canvas.style.width = `${content.width}px`;
+      canvas.style.height = `${content.height}px`;
+      canvas.style.right = "auto";
+      canvas.style.bottom = "auto";
+    }
+
+    function clearPoseOverlayCanvas() {
+      const canvas = document.getElementById("poseOverlayCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, canvas.width || 1, canvas.height || 1);
+    }
+
     function poseSideIndices(analysis = lastPoseAnalysis) {
       const side = analysis?.poseSide === "right" ? "right" : "left";
       return side === "right"
-        ? { shoulder: 12, elbow: 14, wrist: 16, hip: 24 }
-        : { shoulder: 11, elbow: 13, wrist: 15, hip: 23 };
+        ? { shoulder: 12, elbow: 14, wrist: 16, hip: 24, knee: 26, ankle: 28 }
+        : { shoulder: 11, elbow: 13, wrist: 15, hip: 23, knee: 25, ankle: 27 };
     }
 
     function poseTracePoint(frame, kind, analysis = lastPoseAnalysis) {
@@ -11568,10 +11645,14 @@
       return midpoint(11, 12);
     }
 
-    function pixelSaturation(r, g, b) {
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      return max ? (max - min) / max : 0;
+    function platePixelScore(r, g, b) {
+      const brightness = (r + g + b) / 765;
+      const redDominance = r - Math.max(g, b);
+      const orangeDominance = r - b;
+      const redPlate = brightness > 0.12 && r > 75 && redDominance > 22;
+      const orangePlate = brightness > 0.16 && r > 95 && g > 35 && orangeDominance > 40 && r > g * 1.04;
+      if (!redPlate && !orangePlate) return 0;
+      return Math.max(0, redDominance * 1.4 + orangeDominance * 0.55 + brightness * 60);
     }
 
     function detectVisualBarPoint(ctx, width, height, fallback, previous = null) {
@@ -11579,8 +11660,9 @@
       if (!center || !Number.isFinite(Number(center.x)) || !Number.isFinite(Number(center.y))) return fallback || null;
       const cx = Math.round(Number(center.x) * width);
       const cy = Math.round(Number(center.y) * height);
-      const rx = Math.round(width * (previous || poseManualBarPoint ? 0.12 : 0.2));
-      const ry = Math.round(height * (previous || poseManualBarPoint ? 0.08 : 0.13));
+      const hasManualAnchor = Boolean(poseManualBarPoint);
+      const rx = Math.round(width * (previous || hasManualAnchor ? 0.095 : 0.18));
+      const ry = Math.round(height * (previous || hasManualAnchor ? 0.07 : 0.12));
       const x0 = Math.max(0, cx - rx);
       const y0 = Math.max(0, cy - ry);
       const x1 = Math.min(width - 1, cx + rx);
@@ -11596,30 +11678,29 @@
       let weight = 0;
       let sumX = 0;
       let sumY = 0;
-      const step = Math.max(2, Math.round(Math.min(width, height) / 420));
+      const step = Math.max(1, Math.round(Math.min(width, height) / 560));
       for (let y = 0; y < boxH; y += step) {
         for (let x = 0; x < boxW; x += step) {
           const offset = (y * boxW + x) * 4;
           const r = data[offset];
           const g = data[offset + 1];
           const b = data[offset + 2];
-          const brightness = (r + g + b) / 765;
-          const redDominance = r - Math.max(g, b);
-          const redPlate = brightness > 0.12 && r > 75 && redDominance > 22;
-          if (!redPlate) continue;
+          const plateScore = platePixelScore(r, g, b);
+          if (!plateScore) continue;
           const absX = x0 + x;
           const absY = y0 + y;
           const dx = (absX - cx) / Math.max(rx, 1);
           const dy = (absY - cy) / Math.max(ry, 1);
-          const distancePenalty = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy));
-          const score = (1 + redDominance / 180) * distancePenalty;
-          if (score <= 0.05) continue;
+          const distanceSq = dx * dx + dy * dy;
+          const centerBias = Math.exp(-(hasManualAnchor ? 7 : 3.2) * distanceSq);
+          const score = plateScore * centerBias;
+          if (score <= 0.08) continue;
           weight += score;
           sumX += absX * score;
           sumY += absY * score;
         }
       }
-      if (weight < 8) return fallback || previous || null;
+      if (weight < 120) return previous || fallback || null;
       const detected = { x: sumX / weight / width, y: sumY / weight / height, visibility: Math.min(1, weight / 220), source: "visual" };
       if (!previous && !poseManualBarPoint) return detected;
       const anchor = previous || poseManualBarPoint;
@@ -11631,14 +11712,57 @@
       };
     }
 
+    function visualBarPathSummary(frames, pixelToMeter = 0) {
+      const points = frames.map((frame) => frame.visualBarPoint).filter((point) => Number.isFinite(Number(point?.x)) && Number.isFinite(Number(point?.y)));
+      if (points.length < Math.max(5, frames.length * 0.35)) return null;
+      const xs = points.map((point) => Number(point.x));
+      const ys = points.map((point) => Number(point.y));
+      let pathLength = 0;
+      for (let i = 1; i < points.length; i += 1) {
+        const dx = Number(points[i].x) - Number(points[i - 1].x);
+        const dy = Number(points[i].y) - Number(points[i - 1].y);
+        pathLength += Math.sqrt(dx * dx + dy * dy);
+      }
+      return {
+        source: "visual plate marker",
+        horizontalDriftPct: Number(((Math.max(...xs) - Math.min(...xs)) * 100).toFixed(1)),
+        verticalTravelPct: Number(((Math.max(...ys) - Math.min(...ys)) * 100).toFixed(1)),
+        pathLength: Number((pathLength * (pixelToMeter || 1)).toFixed(pixelToMeter ? 2 : 4)),
+        unit: pixelToMeter ? "m estimate" : "relative frame"
+      };
+    }
+
+    function mergeVisualBarCurve(curvePreview, frames) {
+      if (!Array.isArray(curvePreview) || !curvePreview.length) return curvePreview;
+      const step = Math.max(1, Math.ceil(frames.length / curvePreview.length));
+      const visualFrames = frames.filter((_, index) => index % step === 0);
+      return curvePreview.map((point, index) => {
+        const bar = visualFrames[index]?.visualBarPoint;
+        if (!bar) return point;
+        return {
+          ...point,
+          barX: Number(Number(bar.x).toFixed(4)),
+          barY: Number(Number(bar.y).toFixed(4))
+        };
+      });
+    }
+
     function drawPoseTrace(ctx, canvas, frames, kind, color, label) {
-      const points = frames.map((frame) => poseTracePoint(frame, kind)).filter((point) => Number.isFinite(Number(point?.x)) && Number.isFinite(Number(point?.y)));
+      const rawPoints = frames.map((frame) => poseTracePoint(frame, kind)).filter((point) => Number.isFinite(Number(point?.x)) && Number.isFinite(Number(point?.y)));
+      const points = rawPoints.map((point, index) => {
+        const start = Math.max(0, index - 2);
+        const end = Math.min(rawPoints.length, index + 3);
+        const slice = rawPoints.slice(start, end);
+        return {
+          x: slice.reduce((sum, item) => sum + Number(item.x), 0) / slice.length,
+          y: slice.reduce((sum, item) => sum + Number(item.y), 0) / slice.length
+        };
+      });
       if (!points.length) return;
       ctx.save();
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(3, canvas.width / 260);
+      const lineWidth = Math.max(7, canvas.width / 135);
       ctx.shadowColor = "rgba(0,0,0,0.35)";
       ctx.shadowBlur = Math.max(2, canvas.width / 360);
       ctx.beginPath();
@@ -11648,17 +11772,32 @@
         if (!index) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
+      ctx.strokeStyle = "rgba(18, 15, 11, 0.82)";
+      ctx.lineWidth = lineWidth + Math.max(5, canvas.width / 180);
+      ctx.stroke();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
       ctx.stroke();
       const current = points[points.length - 1];
       const x = Number(current.x) * canvas.width;
       const y = Number(current.y) * canvas.height;
+      ctx.fillStyle = "rgba(18, 15, 11, 0.85)";
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(10, canvas.width / 85), 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(x, y, Math.max(5, canvas.width / 140), 0, Math.PI * 2);
+      ctx.arc(x, y, Math.max(7, canvas.width / 120), 0, Math.PI * 2);
       ctx.fill();
       if (label) {
-        ctx.font = `${Math.max(14, canvas.width / 52)}px sans-serif`;
-        ctx.fillText(label, x + 8, y - 8);
+        ctx.font = `700 ${Math.max(22, canvas.width / 34)}px sans-serif`;
+        const tx = x + Math.max(14, canvas.width / 80);
+        const ty = kind === "shoulder" ? y + Math.max(40, canvas.width / 26) : y - Math.max(12, canvas.width / 90);
+        const metrics = ctx.measureText(label);
+        ctx.fillStyle = "rgba(18, 15, 11, 0.78)";
+        ctx.fillRect(tx - 6, ty - Math.max(24, canvas.width / 36), metrics.width + 12, Math.max(30, canvas.width / 30));
+        ctx.fillStyle = color;
+        ctx.fillText(label, tx, ty);
       }
       ctx.restore();
     }
@@ -11689,20 +11828,23 @@
         video.addEventListener(eventName, () => drawPoseOverlay(lastPoseAnalysis, { followVideo: true }));
       });
       video.addEventListener("play", syncPoseOverlay);
+      window.addEventListener("resize", () => drawPoseOverlay(lastPoseAnalysis, { followVideo: true }));
       video.addEventListener("ended", () => {
         stopPoseOverlayLoop();
         drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
       });
       shell?.addEventListener("click", (event) => {
-        const rect = video.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
-        poseManualBarPoint = {
-          x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
-          y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),
-          visibility: 1,
-          source: "manual"
-        };
-        showToast(currentLanguage() === "zh" ? "已標記槓/槓片位置，重新分析會更準。" : "Bar marker set. Re-run analysis for a tighter trace.", "ok");
+        const content = videoContentRect(video);
+        if (content?.height && event.clientY > content.top + content.height - 56) return;
+        const point = videoEventPoint(event, video);
+        if (!point) {
+          showToast(t("barMarkerOutside"), "warn");
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        poseManualBarPoint = point;
+        showToast(t("barMarkerSet"), "ok");
         drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
       });
       poseOverlayListenersAttached = true;
@@ -11742,8 +11884,12 @@
       const barSource = analysis.barTrackingSource === "visual-overlay" || analysis.barTrackingSource === "visual"
         ? (zh ? "畫面槓路：影像追蹤" : "Overlay bar: visual trace")
         : (zh ? "槓路：關節估算" : "Bar: joint estimate");
+      const barDrift = Number(analysis.barPathSummary?.horizontalDriftPct);
+      const barDriftText = Number.isFinite(barDrift)
+        ? ` | ${zh ? "槓路漂移" : "Bar drift"} ${poseValue(barDrift, "%")}`
+        : "";
       const detailLine = isBench
-        ? `${zh ? "肘角範圍" : "Elbow range"} ${poseValue(angle.elbowAngle?.min, "°")}-${poseValue(angle.elbowAngle?.max, "°")} | ${zh ? "鎖定肘角" : "Lockout elbow"} ${poseValue(angle.lockoutElbowAngle, "°")} | ${barSource}`
+        ? `${zh ? "肘角範圍" : "Elbow range"} ${poseValue(angle.elbowAngle?.min, "°")}-${poseValue(angle.elbowAngle?.max, "°")} | ${zh ? "鎖定肘角" : "Lockout elbow"} ${poseValue(angle.lockoutElbowAngle, "°")} | ${barSource}${barDriftText}`
         : `${zh ? "槓路漂移" : "Bar path drift"} ${poseValue(analysis.barPathSummary?.horizontalDriftPct, "%")} | ${escapeHtml(analysis.velocityCurveSummary?.unit || "relative")}`;
       target.className = `pose-analysis-card ${level === "ok" ? "" : level}`.trim();
       target.innerHTML = `
@@ -11773,6 +11919,7 @@
       const video = document.getElementById("posePreviewVideo");
       const canvas = document.getElementById("poseOverlayCanvas");
       if (!video || !canvas || !analysis || !lastPoseFrames.length || !video.videoWidth || !video.videoHeight) return;
+      syncPoseCanvasToVideo(video, canvas);
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
@@ -11783,29 +11930,65 @@
       const lm = frame.landmarks || [];
       const isBench = getPoseLiftFamily(analysis) === "bench";
       const visibleFrames = lastPoseFrames.slice(0, Math.max(frameIndex + 1, 1));
-      drawPoseTrace(ctx, canvas, visibleFrames, "bar", "rgba(142, 194, 169, 0.95)", isBench ? "bar" : "path");
-      drawPoseTrace(ctx, canvas, visibleFrames, "shoulder", "rgba(241, 201, 133, 0.88)", "shoulder");
-      drawPoseTrace(ctx, canvas, visibleFrames, isBench ? "elbow" : "hip", isBench ? "rgba(236, 140, 105, 0.88)" : "rgba(185, 168, 234, 0.82)", isBench ? "elbow" : "hip");
-      const pairs = isBench
-        ? [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24]]
-        : [[11, 12], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28], [11, 13], [13, 15], [12, 14], [14, 16]];
-      ctx.lineWidth = Math.max(3, canvas.width / 240);
-      ctx.strokeStyle = "rgba(241, 201, 133, 0.9)";
-      pairs.forEach(([a, b]) => {
+      drawPoseTrace(ctx, canvas, visibleFrames, "bar", "rgba(120, 255, 190, 0.98)", isBench ? "bar" : "path");
+      drawPoseTrace(ctx, canvas, visibleFrames, "shoulder", "rgba(255, 221, 128, 0.96)", "shoulder");
+      drawPoseTrace(ctx, canvas, visibleFrames, isBench ? "elbow" : "hip", isBench ? "rgba(255, 125, 92, 0.96)" : "rgba(202, 185, 255, 0.94)", isBench ? "elbow" : "hip");
+      const idx = poseSideIndices(analysis);
+      const selectedPairs = isBench
+        ? [[idx.shoulder, idx.elbow], [idx.elbow, idx.wrist], [idx.shoulder, idx.hip]]
+        : [[idx.shoulder, idx.hip], [idx.hip, idx.knee], [idx.knee, idx.ankle], [idx.shoulder, idx.elbow], [idx.elbow, idx.wrist]];
+      const contextPairs = isBench
+        ? [[11, 12], [23, 24], [11, 23], [12, 24]]
+        : [[11, 12], [23, 24], [11, 23], [12, 24]];
+      const strokePairs = (pairs, color, width) => pairs.forEach(([a, b]) => {
         if (!lm[a] || !lm[b]) return;
         ctx.beginPath();
         ctx.moveTo(lm[a].x * canvas.width, lm[a].y * canvas.height);
         ctx.lineTo(lm[b].x * canvas.width, lm[b].y * canvas.height);
+        ctx.lineWidth = width;
+        ctx.strokeStyle = "rgba(18, 15, 11, 0.78)";
+        ctx.stroke();
+        ctx.lineWidth = Math.max(3, width - 4);
+        ctx.strokeStyle = color;
         ctx.stroke();
       });
+      strokePairs(contextPairs, "rgba(241, 201, 133, 0.35)", Math.max(5, canvas.width / 210));
+      strokePairs(selectedPairs, "rgba(251, 246, 234, 0.92)", Math.max(8, canvas.width / 135));
       ctx.fillStyle = "rgba(251, 246, 234, 0.95)";
-      (isBench ? [11, 12, 13, 14, 15, 16, 23, 24] : [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]).forEach((index) => {
+      [...new Set([...(isBench ? [11, 12, 23, 24] : [11, 12, 23, 24]), ...selectedPairs.flat()])].forEach((index) => {
         const point = lm[index];
         if (!point) return;
         ctx.beginPath();
-        ctx.arc(point.x * canvas.width, point.y * canvas.height, Math.max(4, canvas.width / 170), 0, Math.PI * 2);
+        ctx.arc(point.x * canvas.width, point.y * canvas.height, Math.max(6, canvas.width / 125), 0, Math.PI * 2);
         ctx.fill();
       });
+    }
+
+    function preparePoseVideoPreview(file, options = {}) {
+      const video = document.getElementById("posePreviewVideo");
+      if (!video) return;
+      const resetMarker = options.resetMarker !== false;
+      stopPoseOverlayLoop();
+      if (resetMarker) poseManualBarPoint = null;
+      lastPoseAnalysis = null;
+      lastPoseFrames = [];
+      clearPoseOverlayCanvas();
+      renderPoseAnalysisSummary(null);
+      if (!file) {
+        poseVideoFileKey = "";
+        video.removeAttribute("src");
+        video.load?.();
+        setPoseStatus(t("localOnly"), "warn");
+        return;
+      }
+      if (!file.type?.startsWith("video/")) return;
+      if (poseVideoObjectUrl) URL.revokeObjectURL(poseVideoObjectUrl);
+      poseVideoFileKey = poseFileKey(file);
+      poseVideoObjectUrl = URL.createObjectURL(file);
+      video.src = poseVideoObjectUrl;
+      video.load?.();
+      attachPoseOverlayListeners();
+      setPoseStatus(t("previewReady"), "ok");
     }
 
     async function analyzePoseLocally() {
@@ -11828,10 +12011,10 @@
       }
       setPoseStatus("Loading model", "warn");
       try {
-        if (poseVideoObjectUrl) URL.revokeObjectURL(poseVideoObjectUrl);
         stopPoseOverlayLoop();
-        poseVideoObjectUrl = URL.createObjectURL(file);
-        video.src = poseVideoObjectUrl;
+        if (poseVideoFileKey !== poseFileKey(file) || !poseVideoObjectUrl || !video.src) {
+          preparePoseVideoPreview(file, { resetMarker: true });
+        }
         attachPoseOverlayListeners();
         await waitForVideoMetadata(video);
         const landmarker = await loadPoseLandmarker();
@@ -11875,6 +12058,7 @@
         const options = trackingOptions;
         const engineAnalysis = window.newRtsVideoAnalysis.analyzeLandmarkFrames(frames, options);
         const visualBarFrameCount = frames.filter((frame) => frame.visualBarPoint).length;
+        const visualPath = visualBarPathSummary(frames, options.pixelToMeter);
         lastPoseAnalysis = {
           id: crypto.randomUUID(),
           date: document.getElementById("logDate")?.value || todayString(),
@@ -11888,11 +12072,15 @@
           manualBarSpeed: options.barSpeed,
           manualCue: options.manualCue,
           ...engineAnalysis,
+          curvePreview: visualPath ? mergeVisualBarCurve(engineAnalysis.curvePreview, frames) : engineAnalysis.curvePreview,
+          barPathSummary: visualPath || engineAnalysis.barPathSummary,
+          visualBarPathSummary: visualPath,
           visualBarFrameCount,
           barTrackingSource: visualBarFrameCount >= Math.max(5, frames.length * 0.35) ? "visual-overlay" : engineAnalysis.barTrackingSource
         };
         renderPoseAnalysisSummary(lastPoseAnalysis);
-        await seekVideo(video, Number(lastPoseAnalysis.keyFrames?.bottomTime) || 0);
+        const displayTime = Number(lastPoseAnalysis.repPhases?.at?.(-1)?.lockoutTime ?? lastPoseAnalysis.keyFrames?.lockoutTime ?? lastPoseAnalysis.keyFrames?.bottomTime ?? 0) || 0;
+        await seekVideo(video, displayTime);
         drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
         setPoseStatus(currentLanguage() === "zh" ? "可以儲存" : "Ready to save", lastPoseAnalysis.confidence >= 0.45 ? "ok" : "bad");
         showToast(currentLanguage() === "zh" ? "已完成本機姿態分析。" : "Pose analysis finished locally.", "ok");
@@ -14181,7 +14369,10 @@
     document.getElementById("askPoseWeaknessBtn").addEventListener("click", () => askPoseAi("weakness"));
     document.getElementById("askPoseRpeBtn").addEventListener("click", () => askPoseAi("rpe"));
     document.getElementById("poseCalibrationMode").addEventListener("change", updatePoseCalibrationUi);
-    ["videoLift", "videoRpe", "videoFile", "videoSetType", "videoReps", "videoWeight", "videoSpeed", "poseViewAngle", "poseSaveRawVideo"].forEach((id) => {
+    document.getElementById("videoFile")?.addEventListener("change", (event) => {
+      preparePoseVideoPreview(event.target.files?.[0] || null);
+    });
+    ["videoLift", "videoRpe", "videoFile", "videoSetType", "videoReps", "videoWeight", "videoSpeed", "poseViewAngle", "poseTrackedSide", "poseSaveRawVideo"].forEach((id) => {
       const input = document.getElementById(id);
       if (!input) return;
       input.addEventListener("input", renderVideoCommandPanel);
