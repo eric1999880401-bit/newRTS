@@ -6,7 +6,9 @@ const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 
-admin.initializeApp();
+const DATABASE_URL = "https://powerlifting-log-f7235-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+admin.initializeApp({ databaseURL: DATABASE_URL });
 
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 const REGION = "asia-southeast1";
@@ -22,7 +24,8 @@ const CALLABLE_DEFAULTS = {
   region: REGION,
   timeoutSeconds: 60,
   memory: "256MiB",
-  maxInstances: 2
+  maxInstances: 2,
+  invoker: "public"
 };
 
 const AI_SUGGESTION_SCHEMA = {
@@ -78,6 +81,46 @@ function assertAuthed(request) {
     throw new HttpsError("unauthenticated", "Sign in before using this feature.");
   }
   return uid;
+}
+
+function requestIdToken(request) {
+  const header = request.rawRequest?.headers?.authorization || request.rawRequest?.headers?.Authorization || "";
+  const match = String(header).match(/^Bearer\s+(.+)$/i);
+  if (!match?.[1]) {
+    throw new HttpsError("unauthenticated", "Missing Firebase ID token.");
+  }
+  return match[1];
+}
+
+function withTimeout(promise, ms, label = "operation") {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => windowSetTimeoutSafe(reject, ms, new Error(`${label} timed out`)))
+  ]);
+}
+
+function windowSetTimeoutSafe(reject, ms, err) {
+  return setTimeout(() => reject(err), ms);
+}
+
+function userRtdbUrl(request, path) {
+  const token = encodeURIComponent(requestIdToken(request));
+  const cleanPath = String(path || "").replace(/^\/+/, "");
+  return `${DATABASE_URL}/${cleanPath}.json?auth=${token}`;
+}
+
+async function userRtdbRequest(request, path, { method = "GET", body = undefined } = {}) {
+  const response = await fetch(userRtdbUrl(request, path), {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    logger.error("Realtime Database REST request failed", { path, method, status: response.status, body: text.slice(0, 300) });
+    throw new HttpsError("internal", "Database request failed.");
+  }
+  return text ? JSON.parse(text) : null;
 }
 
 function clamp(value, min, max) {
@@ -140,7 +183,7 @@ function addDays(date, days) {
 
 function entitlementIsActive(entitlement = {}, nowMs = Date.now()) {
   const status = safeString(entitlement.status, 40);
-  const allowed = ["active", "trialing", "beta", "manual"];
+  const allowed = ["active", "trialing", "beta", "manual", "partner_free", "free"];
   if (!allowed.includes(status)) return false;
   const explicitEndMs = safeNumber(entitlement.currentPeriodEndMs);
   if (explicitEndMs !== null) return explicitEndMs >= nowMs;
@@ -281,6 +324,25 @@ async function copySameEmailAdminAccess(uid, email) {
 
 async function assertActiveEntitlement(uid, feature = "paid feature") {
   const [entitlement, adminRecord] = await Promise.all([getEntitlement(uid), getAdmin(uid)]);
+  if (adminIsActive(adminRecord) || entitlementIsActive(entitlement)) {
+    return { entitlement: summarizeEntitlement(entitlement), admin: adminRecord || null };
+  }
+  throw new HttpsError("failed-precondition", `${feature} requires an active Beta membership.`);
+}
+
+async function getAccountAccessForRequest(request, uid) {
+  const [entitlement, adminRecord] = await Promise.all([
+    userRtdbRequest(request, `entitlements/${uid}`).catch((err) => {
+      logger.warn("User entitlement REST read failed", { uid, message: err.message });
+      return null;
+    }),
+    userRtdbRequest(request, `admins/${uid}`).catch(() => null)
+  ]);
+  return { entitlement, adminRecord };
+}
+
+async function assertActiveEntitlementForRequest(request, uid, feature = "paid feature") {
+  const { entitlement, adminRecord } = await getAccountAccessForRequest(request, uid);
   if (adminIsActive(adminRecord) || entitlementIsActive(entitlement)) {
     return { entitlement: summarizeEntitlement(entitlement), admin: adminRecord || null };
   }
@@ -696,6 +758,13 @@ async function writeUserChild(uid, child, id, payload) {
   await admin.database().ref(`users/${uid}/${child}/${id}`).update(payload);
 }
 
+async function writeUserChildForRequest(request, uid, child, id, payload) {
+  await userRtdbRequest(request, `users/${uid}/${child}/${id}`, {
+    method: "PATCH",
+    body: payload
+  });
+}
+
 async function assertDailyLimit(uid, feature, maxCount) {
   const day = new Date().toISOString().slice(0, 10);
   const ref = admin.database().ref(`usageLimits/${uid}/${feature}/${day}`);
@@ -711,6 +780,24 @@ async function assertDailyLimit(uid, feature, maxCount) {
   if (!result.committed) {
     throw new HttpsError("resource-exhausted", `${feature} daily safety limit reached.`);
   }
+}
+
+async function assertDailyLimitForRequest(request, uid, feature, maxCount) {
+  const day = new Date().toISOString().slice(0, 10);
+  const path = `users/${uid}/usageCounters/${feature}/${day}`;
+  const current = await userRtdbRequest(request, path).catch(() => null);
+  const count = Number(current?.count) || 0;
+  if (count >= maxCount) {
+    throw new HttpsError("resource-exhausted", `${feature} daily safety limit reached.`);
+  }
+  await userRtdbRequest(request, path, {
+    method: "PUT",
+    body: {
+      count: count + 1,
+      limit: maxCount,
+      updatedAt: new Date().toISOString()
+    }
+  });
 }
 
 async function assertMonthlyProjectLimit(feature, maxCount) {
@@ -733,13 +820,34 @@ async function assertMonthlyProjectLimit(feature, maxCount) {
 exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
   const email = normalizeEmail(request.auth?.token?.email || "");
-  await materializePendingEntitlement(uid, email);
-  await copySameEmailAdminAccess(uid, email);
-  const [entitlement, adminRecord, usageSnap] = await Promise.all([
-    getEntitlement(uid),
-    getAdmin(uid),
-    admin.database().ref(`usageLimits/${uid}`).get()
-  ]);
+  let entitlement = null;
+  let adminRecord = null;
+  let usageLimits = {};
+  try {
+    const adminPath = await withTimeout((async () => {
+      await materializePendingEntitlement(uid, email);
+      await copySameEmailAdminAccess(uid, email);
+      const [adminEntitlement, adminAdminRecord, usageSnap] = await Promise.all([
+        getEntitlement(uid),
+        getAdmin(uid),
+        admin.database().ref(`usageLimits/${uid}`).get()
+      ]);
+      return {
+        entitlement: adminEntitlement,
+        adminRecord: adminAdminRecord,
+        usageLimits: usageSnap.exists() ? usageSnap.val() : {}
+      };
+    })(), 2500, "Admin account status path");
+    entitlement = adminPath.entitlement;
+    adminRecord = adminPath.adminRecord;
+    usageLimits = adminPath.usageLimits;
+  } catch (err) {
+    logger.warn("Admin account status path failed; falling back to user RTDB REST.", { uid, message: err.message });
+    const access = await getAccountAccessForRequest(request, uid);
+    entitlement = access.entitlement;
+    adminRecord = access.adminRecord;
+    usageLimits = await userRtdbRequest(request, `users/${uid}/usageCounters`).catch(() => ({}));
+  }
   return {
     uid,
     email,
@@ -748,7 +856,7 @@ exports.getAccountStatus = onCall(CALLABLE_DEFAULTS, async (request) => {
       active: adminRecord.active !== false
     } : null,
     entitlement: summarizeEntitlement(entitlement),
-    usageLimits: usageSnap.exists() ? usageSnap.val() : {},
+    usageLimits: usageLimits || {},
     beta: {
       plan: BETA_PLAN_ID,
       priceTwd: BETA_PRICE_TWD,
@@ -998,10 +1106,12 @@ exports.createAiCoachSuggestion = onCall({ ...CALLABLE_DEFAULTS, secrets: [OPENA
   const athleteId = safeId(request.data?.athleteId || "active-athlete", "active-athlete");
   const requestSummary = sanitizeRequestSummary(request.data?.requestSummary || {});
   const focus = safeString(requestSummary.requestFocus || "", 80);
-  await assertActiveEntitlement(uid, focus.startsWith("pose-") ? "Pose AI" : "AI Coach");
-  await assertDailyLimit(uid, "aiCoach", AI_DAILY_LIMIT);
-  if (focus.startsWith("pose-")) await assertDailyLimit(uid, "poseAi", POSE_AI_DAILY_LIMIT);
-  await assertMonthlyProjectLimit("aiCoach", AI_MONTHLY_PROJECT_LIMIT);
+  await assertActiveEntitlementForRequest(request, uid, focus.startsWith("pose-") ? "Pose AI" : "AI Coach");
+  await assertDailyLimitForRequest(request, uid, "aiCoach", AI_DAILY_LIMIT);
+  if (focus.startsWith("pose-")) await assertDailyLimitForRequest(request, uid, "poseAi", POSE_AI_DAILY_LIMIT);
+  logger.info("Using per-user AI daily limits; project budget is enforced by Google Cloud/OpenAI budget alerts.", {
+    configuredProjectLimit: AI_MONTHLY_PROJECT_LIMIT
+  });
   const responseJson = await callOpenAiCoach(requestSummary, OPENAI_API_KEY.value());
   const sessionId = `ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const session = {
@@ -1013,7 +1123,7 @@ exports.createAiCoachSuggestion = onCall({ ...CALLABLE_DEFAULTS, secrets: [OPENA
     status: "suggested",
     appliedDecisionId: ""
   };
-  await writeUserChild(uid, "aiCoachSessions", sessionId, session);
+  await writeUserChildForRequest(request, uid, "aiCoachSessions", sessionId, session);
   return { session };
 });
 
@@ -1025,7 +1135,7 @@ exports.validateAiCoachResponse = onCall(CALLABLE_DEFAULTS, async (request) => {
 
 exports.createVideoUploadMetadata = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
-  await assertActiveEntitlement(uid, "Video upload");
+  await assertActiveEntitlementForRequest(request, uid, "Video upload");
   const reviewId = safeId(request.data?.reviewId || `video_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, "video");
   const fileName = safeFileName(request.data?.fileName);
   const contentType = safeString(request.data?.contentType || "", 100);
@@ -1038,14 +1148,14 @@ exports.createVideoUploadMetadata = onCall(CALLABLE_DEFAULTS, async (request) =>
 
 exports.saveVideoRpeEstimate = onCall(CALLABLE_DEFAULTS, async (request) => {
   const uid = assertAuthed(request);
-  await assertActiveEntitlement(uid, "Video RPE");
+  await assertActiveEntitlementForRequest(request, uid, "Video RPE");
   const data = request.data || {};
   const reviewId = safeId(data.reviewId || `video_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, "video");
   const storagePath = safeString(data.storagePath, 600);
   if (storagePath && !storagePath.startsWith(`users/${uid}/videos/${reviewId}/`)) {
     throw new HttpsError("permission-denied", "Video path does not belong to this account.");
   }
-  await assertDailyLimit(uid, "videoReview", VIDEO_REVIEW_DAILY_LIMIT);
+  await assertDailyLimitForRequest(request, uid, "videoReview", VIDEO_REVIEW_DAILY_LIMIT);
   const estimate = estimateExperimentalRpe(data);
   const review = {
     id: reviewId,
@@ -1070,7 +1180,7 @@ exports.saveVideoRpeEstimate = onCall(CALLABLE_DEFAULTS, async (request) => {
     cue: safeString(data.cue, 500),
     experimental: true
   };
-  await writeUserChild(uid, "videoReviews", reviewId, review);
+  await writeUserChildForRequest(request, uid, "videoReviews", reviewId, review);
   return { review };
 });
 

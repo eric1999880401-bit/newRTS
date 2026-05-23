@@ -8,24 +8,40 @@ const mainScript = scripts.at(-1)[1];
 const pageNavigationIndex = mainScript.indexOf("Page navigation");
 const coreScript = mainScript.slice(0, pageNavigationIndex - 10);
 
+const fakeInputValues = {
+  targetRpe: "6.0",
+  targetReps: "5",
+  logSetType: "Top"
+};
+
 const fakeDocument = {
   getElementById(id) {
-    if (id === "targetRpe") return { value: "6.0" };
-    if (id === "logSetType") return { value: "Top" };
-    return { value: "" };
+    return {
+      get value() {
+        return fakeInputValues[id] ?? "";
+      },
+      set value(next) {
+        fakeInputValues[id] = String(next);
+      }
+    };
   }
 };
 
 const api = new Function("document", "firebase", "XLSX", "window", `${coreScript}
+function getAppliedCoachDecisionForDay() { return null; }
+function getScheduleDisplayRow(row) { return row; }
 return {
   APP_SCHEMA_VERSION,
   buildCoachAdjustedPlan,
   buildScopedDataFromState,
   calcE1RM,
+  computeCurrentMetrics,
   countLegacyData,
   countScopedData,
   createUserProfile,
   generateRTSPlan,
+  getBackoffLoadDropSuggestion,
+  getBackoffTargetFromRow,
   getPercent1RM,
   getStructuredPrescription,
   hydrateStateFromScopedData,
@@ -88,6 +104,123 @@ assert(plan.rows[0].ruleNotes.some((note) => note.includes("Response/TTP")));
 
 const parsedBackoff = api.parseSetPrescription("Back-off: 2-3 sets x 5 reps @6-7. Fatigue cap 2.0%");
 assert.deepStrictEqual(parsedBackoff, { setsMin: 2, setsMax: 3, reps: "5", rpe: "6-7" });
+assert.deepStrictEqual(api.parseSetPrescription("−5% then 2–3×2 @7", "backoff"), { setsMin: 2, setsMax: 3, reps: "2", rpe: "7" });
+assert.deepStrictEqual(api.parseSetPrescription("Top 1×5 @6.5, then 3×5 @6", "backoff"), { setsMin: 3, setsMax: 3, reps: "5", rpe: "6" });
+assert.deepStrictEqual(api.getBackoffLoadDropSuggestion(180, { backoffPlan: "−5% then 2–3×2 @7" }, 2.5), { weight: 170, dropPct: 5, referenceWeight: 180 });
+
+const legacyStructured = api.getStructuredPrescription({
+  topSetTarget: "1×1 @8",
+  backoffPlan: "−5% then 2–3×2 @7"
+}, user);
+assert.strictEqual(legacyStructured.topReps, "1");
+assert.strictEqual(legacyStructured.topRpe, "8");
+assert.strictEqual(legacyStructured.backoffSetsMin, 2);
+assert.strictEqual(legacyStructured.backoffSetsMax, 3);
+assert.strictEqual(legacyStructured.backoffReps, "2");
+assert.strictEqual(legacyStructured.backoffRpe, "7");
+
+const normalizedLegacyStructured = api.getStructuredPrescription({
+  topSetTarget: "1×1 @8",
+  backoffPlan: "−5% then 2–3×2 @7",
+  backoffSetsMin: "",
+  backoffSetsMax: "",
+  backoffReps: "",
+  backoffRpe: ""
+}, user);
+assert.strictEqual(normalizedLegacyStructured.backoffSetsMin, 2);
+assert.strictEqual(normalizedLegacyStructured.backoffSetsMax, 3);
+assert.strictEqual(normalizedLegacyStructured.backoffReps, "2");
+assert.strictEqual(normalizedLegacyStructured.backoffRpe, "7");
+
+const rangeTarget = api.getBackoffTargetFromRow({
+  topSetTarget: "1×1 @8",
+  backoffPlan: "3×5 @6–7"
+}, user);
+assert.strictEqual(rangeTarget.reps, 5);
+assert.strictEqual(rangeTarget.rpe, 6);
+
+user.program = [{
+  week: 1,
+  day: 1,
+  mainLift: "Comp Squat",
+  topSetTarget: "1×1 @8",
+  backoffPlan: "−5% then 2–3×2 @7",
+  backoffSetsMin: "",
+  backoffSetsMax: "",
+  backoffReps: "",
+  backoffRpe: ""
+}];
+api.state.activeUserId = "qa";
+api.state.users.qa = user;
+Object.assign(fakeInputValues, {
+  logWeek: "1",
+  logDay: "1",
+  logLift: "Squat",
+  logSetType: "Top",
+  logReps: "1",
+  logRpe: "8",
+  logWeight: "180",
+  targetReps: "5",
+  targetRpe: "6.0"
+});
+const loadDropMetrics = api.computeCurrentMetrics();
+assert.strictEqual(loadDropMetrics.targetReps, 2);
+assert.strictEqual(loadDropMetrics.targetRpe, 7);
+assert.strictEqual(loadDropMetrics.suggestedWeightSource, "loadDrop");
+assert.strictEqual(loadDropMetrics.suggestedWeight, 170);
+
+user.logs.push({
+  id: "today-top",
+  date: "2026-05-23",
+  lift: "Squat",
+  setType: "Top",
+  order: 1,
+  reps: 1,
+  weight: 180,
+  rpe: 8,
+  e1rm: api.calcE1RM(180, 1, 8)
+});
+Object.assign(fakeInputValues, {
+  logDate: "2026-05-23",
+  logSetType: "Back off",
+  logReps: "2",
+  logRpe: "7",
+  logWeight: "",
+  targetReps: "5",
+  targetRpe: "6.0"
+});
+const savedTopBackoffMetrics = api.computeCurrentMetrics();
+assert.strictEqual(savedTopBackoffMetrics.referenceTop.weight, 180);
+assert.strictEqual(savedTopBackoffMetrics.targetReps, 2);
+assert.strictEqual(savedTopBackoffMetrics.targetRpe, 7);
+assert.strictEqual(savedTopBackoffMetrics.suggestedWeightSource, "loadDrop");
+assert.strictEqual(savedTopBackoffMetrics.suggestedWeight, 170);
+
+user.program = [{
+  week: 1,
+  day: 1,
+  mainLift: "Comp Squat",
+  topSetTarget: "1x1 @8",
+  backoffPlan: "2x2 @7",
+  fatigueTargetPct: 2
+}];
+Object.assign(fakeInputValues, {
+  logDate: "2026-05-23",
+  logSetType: "Top",
+  logReps: "1",
+  logRpe: "8",
+  logWeight: "180"
+});
+const planFatigueMetrics = api.computeCurrentMetrics();
+assert.strictEqual(planFatigueMetrics.fatigueTargetPct, 2);
+assert.strictEqual(planFatigueMetrics.fatigueTargetSource, "plan");
+
+const attemptStructured = api.getStructuredPrescription({
+  topSetTarget: "A1 ~90–92%, A2 ~95–97%, A3 PR if ready",
+  backoffPlan: "Warm-ups by feel; shut it down if depth slips"
+}, user);
+assert.strictEqual(attemptStructured.backoffSetsMax, 0);
+assert.strictEqual(attemptStructured.topRpe, "7");
 
 const coachRow = {
   focus: "Squat priority",
