@@ -40,6 +40,7 @@ const benchSide = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("benc
 });
 
 assert.strictEqual(benchSide.liftFamily, "bench");
+assert(["left", "right"].includes(benchSide.poseSide));
 assert.strictEqual(benchSide.angleMetrics.liftFamily, "bench");
 assert(Number.isFinite(benchSide.angleMetrics.elbowAngle.avg));
 assert(Number.isFinite(benchSide.angleMetrics.shoulderAngle.avg));
@@ -52,6 +53,19 @@ assert(benchSide.curvePreview.some((point) => Number.isFinite(point.elbowX) && N
 assert(benchSide.curvePreview.some((point) => Number.isFinite(point.shoulderX) && Number.isFinite(point.shoulderY)));
 assert(new Set(benchSide.curvePreview.map((point) => point.barY)).size > 2);
 assert(new Set(benchSide.curvePreview.map((point) => point.elbowY)).size > 2);
+
+const visualBarFrames = engine.buildSyntheticFrames("bench-side", 72).map((frame, index) => ({
+  ...frame,
+  barPoint: { x: 0.2 + index / 300, y: 0.4 + Math.sin(index / 9) * 0.04, visibility: 0.95 }
+}));
+const visualBar = engine.analyzeLandmarkFrames(visualBarFrames, {
+  lift: "Bench",
+  setType: "Top",
+  viewAngle: "side"
+});
+assert.strictEqual(visualBar.barTrackingSource, "visual");
+assert(visualBar.visualBarFrameCount >= 70);
+assert(Math.abs(visualBar.curvePreview[0].barX - 0.2) < 0.02);
 
 const benchFront = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("bench-front", 72), {
   lift: "Comp Bench",

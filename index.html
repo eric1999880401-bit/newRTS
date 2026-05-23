@@ -3401,6 +3401,7 @@
       background: var(--ink);
       overflow: hidden;
       border-radius: var(--radius);
+      cursor: crosshair;
     }
     .pose-preview-shell video,
     .pose-preview-shell canvas {
@@ -3409,10 +3410,15 @@
       max-height: 460px;
       object-fit: contain;
     }
+    .pose-preview-shell video {
+      position: relative;
+      z-index: 1;
+    }
     .pose-preview-shell canvas {
       position: absolute;
       inset: 0;
       height: 100%;
+      z-index: 2;
       pointer-events: none;
     }
     .pose-analysis-card {
@@ -5350,6 +5356,7 @@
             <div class="pose-preview-shell">
               <video id="posePreviewVideo" controls muted playsinline></video>
               <canvas id="poseOverlayCanvas"></canvas>
+              <div class="footer-note" style="margin-top:8px" data-i18n="barMarkerHint">For the most accurate bar path, click the bar or plate center in the video, then run analysis.</div>
             </div>
             <div id="poseAnalysisOutput" class="pose-analysis-card">
               <div class="empty" data-i18n="noPoseAnalysis">No pose analysis yet.</div>
@@ -5715,6 +5722,7 @@
     let lastPoseFrames = [];
     let poseOverlayRaf = 0;
     let poseOverlayListenersAttached = false;
+    let poseManualBarPoint = null;
     let historyExpanded = false;
 
     function saveState(successMessage = "") {
@@ -7088,6 +7096,7 @@
       saveNoteOnly: "Save note only",
       poseAnalysisTitle: "Movement analysis",
       localOnly: "Local only",
+      barMarkerHint: "For the most accurate bar path, click the bar or plate center in the video, then run analysis.",
       fixedFilmingSetup: "Fixed filming setup",
       distance: "Distance",
       distanceHint: "2.5-4 m from the lifter.",
@@ -7238,6 +7247,7 @@
       saveNoteOnly: "只儲存備註",
       poseAnalysisTitle: "動作分析",
       localOnly: "本機分析",
+      barMarkerHint: "要讓槓路最準，先點影片中的槓或槓片中心，再開始分析。",
       fixedFilmingSetup: "固定拍攝設定",
       distance: "距離",
       distanceHint: "離選手約 2.5-4 公尺。",
@@ -11518,15 +11528,26 @@
       return { x: (Number(a.x) + Number(b.x)) / 2, y: (Number(a.y) + Number(b.y)) / 2 };
     }
 
+    function poseSideIndices(analysis = lastPoseAnalysis) {
+      const side = analysis?.poseSide === "right" ? "right" : "left";
+      return side === "right"
+        ? { shoulder: 12, elbow: 14, wrist: 16, hip: 24 }
+        : { shoulder: 11, elbow: 13, wrist: 15, hip: 23 };
+    }
+
     function poseTracePoint(frame, kind, analysis = lastPoseAnalysis) {
       const family = getPoseLiftFamily(analysis);
       if (kind === "bar") {
-        if (family === "bench" || family === "deadlift") return poseMidpoint(poseLandmark(frame, 15), poseLandmark(frame, 16));
+        if (frame?.visualBarPoint) return frame.visualBarPoint;
+        if (frame?.barPoint) return frame.barPoint;
+        const idx = poseSideIndices(analysis);
+        if (family === "bench" || family === "deadlift") return poseLandmark(frame, idx.wrist) || poseMidpoint(poseLandmark(frame, 15), poseLandmark(frame, 16));
         return poseMidpoint(poseLandmark(frame, 11), poseLandmark(frame, 12));
       }
-      if (kind === "shoulder") return poseMidpoint(poseLandmark(frame, 11), poseLandmark(frame, 12));
-      if (kind === "elbow") return poseMidpoint(poseLandmark(frame, 13), poseLandmark(frame, 14));
-      if (kind === "hip") return poseMidpoint(poseLandmark(frame, 23), poseLandmark(frame, 24));
+      const idx = poseSideIndices(analysis);
+      if (kind === "shoulder") return poseLandmark(frame, idx.shoulder) || poseMidpoint(poseLandmark(frame, 11), poseLandmark(frame, 12));
+      if (kind === "elbow") return poseLandmark(frame, idx.elbow) || poseMidpoint(poseLandmark(frame, 13), poseLandmark(frame, 14));
+      if (kind === "hip") return poseLandmark(frame, idx.hip) || poseMidpoint(poseLandmark(frame, 23), poseLandmark(frame, 24));
       return null;
     }
 
@@ -11538,6 +11559,76 @@
         if (Math.abs(lastPoseFrames[i].time - target) < Math.abs(lastPoseFrames[bestIndex].time - target)) bestIndex = i;
       }
       return bestIndex;
+    }
+
+    function poseFallbackBarPoint(landmarks, liftFamily) {
+      if (!landmarks) return null;
+      const midpoint = (a, b) => poseMidpoint(poseLandmark({ landmarks }, a), poseLandmark({ landmarks }, b));
+      if (liftFamily === "bench" || liftFamily === "deadlift") return midpoint(15, 16);
+      return midpoint(11, 12);
+    }
+
+    function pixelSaturation(r, g, b) {
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      return max ? (max - min) / max : 0;
+    }
+
+    function detectVisualBarPoint(ctx, width, height, fallback, previous = null) {
+      const center = previous || poseManualBarPoint || fallback;
+      if (!center || !Number.isFinite(Number(center.x)) || !Number.isFinite(Number(center.y))) return fallback || null;
+      const cx = Math.round(Number(center.x) * width);
+      const cy = Math.round(Number(center.y) * height);
+      const rx = Math.round(width * (previous || poseManualBarPoint ? 0.12 : 0.2));
+      const ry = Math.round(height * (previous || poseManualBarPoint ? 0.08 : 0.13));
+      const x0 = Math.max(0, cx - rx);
+      const y0 = Math.max(0, cy - ry);
+      const x1 = Math.min(width - 1, cx + rx);
+      const y1 = Math.min(height - 1, cy + ry);
+      const boxW = Math.max(1, x1 - x0 + 1);
+      const boxH = Math.max(1, y1 - y0 + 1);
+      let data;
+      try {
+        data = ctx.getImageData(x0, y0, boxW, boxH).data;
+      } catch (_) {
+        return fallback || previous || null;
+      }
+      let weight = 0;
+      let sumX = 0;
+      let sumY = 0;
+      const step = Math.max(2, Math.round(Math.min(width, height) / 420));
+      for (let y = 0; y < boxH; y += step) {
+        for (let x = 0; x < boxW; x += step) {
+          const offset = (y * boxW + x) * 4;
+          const r = data[offset];
+          const g = data[offset + 1];
+          const b = data[offset + 2];
+          const brightness = (r + g + b) / 765;
+          const redDominance = r - Math.max(g, b);
+          const redPlate = brightness > 0.12 && r > 75 && redDominance > 22;
+          if (!redPlate) continue;
+          const absX = x0 + x;
+          const absY = y0 + y;
+          const dx = (absX - cx) / Math.max(rx, 1);
+          const dy = (absY - cy) / Math.max(ry, 1);
+          const distancePenalty = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy));
+          const score = (1 + redDominance / 180) * distancePenalty;
+          if (score <= 0.05) continue;
+          weight += score;
+          sumX += absX * score;
+          sumY += absY * score;
+        }
+      }
+      if (weight < 8) return fallback || previous || null;
+      const detected = { x: sumX / weight / width, y: sumY / weight / height, visibility: Math.min(1, weight / 220), source: "visual" };
+      if (!previous && !poseManualBarPoint) return detected;
+      const anchor = previous || poseManualBarPoint;
+      return {
+        x: detected.x * 0.72 + Number(anchor.x) * 0.28,
+        y: detected.y * 0.72 + Number(anchor.y) * 0.28,
+        visibility: detected.visibility,
+        source: "visual"
+      };
     }
 
     function drawPoseTrace(ctx, canvas, frames, kind, color, label) {
@@ -11591,6 +11682,8 @@
     function attachPoseOverlayListeners() {
       if (poseOverlayListenersAttached) return;
       const video = document.getElementById("posePreviewVideo");
+      const canvas = document.getElementById("poseOverlayCanvas");
+      const shell = canvas?.closest(".pose-preview-shell");
       if (!video) return;
       ["timeupdate", "seeking", "seeked", "loadedmetadata", "pause"].forEach((eventName) => {
         video.addEventListener(eventName, () => drawPoseOverlay(lastPoseAnalysis, { followVideo: true }));
@@ -11598,6 +11691,18 @@
       video.addEventListener("play", syncPoseOverlay);
       video.addEventListener("ended", () => {
         stopPoseOverlayLoop();
+        drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
+      });
+      shell?.addEventListener("click", (event) => {
+        const rect = video.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        poseManualBarPoint = {
+          x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+          y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),
+          visibility: 1,
+          source: "manual"
+        };
+        showToast(currentLanguage() === "zh" ? "已標記槓/槓片位置，重新分析會更準。" : "Bar marker set. Re-run analysis for a tighter trace.", "ok");
         drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
       });
       poseOverlayListenersAttached = true;
@@ -11634,8 +11739,11 @@
         : `${renderSparkline(zh ? "髖角度" : "Hip angle", curve, "hip")}
            ${renderSparkline(zh ? "膝角度" : "Knee angle", curve, "knee")}
            ${renderSparkline(zh ? "槓路 Y" : "Bar path Y", curve, "barY")}`;
+      const barSource = analysis.barTrackingSource === "visual-overlay" || analysis.barTrackingSource === "visual"
+        ? (zh ? "畫面槓路：影像追蹤" : "Overlay bar: visual trace")
+        : (zh ? "槓路：關節估算" : "Bar: joint estimate");
       const detailLine = isBench
-        ? `${zh ? "肘角範圍" : "Elbow range"} ${poseValue(angle.elbowAngle?.min, "°")}-${poseValue(angle.elbowAngle?.max, "°")} | ${zh ? "鎖定肘角" : "Lockout elbow"} ${poseValue(angle.lockoutElbowAngle, "°")} | ${zh ? "手腕堆疊" : "Wrist stack"} ${poseValue(angle.wristStackPct?.avg, "%")}`
+        ? `${zh ? "肘角範圍" : "Elbow range"} ${poseValue(angle.elbowAngle?.min, "°")}-${poseValue(angle.elbowAngle?.max, "°")} | ${zh ? "鎖定肘角" : "Lockout elbow"} ${poseValue(angle.lockoutElbowAngle, "°")} | ${barSource}`
         : `${zh ? "槓路漂移" : "Bar path drift"} ${poseValue(analysis.barPathSummary?.horizontalDriftPct, "%")} | ${escapeHtml(analysis.velocityCurveSummary?.unit || "relative")}`;
       target.className = `pose-analysis-card ${level === "ok" ? "" : level}`.trim();
       target.innerHTML = `
@@ -11727,6 +11835,14 @@
         attachPoseOverlayListeners();
         await waitForVideoMetadata(video);
         const landmarker = await loadPoseLandmarker();
+        const trackingOptions = collectPoseOptions(video);
+        const trackingLiftFamily = getPoseLiftFamily({ lift: trackingOptions.lift });
+        const trackingCanvas = document.createElement("canvas");
+        trackingCanvas.width = video.videoWidth;
+        trackingCanvas.height = video.videoHeight;
+        const trackingCtx = trackingCanvas.getContext("2d", { willReadFrequently: true });
+        let previousVisualBarPoint = poseManualBarPoint || null;
+        const enableVisualBarTracking = true;
         const duration = Math.min(Number(video.duration) || 0, 30);
         const targetFrames = Math.min(180, Math.max(24, Math.ceil(duration * 8)));
         const step = duration / Math.max(targetFrames - 1, 1);
@@ -11735,12 +11851,30 @@
           const t = Math.min(duration, i * step);
           await seekVideo(video, t);
           const result = landmarker.detectForVideo(video, Math.round(t * 1000));
-          if (result?.landmarks?.[0]) frames.push({ time: t, width: video.videoWidth, height: video.videoHeight, landmarks: result.landmarks[0] });
+          if (result?.landmarks?.[0]) {
+            const landmarks = result.landmarks[0];
+            const fallbackBarPoint = poseFallbackBarPoint(landmarks, trackingLiftFamily);
+            let visualBarPoint = null;
+            if (enableVisualBarTracking && trackingCtx && video.videoWidth && video.videoHeight) {
+              trackingCtx.drawImage(video, 0, 0, trackingCanvas.width, trackingCanvas.height);
+              visualBarPoint = detectVisualBarPoint(trackingCtx, trackingCanvas.width, trackingCanvas.height, fallbackBarPoint, previousVisualBarPoint);
+              if (visualBarPoint?.source === "visual") previousVisualBarPoint = visualBarPoint;
+            }
+            frames.push({
+              time: t,
+              width: video.videoWidth,
+              height: video.videoHeight,
+              landmarks,
+              visualBarPoint: visualBarPoint?.source === "visual" ? visualBarPoint : undefined
+            });
+          }
           if (i % 12 === 0) setPoseStatus(`Analyzing ${Math.round((i / targetFrames) * 100)}%`, "warn");
         }
         if (frames.length < 5) throw new Error("No stable single-person pose was detected.");
         lastPoseFrames = frames;
-        const options = collectPoseOptions(video);
+        const options = trackingOptions;
+        const engineAnalysis = window.newRtsVideoAnalysis.analyzeLandmarkFrames(frames, options);
+        const visualBarFrameCount = frames.filter((frame) => frame.visualBarPoint).length;
         lastPoseAnalysis = {
           id: crypto.randomUUID(),
           date: document.getElementById("logDate")?.value || todayString(),
@@ -11753,7 +11887,9 @@
           manualWeight: options.weight,
           manualBarSpeed: options.barSpeed,
           manualCue: options.manualCue,
-          ...window.newRtsVideoAnalysis.analyzeLandmarkFrames(frames, options)
+          ...engineAnalysis,
+          visualBarFrameCount,
+          barTrackingSource: visualBarFrameCount >= Math.max(5, frames.length * 0.35) ? "visual-overlay" : engineAnalysis.barTrackingSource
         };
         renderPoseAnalysisSummary(lastPoseAnalysis);
         await seekVideo(video, Number(lastPoseAnalysis.keyFrames?.bottomTime) || 0);

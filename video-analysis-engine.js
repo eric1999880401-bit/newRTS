@@ -82,6 +82,20 @@
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  function normalizedPoint(point) {
+    if (!point) return null;
+    const x = Number(point.x);
+    const y = Number(point.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return {
+      x: clamp(x, 0, 1),
+      y: clamp(y, 0, 1),
+      z: Number(point.z) || 0,
+      visibility: clamp(Number(point.visibility ?? point.score ?? 1), 0, 1),
+      source: point.source || "visual"
+    };
+  }
+
   function angleDeg(a, b, c) {
     if (!a || !b || !c) return null;
     const abx = Number(a.x) - Number(b.x);
@@ -207,7 +221,8 @@
     const wristMid = midpoint(leftWrist, rightWrist) || wrist;
     const hipMid = midpoint(leftHip, rightHip) || hip;
     const liftFamily = normalizeLiftFamily(options.lift);
-    const barProxy = liftFamily === "bench" || liftFamily === "deadlift" ? wristMid : shoulderMid;
+    const visualBarPoint = normalizedPoint(frame.barPoint);
+    const barProxy = visualBarPoint || (liftFamily === "bench" || liftFamily === "deadlift" ? wristMid : shoulderMid);
     const scores = (liftFamily === "bench" ? [shoulder, elbow, wrist, elbowMid, barProxy] : [shoulder, hip, knee, ankle, barProxy]).map(pointScore);
     const confidence = scores.reduce((sum, score) => sum + score, 0) / Math.max(scores.length, 1);
     const wristStackPct = elbow && wrist ? Math.abs(Number(wrist.x) - Number(elbow.x)) * 100 : null;
@@ -225,9 +240,17 @@
         shoulderAngle: angleDeg(hip || hipMid, shoulder, elbow),
         forearmAngle: segmentAngleFromVerticalDeg(elbow, wrist),
         wristStackPct: Number.isFinite(wristStackPct) ? wristStackPct : null,
+        shoulder,
+        elbow,
+        wrist,
         elbowMid,
         wristMid
       },
+      visualBarPoint,
+      shoulder,
+      elbow,
+      wrist,
+      hip,
       shoulderMid,
       hipMid,
       knee,
@@ -365,12 +388,14 @@
       elbow: round(m.bench?.elbowAngle, 1),
       shoulder: round(m.bench?.shoulderAngle, 1),
       wristStack: round(m.bench?.wristStackPct, 1),
-      shoulderX: round(m.shoulderMid?.x, 4),
-      shoulderY: round(m.shoulderMid?.y, 4),
-      elbowX: round(m.bench?.elbowMid?.x, 4),
-      elbowY: round(m.bench?.elbowMid?.y, 4),
-      hipX: round(m.hipMid?.x, 4),
-      hipY: round(m.hipMid?.y, 4),
+      shoulderX: round(m.shoulder?.x, 4),
+      shoulderY: round(m.shoulder?.y, 4),
+      elbowX: round(m.elbow?.x, 4),
+      elbowY: round(m.elbow?.y, 4),
+      wristX: round(m.wrist?.x, 4),
+      wristY: round(m.wrist?.y, 4),
+      hipX: round(m.hip?.x, 4),
+      hipY: round(m.hip?.y, 4),
       barX: round(m.barProxy?.x, 4),
       barY: round(m.barProxy?.y, 4)
     }));
@@ -443,6 +468,7 @@
     const liftFamily = normalizeLiftFamily(options.lift);
     const metricOptions = { ...options, preferredSide: chooseStableSide(cleanFrames, liftFamily, options.preferredSide || "auto") };
     const metrics = cleanFrames.map((frame) => makeFrameMetrics(frame, metricOptions));
+    const visualBarCount = metrics.filter((m) => m.visualBarPoint).length;
     const validConfidence = metrics.map((m) => m.confidence).filter(Number.isFinite);
     const landmarkConfidence = validConfidence.reduce((sum, v) => sum + v, 0) / Math.max(validConfidence.length, 1);
     const pixelToMeter = Number(options.pixelToMeter) || 0;
@@ -499,6 +525,9 @@
       createdAt: new Date().toISOString(),
       viewAngle,
       liftFamily,
+      poseSide: metricOptions.preferredSide,
+      barTrackingSource: visualBarCount >= Math.max(5, cleanFrames.length * 0.35) ? "visual" : "pose-proxy",
+      visualBarFrameCount: visualBarCount,
       lift: String(options.lift || "Lift"),
       setType: String(options.setType || "Set"),
       calibration: {
