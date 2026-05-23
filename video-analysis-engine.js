@@ -365,6 +365,12 @@
       elbow: round(m.bench?.elbowAngle, 1),
       shoulder: round(m.bench?.shoulderAngle, 1),
       wristStack: round(m.bench?.wristStackPct, 1),
+      shoulderX: round(m.shoulderMid?.x, 4),
+      shoulderY: round(m.shoulderMid?.y, 4),
+      elbowX: round(m.bench?.elbowMid?.x, 4),
+      elbowY: round(m.bench?.elbowMid?.y, 4),
+      hipX: round(m.hipMid?.x, 4),
+      hipY: round(m.hipMid?.y, 4),
       barX: round(m.barProxy?.x, 4),
       barY: round(m.barProxy?.y, 4)
     }));

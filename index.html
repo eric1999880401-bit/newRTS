@@ -5713,6 +5713,8 @@
     let lastPoseAnalysis = null;
     let poseVideoObjectUrl = "";
     let lastPoseFrames = [];
+    let poseOverlayRaf = 0;
+    let poseOverlayListenersAttached = false;
     let historyExpanded = false;
 
     function saveState(successMessage = "") {
@@ -11507,6 +11509,100 @@
       return Number.isFinite(number) ? `${number.toFixed(digits)}${suffix}` : "--";
     }
 
+    function poseLandmark(frame, index) {
+      return frame?.landmarks?.[index] || null;
+    }
+
+    function poseMidpoint(a, b) {
+      if (!a || !b) return a || b || null;
+      return { x: (Number(a.x) + Number(b.x)) / 2, y: (Number(a.y) + Number(b.y)) / 2 };
+    }
+
+    function poseTracePoint(frame, kind, analysis = lastPoseAnalysis) {
+      const family = getPoseLiftFamily(analysis);
+      if (kind === "bar") {
+        if (family === "bench" || family === "deadlift") return poseMidpoint(poseLandmark(frame, 15), poseLandmark(frame, 16));
+        return poseMidpoint(poseLandmark(frame, 11), poseLandmark(frame, 12));
+      }
+      if (kind === "shoulder") return poseMidpoint(poseLandmark(frame, 11), poseLandmark(frame, 12));
+      if (kind === "elbow") return poseMidpoint(poseLandmark(frame, 13), poseLandmark(frame, 14));
+      if (kind === "hip") return poseMidpoint(poseLandmark(frame, 23), poseLandmark(frame, 24));
+      return null;
+    }
+
+    function nearestPoseFrameIndex(time) {
+      if (!lastPoseFrames.length) return -1;
+      const target = Number.isFinite(Number(time)) ? Number(time) : Number(lastPoseAnalysis?.keyFrames?.bottomTime ?? 0);
+      let bestIndex = 0;
+      for (let i = 1; i < lastPoseFrames.length; i += 1) {
+        if (Math.abs(lastPoseFrames[i].time - target) < Math.abs(lastPoseFrames[bestIndex].time - target)) bestIndex = i;
+      }
+      return bestIndex;
+    }
+
+    function drawPoseTrace(ctx, canvas, frames, kind, color, label) {
+      const points = frames.map((frame) => poseTracePoint(frame, kind)).filter((point) => Number.isFinite(Number(point?.x)) && Number.isFinite(Number(point?.y)));
+      if (!points.length) return;
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(3, canvas.width / 260);
+      ctx.shadowColor = "rgba(0,0,0,0.35)";
+      ctx.shadowBlur = Math.max(2, canvas.width / 360);
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        const x = Number(point.x) * canvas.width;
+        const y = Number(point.y) * canvas.height;
+        if (!index) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      const current = points[points.length - 1];
+      const x = Number(current.x) * canvas.width;
+      const y = Number(current.y) * canvas.height;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(5, canvas.width / 140), 0, Math.PI * 2);
+      ctx.fill();
+      if (label) {
+        ctx.font = `${Math.max(14, canvas.width / 52)}px sans-serif`;
+        ctx.fillText(label, x + 8, y - 8);
+      }
+      ctx.restore();
+    }
+
+    function stopPoseOverlayLoop() {
+      if (poseOverlayRaf) cancelAnimationFrame(poseOverlayRaf);
+      poseOverlayRaf = 0;
+    }
+
+    function syncPoseOverlay() {
+      stopPoseOverlayLoop();
+      const video = document.getElementById("posePreviewVideo");
+      if (!video || !lastPoseAnalysis || !lastPoseFrames.length) return;
+      const tick = () => {
+        drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
+        if (!video.paused && !video.ended) poseOverlayRaf = requestAnimationFrame(tick);
+      };
+      tick();
+    }
+
+    function attachPoseOverlayListeners() {
+      if (poseOverlayListenersAttached) return;
+      const video = document.getElementById("posePreviewVideo");
+      if (!video) return;
+      ["timeupdate", "seeking", "seeked", "loadedmetadata", "pause"].forEach((eventName) => {
+        video.addEventListener(eventName, () => drawPoseOverlay(lastPoseAnalysis, { followVideo: true }));
+      });
+      video.addEventListener("play", syncPoseOverlay);
+      video.addEventListener("ended", () => {
+        stopPoseOverlayLoop();
+        drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
+      });
+      poseOverlayListenersAttached = true;
+    }
+
     function renderPoseAnalysisSummary(analysis = lastPoseAnalysis) {
       const target = document.getElementById("poseAnalysisOutput");
       const saveBtn = document.getElementById("savePoseAnalysisBtn");
@@ -11565,7 +11661,7 @@
       renderVideoCommandPanel();
     }
 
-    function drawPoseOverlay(analysis = lastPoseAnalysis) {
+    function drawPoseOverlay(analysis = lastPoseAnalysis, options = {}) {
       const video = document.getElementById("posePreviewVideo");
       const canvas = document.getElementById("poseOverlayCanvas");
       if (!video || !canvas || !analysis || !lastPoseFrames.length || !video.videoWidth || !video.videoHeight) return;
@@ -11573,10 +11669,15 @@
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const targetTime = Number(analysis.keyFrames?.bottomTime ?? lastPoseFrames[0].time);
-      const frame = lastPoseFrames.reduce((best, current) => Math.abs(current.time - targetTime) < Math.abs(best.time - targetTime) ? current : best, lastPoseFrames[0]);
+      const targetTime = options.followVideo ? Number(video.currentTime) : Number(analysis.keyFrames?.bottomTime ?? video.currentTime ?? lastPoseFrames[0].time);
+      const frameIndex = nearestPoseFrameIndex(targetTime);
+      const frame = lastPoseFrames[frameIndex] || lastPoseFrames[0];
       const lm = frame.landmarks || [];
       const isBench = getPoseLiftFamily(analysis) === "bench";
+      const visibleFrames = lastPoseFrames.slice(0, Math.max(frameIndex + 1, 1));
+      drawPoseTrace(ctx, canvas, visibleFrames, "bar", "rgba(142, 194, 169, 0.95)", isBench ? "bar" : "path");
+      drawPoseTrace(ctx, canvas, visibleFrames, "shoulder", "rgba(241, 201, 133, 0.88)", "shoulder");
+      drawPoseTrace(ctx, canvas, visibleFrames, isBench ? "elbow" : "hip", isBench ? "rgba(236, 140, 105, 0.88)" : "rgba(185, 168, 234, 0.82)", isBench ? "elbow" : "hip");
       const pairs = isBench
         ? [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24]]
         : [[11, 12], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28], [11, 13], [13, 15], [12, 14], [14, 16]];
@@ -11597,19 +11698,6 @@
         ctx.arc(point.x * canvas.width, point.y * canvas.height, Math.max(4, canvas.width / 170), 0, Math.PI * 2);
         ctx.fill();
       });
-      if ((analysis.curvePreview || []).length) {
-        ctx.strokeStyle = "rgba(142, 194, 169, 0.95)";
-        ctx.lineWidth = Math.max(2, canvas.width / 320);
-        ctx.beginPath();
-        analysis.curvePreview.forEach((point, index) => {
-          const x = Number(point.barX) * canvas.width;
-          const y = Number(point.barY) * canvas.height;
-          if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-          if (!index) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-      }
     }
 
     async function analyzePoseLocally() {
@@ -11633,8 +11721,10 @@
       setPoseStatus("Loading model", "warn");
       try {
         if (poseVideoObjectUrl) URL.revokeObjectURL(poseVideoObjectUrl);
+        stopPoseOverlayLoop();
         poseVideoObjectUrl = URL.createObjectURL(file);
         video.src = poseVideoObjectUrl;
+        attachPoseOverlayListeners();
         await waitForVideoMetadata(video);
         const landmarker = await loadPoseLandmarker();
         const duration = Math.min(Number(video.duration) || 0, 30);
@@ -11667,7 +11757,7 @@
         };
         renderPoseAnalysisSummary(lastPoseAnalysis);
         await seekVideo(video, Number(lastPoseAnalysis.keyFrames?.bottomTime) || 0);
-        drawPoseOverlay(lastPoseAnalysis);
+        drawPoseOverlay(lastPoseAnalysis, { followVideo: true });
         setPoseStatus(currentLanguage() === "zh" ? "可以儲存" : "Ready to save", lastPoseAnalysis.confidence >= 0.45 ? "ok" : "bad");
         showToast(currentLanguage() === "zh" ? "已完成本機姿態分析。" : "Pose analysis finished locally.", "ok");
       } catch (err) {
@@ -13950,6 +14040,7 @@
     document.getElementById("uploadVideoReviewBtn").addEventListener("click", uploadAndEstimateVideoReview);
     document.getElementById("saveVideoReviewBtn").addEventListener("click", saveVideoReview);
     document.getElementById("analyzePoseBtn").addEventListener("click", analyzePoseLocally);
+    attachPoseOverlayListeners();
     document.getElementById("savePoseAnalysisBtn").addEventListener("click", savePoseAnalysisSummary);
     document.getElementById("askPoseWeaknessBtn").addEventListener("click", () => askPoseAi("weakness"));
     document.getElementById("askPoseRpeBtn").addEventListener("click", () => askPoseAi("rpe"));

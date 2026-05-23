@@ -17,6 +17,9 @@ assert(Number.isFinite(side.velocityCurveSummary.avgVelocity));
 assert.strictEqual(side.asymmetryFlags.length, 0);
 assert(side.techniqueFlags.length >= 1);
 assert(side.curvePreview.length <= 48);
+assert(side.curvePreview.some((point) => Number.isFinite(point.barX) && Number.isFinite(point.barY)));
+assert(side.curvePreview.some((point) => Number.isFinite(point.shoulderX) && Number.isFinite(point.shoulderY)));
+assert(side.curvePreview.some((point) => Number.isFinite(point.hipX) && Number.isFinite(point.hipY)));
 
 const front = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("front", 72), {
   lift: "Squat",
@@ -44,6 +47,11 @@ assert(Number.isFinite(benchSide.angleMetrics.wristStackPct.avg));
 assert.strictEqual(benchSide.angleMetrics.hipAngle, undefined);
 assert.strictEqual(benchSide.angleMetrics.kneeAngle, undefined);
 assert(benchSide.techniqueFlags.join(" ").includes("Bench"));
+assert(benchSide.curvePreview.some((point) => Number.isFinite(point.barX) && Number.isFinite(point.barY)));
+assert(benchSide.curvePreview.some((point) => Number.isFinite(point.elbowX) && Number.isFinite(point.elbowY)));
+assert(benchSide.curvePreview.some((point) => Number.isFinite(point.shoulderX) && Number.isFinite(point.shoulderY)));
+assert(new Set(benchSide.curvePreview.map((point) => point.barY)).size > 2);
+assert(new Set(benchSide.curvePreview.map((point) => point.elbowY)).size > 2);
 
 const benchFront = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("bench-front", 72), {
   lift: "Comp Bench",
