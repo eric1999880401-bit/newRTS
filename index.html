@@ -11493,6 +11493,20 @@
         </div>`;
     }
 
+    function getPoseLiftFamily(analysis) {
+      const text = String(analysis?.liftFamily || analysis?.angleMetrics?.liftFamily || analysis?.lift || "").toLowerCase();
+      if (text.includes("bench") || text.includes("press")) return "bench";
+      if (text.includes("dead")) return "deadlift";
+      if (text.includes("squat")) return "squat";
+      return "other";
+    }
+
+    function poseValue(value, suffix = "", digits = 1) {
+      if (value === null || value === undefined || value === "") return "--";
+      const number = Number(value);
+      return Number.isFinite(number) ? `${number.toFixed(digits)}${suffix}` : "--";
+    }
+
     function renderPoseAnalysisSummary(analysis = lastPoseAnalysis) {
       const target = document.getElementById("poseAnalysisOutput");
       const saveBtn = document.getElementById("savePoseAnalysisBtn");
@@ -11512,25 +11526,38 @@
       const flags = [...(analysis.techniqueFlags || []), ...(analysis.asymmetryFlags || [])];
       const curve = analysis.curvePreview || [];
       const zh = currentLanguage() === "zh";
+      const isBench = getPoseLiftFamily(analysis) === "bench";
+      const angle = analysis.angleMetrics || {};
+      const viewLabel = isBench
+        ? (analysis.viewAngle === "front" ? (zh ? "臥推正面分析" : "Bench front analysis") : (zh ? "臥推側面分析" : "Bench side analysis"))
+        : (analysis.viewAngle === "front" ? (zh ? "正面姿態分析" : "Front pose analysis") : (zh ? "側面姿態分析" : "Side pose analysis"));
+      const chartHtml = isBench
+        ? `${renderSparkline(zh ? "肘角" : "Elbow angle", curve, "elbow")}
+           ${renderSparkline(zh ? "肩角" : "Shoulder angle", curve, "shoulder")}
+           ${renderSparkline(zh ? "手腕堆疊" : "Wrist stack", curve, "wristStack")}`
+        : `${renderSparkline(zh ? "髖角度" : "Hip angle", curve, "hip")}
+           ${renderSparkline(zh ? "膝角度" : "Knee angle", curve, "knee")}
+           ${renderSparkline(zh ? "槓路 Y" : "Bar path Y", curve, "barY")}`;
+      const detailLine = isBench
+        ? `${zh ? "肘角範圍" : "Elbow range"} ${poseValue(angle.elbowAngle?.min, "°")}-${poseValue(angle.elbowAngle?.max, "°")} | ${zh ? "鎖定肘角" : "Lockout elbow"} ${poseValue(angle.lockoutElbowAngle, "°")} | ${zh ? "手腕堆疊" : "Wrist stack"} ${poseValue(angle.wristStackPct?.avg, "%")}`
+        : `${zh ? "槓路漂移" : "Bar path drift"} ${poseValue(analysis.barPathSummary?.horizontalDriftPct, "%")} | ${escapeHtml(analysis.velocityCurveSummary?.unit || "relative")}`;
       target.className = `pose-analysis-card ${level === "ok" ? "" : level}`.trim();
       target.innerHTML = `
         <div class="feature-title">
-          <strong>${escapeHtml(analysis.viewAngle === "front" ? (zh ? "正面姿態分析" : "Front pose analysis") : (zh ? "側面姿態分析" : "Side pose analysis"))}</strong>
-          <span class="status ${level}">${Math.round(Number(analysis.confidence || 0) * 100)}% ${zh ? "信心" : "confidence"}</span>
+          <strong>${escapeHtml(viewLabel)}</strong>
+          <span class="status ${level}">${Math.round(Number(analysis.confidence || 0) * 100)}% ${zh ? "可信度" : "confidence"}</span>
         </div>
         <div class="metric-strip">
           <div class="metric"><div class="k">${zh ? "次數" : "Reps"}</div><div class="v">${(analysis.repPhases || []).length}</div></div>
-          <div class="metric"><div class="k">${zh ? "向心秒數" : "Concentric"}</div><div class="v">${analysis.velocityCurveSummary?.avgConcentricSeconds ?? "--"}s</div></div>
-          <div class="metric"><div class="k">${zh ? "速度下降" : "Velocity drop"}</div><div class="v">${analysis.velocityCurveSummary?.velocityDropPct ?? "--"}%</div></div>
+          <div class="metric"><div class="k">${zh ? "平均上推" : "Concentric"}</div><div class="v">${poseValue(analysis.velocityCurveSummary?.avgConcentricSeconds, "s", 2)}</div></div>
+          <div class="metric"><div class="k">${zh ? "速度下降" : "Velocity drop"}</div><div class="v">${poseValue(analysis.velocityCurveSummary?.velocityDropPct, "%")}</div></div>
         </div>
         <div class="pose-chart">
-          ${renderSparkline(zh ? "髖角度" : "Hip angle", curve, "hip")}
-          ${renderSparkline(zh ? "膝角度" : "Knee angle", curve, "knee")}
-          ${renderSparkline(zh ? "槓路 Y" : "Bar path Y", curve, "barY")}
+          ${chartHtml}
         </div>
-        <div class="compact-list">${zh ? "槓路漂移" : "Bar path drift"} ${analysis.barPathSummary?.horizontalDriftPct ?? "--"}% | ${escapeHtml(analysis.velocityCurveSummary?.unit || "relative")}</div>
+        <div class="compact-list">${detailLine}</div>
         ${flags.length ? `<div><strong>${zh ? "提醒" : "Flags"}</strong><ul class="reason-list">${flags.map((flag) => `<li>${escapeHtml(flag)}</li>`).join("")}</ul></div>` : ""}
-        ${(analysis.coachCues || []).length ? `<div><strong>${zh ? "建議提示" : "Coach cues"}</strong><ul class="reason-list">${analysis.coachCues.map((cue) => `<li>${escapeHtml(cue)}</li>`).join("")}</ul></div>` : ""}
+        ${(analysis.coachCues || []).length ? `<div><strong>${zh ? "下次提示" : "Coach cues"}</strong><ul class="reason-list">${analysis.coachCues.map((cue) => `<li>${escapeHtml(cue)}</li>`).join("")}</ul></div>` : ""}
         <div class="footer-note">${(analysis.limitations || []).map(escapeHtml).join(" | ")}</div>`;
       if (saveBtn) saveBtn.disabled = false;
       if (weakBtn) weakBtn.disabled = false;
@@ -11549,7 +11576,10 @@
       const targetTime = Number(analysis.keyFrames?.bottomTime ?? lastPoseFrames[0].time);
       const frame = lastPoseFrames.reduce((best, current) => Math.abs(current.time - targetTime) < Math.abs(best.time - targetTime) ? current : best, lastPoseFrames[0]);
       const lm = frame.landmarks || [];
-      const pairs = [[11, 12], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28], [11, 15], [12, 16]];
+      const isBench = getPoseLiftFamily(analysis) === "bench";
+      const pairs = isBench
+        ? [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24]]
+        : [[11, 12], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28], [11, 13], [13, 15], [12, 14], [14, 16]];
       ctx.lineWidth = Math.max(3, canvas.width / 240);
       ctx.strokeStyle = "rgba(241, 201, 133, 0.9)";
       pairs.forEach(([a, b]) => {
@@ -11560,7 +11590,7 @@
         ctx.stroke();
       });
       ctx.fillStyle = "rgba(251, 246, 234, 0.95)";
-      [11, 12, 15, 16, 23, 24, 25, 26, 27, 28].forEach((index) => {
+      (isBench ? [11, 12, 13, 14, 15, 16, 23, 24] : [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]).forEach((index) => {
         const point = lm[index];
         if (!point) return;
         ctx.beginPath();
@@ -11704,6 +11734,10 @@
       const user = getActiveUser();
       const base = buildAnonymousCoachPacket(user);
       const focus = mode === "rpe" ? "pose-rpe" : "pose-weakness";
+      const liftFamily = getPoseLiftFamily(analysis);
+      const liftInstruction = liftFamily === "bench"
+        ? "This is bench press analysis. Use shoulder/elbow/wrist stack, touch and lockout proxies, bar path, velocity, view angle, and confidence. Do not use squat depth or hip/knee angle as bench evidence."
+        : "Use the lift-specific pose metrics. For squat/deadlift side view, hip/knee/torso and bar path may be relevant; for front view, asymmetry metrics are more relevant than depth.";
       const modeInstruction = mode === "rpe"
         ? "Estimate an RPE second-opinion range from pose metrics only. Use velocity drop, average concentric time, bar path drift, rep count, and confidence. Do not change the log automatically; explain when confidence is too low."
         : "Analyze technical weak points from pose metrics only. Focus on likely constraint, evidence, practical cues, and what should be filmed next. Do not diagnose pain or injury.";
@@ -11712,7 +11746,7 @@
         requestVersion: "pose-ai-v1",
         requestFocus: focus,
         poseAnalysis: analysis,
-        instruction: `${modeInstruction} Return concise JSON in the required AI coach suggestion shape. Put the main finding in summary, evidence in why, and any cues in recommendedChanges.`
+        instruction: `${liftInstruction} ${modeInstruction} Return concise JSON in the required AI coach suggestion shape. Put the main finding in summary, evidence in why, and any cues in recommendedChanges.`
       };
     }
 

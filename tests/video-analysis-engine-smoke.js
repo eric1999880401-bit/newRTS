@@ -30,6 +30,31 @@ assert(front.asymmetryFlags.length >= 1);
 assert.strictEqual(front.velocityCurveSummary.unit, "m/s estimate");
 assert(front.confidence > 0.5);
 
+const benchSide = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("bench-side", 72), {
+  lift: "Bench",
+  setType: "Top",
+  viewAngle: "side"
+});
+
+assert.strictEqual(benchSide.liftFamily, "bench");
+assert.strictEqual(benchSide.angleMetrics.liftFamily, "bench");
+assert(Number.isFinite(benchSide.angleMetrics.elbowAngle.avg));
+assert(Number.isFinite(benchSide.angleMetrics.shoulderAngle.avg));
+assert(Number.isFinite(benchSide.angleMetrics.wristStackPct.avg));
+assert.strictEqual(benchSide.angleMetrics.hipAngle, undefined);
+assert.strictEqual(benchSide.angleMetrics.kneeAngle, undefined);
+assert(benchSide.techniqueFlags.join(" ").includes("Bench"));
+
+const benchFront = engine.analyzeLandmarkFrames(engine.buildSyntheticFrames("bench-front", 72), {
+  lift: "Comp Bench",
+  setType: "Top",
+  viewAngle: "front"
+});
+
+assert.strictEqual(benchFront.liftFamily, "bench");
+assert(benchFront.asymmetryFlags.some((flag) => flag.includes("Wrist") || flag.includes("Elbow") || flag.includes("Shoulder")));
+
 assert.strictEqual(Math.round(engine._test.angleDeg({ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 })), 90);
+assert.strictEqual(engine._test.normalizeLiftFamily("Paused Bench"), "bench");
 
 console.log("video analysis engine smoke ok");

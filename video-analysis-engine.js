@@ -10,6 +10,8 @@
   const L = Object.freeze({
     leftShoulder: 11,
     rightShoulder: 12,
+    leftElbow: 13,
+    rightElbow: 14,
     leftWrist: 15,
     rightWrist: 16,
     leftHip: 23,
@@ -23,6 +25,7 @@
   const SIDE_JOINTS = Object.freeze({
     left: {
       shoulder: L.leftShoulder,
+      elbow: L.leftElbow,
       wrist: L.leftWrist,
       hip: L.leftHip,
       knee: L.leftKnee,
@@ -30,6 +33,7 @@
     },
     right: {
       shoulder: L.rightShoulder,
+      elbow: L.rightElbow,
       wrist: L.rightWrist,
       hip: L.rightHip,
       knee: L.rightKnee,
@@ -44,6 +48,7 @@
   }
 
   function round(value, digits = 2) {
+    if (value === null || value === undefined || value === "") return null;
     const n = Number(value);
     if (!Number.isFinite(n)) return null;
     const m = Math.pow(10, digits);
@@ -97,6 +102,28 @@
     return Math.abs(Math.atan2(dx, -dy) * 180 / Math.PI);
   }
 
+  function normalizeLiftFamily(lift) {
+    const text = String(lift || "").toLowerCase();
+    if (text.includes("bench") || text.includes("press")) return "bench";
+    if (text.includes("dead")) return "deadlift";
+    if (text.includes("squat")) return "squat";
+    return "other";
+  }
+
+  function segmentAngleFromVerticalDeg(a, b) {
+    if (!a || !b) return null;
+    const dx = Number(b.x) - Number(a.x);
+    const dy = Number(b.y) - Number(a.y);
+    if (!dx && !dy) return null;
+    return Math.abs(Math.atan2(dx, -dy) * 180 / Math.PI);
+  }
+
+  function verticalDiffPct(a, b) {
+    if (!a || !b) return null;
+    const diff = Math.abs(Number(a.y) - Number(b.y)) * 100;
+    return Number.isFinite(diff) ? diff : null;
+  }
+
   function summarize(values) {
     const clean = values.map(Number).filter(Number.isFinite);
     if (!clean.length) return { min: null, max: null, avg: null };
@@ -128,16 +155,47 @@
     return sideScore("left") >= sideScore("right") ? "left" : "right";
   }
 
+  function chooseStableSide(frames, liftFamily, preferred = "auto") {
+    if (preferred === "left" || preferred === "right") return preferred;
+    const sideScore = (side) => {
+      const joints = SIDE_JOINTS[side];
+      const indices = liftFamily === "bench"
+        ? [joints.shoulder, joints.elbow, joints.wrist]
+        : [joints.shoulder, joints.hip, joints.knee, joints.ankle, joints.wrist];
+      return frames.reduce((sum, frame) => sum + indices
+        .map((index) => pointScore(getPoint(frame, index)))
+        .reduce((frameSum, score) => frameSum + score, 0), 0);
+    };
+    return sideScore("left") >= sideScore("right") ? "left" : "right";
+  }
+
+  function median(values) {
+    const clean = values.map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+    if (!clean.length) return null;
+    const mid = Math.floor(clean.length / 2);
+    return clean.length % 2 ? clean[mid] : (clean[mid - 1] + clean[mid]) / 2;
+  }
+
+  function plausibleBenchElbowAngle(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 45 && number <= 180;
+  }
+
   function makeFrameMetrics(frame, options) {
     const side = chooseSide(frame, options.preferredSide || "auto");
     const joints = SIDE_JOINTS[side];
     const shoulder = getPoint(frame, joints.shoulder);
+    const elbow = getPoint(frame, joints.elbow);
     const wrist = getPoint(frame, joints.wrist);
     const hip = getPoint(frame, joints.hip);
     const knee = getPoint(frame, joints.knee);
     const ankle = getPoint(frame, joints.ankle);
     const leftShoulder = getPoint(frame, L.leftShoulder);
     const rightShoulder = getPoint(frame, L.rightShoulder);
+    const leftElbow = getPoint(frame, L.leftElbow);
+    const rightElbow = getPoint(frame, L.rightElbow);
+    const leftWrist = getPoint(frame, L.leftWrist);
+    const rightWrist = getPoint(frame, L.rightWrist);
     const leftHip = getPoint(frame, L.leftHip);
     const rightHip = getPoint(frame, L.rightHip);
     const leftKnee = getPoint(frame, L.leftKnee);
@@ -145,28 +203,41 @@
     const leftAnkle = getPoint(frame, L.leftAnkle);
     const rightAnkle = getPoint(frame, L.rightAnkle);
     const shoulderMid = midpoint(leftShoulder, rightShoulder) || shoulder;
-    const wristMid = midpoint(getPoint(frame, L.leftWrist), getPoint(frame, L.rightWrist)) || wrist;
+    const elbowMid = midpoint(leftElbow, rightElbow) || elbow;
+    const wristMid = midpoint(leftWrist, rightWrist) || wrist;
     const hipMid = midpoint(leftHip, rightHip) || hip;
-    const lift = String(options.lift || "").toLowerCase();
-    const barProxy = lift.includes("bench") || lift.includes("deadlift") ? wristMid : shoulderMid;
-    const scores = [shoulder, hip, knee, ankle, barProxy].map(pointScore);
+    const liftFamily = normalizeLiftFamily(options.lift);
+    const barProxy = liftFamily === "bench" || liftFamily === "deadlift" ? wristMid : shoulderMid;
+    const scores = (liftFamily === "bench" ? [shoulder, elbow, wrist, elbowMid, barProxy] : [shoulder, hip, knee, ankle, barProxy]).map(pointScore);
     const confidence = scores.reduce((sum, score) => sum + score, 0) / Math.max(scores.length, 1);
+    const wristStackPct = elbow && wrist ? Math.abs(Number(wrist.x) - Number(elbow.x)) * 100 : null;
 
     return {
       time: Number(frame.time) || 0,
       side,
+      liftFamily,
       confidence,
       hipAngle: angleDeg(shoulder, hip, knee),
       kneeAngle: angleDeg(hip, knee, ankle),
       torsoAngle: torsoAngleDeg(shoulder, hip),
+      bench: {
+        elbowAngle: angleDeg(shoulder, elbow, wrist),
+        shoulderAngle: angleDeg(hip || hipMid, shoulder, elbow),
+        forearmAngle: segmentAngleFromVerticalDeg(elbow, wrist),
+        wristStackPct: Number.isFinite(wristStackPct) ? wristStackPct : null,
+        elbowMid,
+        wristMid
+      },
       shoulderMid,
       hipMid,
       knee,
       barProxy,
       front: {
-        shoulderHeightDiffPct: Math.abs(Number(leftShoulder?.y) - Number(rightShoulder?.y)) * 100,
-        hipHeightDiffPct: Math.abs(Number(leftHip?.y) - Number(rightHip?.y)) * 100,
-        kneeHeightDiffPct: Math.abs(Number(leftKnee?.y) - Number(rightKnee?.y)) * 100,
+        shoulderHeightDiffPct: verticalDiffPct(leftShoulder, rightShoulder),
+        elbowHeightDiffPct: verticalDiffPct(leftElbow, rightElbow),
+        wristHeightDiffPct: verticalDiffPct(leftWrist, rightWrist),
+        hipHeightDiffPct: verticalDiffPct(leftHip, rightHip),
+        kneeHeightDiffPct: verticalDiffPct(leftKnee, rightKnee),
         centerShiftPct: Math.abs(Number(hipMid?.x) - Number(shoulderMid?.x)) * 100,
         leftKneeInward: kneeInwardProxy(leftHip, leftKnee, leftAnkle),
         rightKneeInward: kneeInwardProxy(rightHip, rightKnee, rightAnkle)
@@ -291,15 +362,44 @@
       hip: round(m.hipAngle, 1),
       knee: round(m.kneeAngle, 1),
       torso: round(m.torsoAngle, 1),
+      elbow: round(m.bench?.elbowAngle, 1),
+      shoulder: round(m.bench?.shoulderAngle, 1),
+      wristStack: round(m.bench?.wristStackPct, 1),
       barX: round(m.barProxy?.x, 4),
       barY: round(m.barProxy?.y, 4)
     }));
   }
 
-  function buildFlags({ viewAngle, angleMetrics, velocity, barPath, front, confidence }) {
+  function buildFlags({ liftFamily, viewAngle, angleMetrics, velocity, barPath, front, confidence }) {
     const flags = [];
     const cues = [];
-    if (viewAngle === "side") {
+    if (liftFamily === "bench") {
+      if (viewAngle === "side") {
+        const wristStack = Number(angleMetrics.touchWristStackPct ?? angleMetrics.wristStackPct?.avg);
+        const lockoutElbow = Number(angleMetrics.lockoutElbowAngle);
+        if (Number.isFinite(wristStack) && wristStack >= 8) {
+          flags.push("Bench wrist/elbow stack drift is noticeable.");
+          cues.push("Keep the wrist closer over the elbow at touch and early press.");
+        }
+        if (Number.isFinite(lockoutElbow) && lockoutElbow < 145) {
+          flags.push("Bench lockout proxy may be incomplete.");
+          cues.push("Confirm full elbow extension from the side or a foot-end angle.");
+        }
+        if (Number(velocity.velocityDropPct) >= 35) {
+          flags.push("Bench press speed dropped sharply.");
+          cues.push("Treat this set as higher fatigue and compare with manual RPE.");
+        }
+        if (Number(barPath.horizontalDriftPct) >= 8) {
+          flags.push("Bench bar path drift is large for this camera angle.");
+          cues.push("Review touch point, elbow position, and press-back path.");
+        }
+      } else {
+        if (Number(front.shoulderHeightDiffPct) >= 3) flags.push("Shoulder height asymmetry detected.");
+        if (Number(front.elbowHeightDiffPct) >= 3) flags.push("Elbow height asymmetry detected.");
+        if (Number(front.wristHeightDiffPct) >= 3) flags.push("Wrist height asymmetry detected.");
+        if (flags.length) cues.push("Confirm uneven lockout with another front or foot-end bench video.");
+      }
+    } else if (viewAngle === "side") {
       if (angleMetrics.bottomHipVsKnee === "high") {
         flags.push("Depth may be high.");
         cues.push("Check squat depth from a true side angle.");
@@ -334,7 +434,9 @@
       throw new Error("Need at least 5 pose frames for analysis.");
     }
     const viewAngle = options.viewAngle === "front" ? "front" : "side";
-    const metrics = cleanFrames.map((frame) => makeFrameMetrics(frame, options));
+    const liftFamily = normalizeLiftFamily(options.lift);
+    const metricOptions = { ...options, preferredSide: chooseStableSide(cleanFrames, liftFamily, options.preferredSide || "auto") };
+    const metrics = cleanFrames.map((frame) => makeFrameMetrics(frame, metricOptions));
     const validConfidence = metrics.map((m) => m.confidence).filter(Number.isFinite);
     const landmarkConfidence = validConfidence.reduce((sum, v) => sum + v, 0) / Math.max(validConfidence.length, 1);
     const pixelToMeter = Number(options.pixelToMeter) || 0;
@@ -343,9 +445,27 @@
     const barPath = barPathSummary(metrics, pixelToMeter);
     const bottomRep = reps[0];
     const bottomMetrics = bottomRep ? metrics[bottomRep.bottomFrameIndex] : metrics[Math.floor(metrics.length / 2)];
+    const lockoutMetrics = bottomRep ? metrics[bottomRep.lockoutFrameIndex] : metrics[metrics.length - 1];
     const bottomHip = Number(bottomMetrics?.hipMid?.y);
     const bottomKnee = Number(bottomMetrics?.knee?.y);
-    const angleMetrics = {
+    const benchElbowAngles = metrics.map((m) => m.bench?.elbowAngle).filter(plausibleBenchElbowAngle);
+    const touchElbowAngles = reps.map((rep) => metrics[rep.bottomFrameIndex]?.bench?.elbowAngle).filter(plausibleBenchElbowAngle);
+    const lockoutElbowAngles = reps.map((rep) => metrics[rep.lockoutFrameIndex]?.bench?.elbowAngle).filter(plausibleBenchElbowAngle);
+    const touchWristStacks = reps.map((rep) => metrics[rep.bottomFrameIndex]?.bench?.wristStackPct).map(Number).filter(Number.isFinite);
+    const lockoutWristStacks = reps.map((rep) => metrics[rep.lockoutFrameIndex]?.bench?.wristStackPct).map(Number).filter(Number.isFinite);
+    const angleMetrics = liftFamily === "bench" ? {
+      liftFamily,
+      elbowAngle: summarize(benchElbowAngles),
+      shoulderAngle: summarize(metrics.map((m) => m.bench?.shoulderAngle)),
+      forearmAngle: summarize(metrics.map((m) => m.bench?.forearmAngle)),
+      wristStackPct: summarize(metrics.map((m) => m.bench?.wristStackPct)),
+      touchElbowAngle: round(median(touchElbowAngles), 1),
+      lockoutElbowAngle: round(median(lockoutElbowAngles), 1),
+      touchWristStackPct: round(median(touchWristStacks), 1),
+      lockoutWristStackPct: round(median(lockoutWristStacks), 1),
+      touchProxy: reps.length ? "detected_from_wrist_low_point" : "unknown"
+    } : {
+      liftFamily,
       hipAngle: summarize(metrics.map((m) => m.hipAngle)),
       kneeAngle: summarize(metrics.map((m) => m.kneeAngle)),
       torsoAngle: summarize(metrics.map((m) => m.torsoAngle)),
@@ -353,16 +473,26 @@
     };
     const frontSummary = {
       shoulderHeightDiffPct: round(Math.max(...metrics.map((m) => Number(m.front.shoulderHeightDiffPct) || 0)), 1),
+      elbowHeightDiffPct: round(Math.max(...metrics.map((m) => Number(m.front.elbowHeightDiffPct) || 0)), 1),
+      wristHeightDiffPct: round(Math.max(...metrics.map((m) => Number(m.front.wristHeightDiffPct) || 0)), 1),
       hipHeightDiffPct: round(Math.max(...metrics.map((m) => Number(m.front.hipHeightDiffPct) || 0)), 1),
       kneeHeightDiffPct: round(Math.max(...metrics.map((m) => Number(m.front.kneeHeightDiffPct) || 0)), 1),
       centerShiftPct: round(Math.max(...metrics.map((m) => Number(m.front.centerShiftPct) || 0)), 1)
     };
     const confidence = round(clamp(landmarkConfidence * (cleanFrames.length >= 20 ? 1 : 0.75) * (pixelToMeter ? 1 : 0.88), 0.05, 0.95), 2);
-    const flags = buildFlags({ viewAngle, angleMetrics, velocity, barPath, front: frontSummary, confidence });
+    const flags = buildFlags({ liftFamily, viewAngle, angleMetrics, velocity, barPath, front: frontSummary, confidence });
+    const limitations = [
+      "Single-camera estimate.",
+      liftFamily === "bench"
+        ? (viewAngle === "front" ? "Front or foot-end bench view is for asymmetry only; touch point and press path are limited." : "Bench side view estimates touch/press path; it cannot reliably grade left-right lockout.")
+        : (viewAngle === "front" ? "Front view is for asymmetry only; side-view depth and bar speed are limited." : "Side view cannot make reliable left-right asymmetry claims."),
+      pixelToMeter ? "Metric speed depends on calibration quality." : "Velocity is relative because no metric calibration was provided."
+    ];
     return {
       analysisVersion: "pose-analysis-v1",
       createdAt: new Date().toISOString(),
       viewAngle,
+      liftFamily,
       lift: String(options.lift || "Lift"),
       setType: String(options.setType || "Set"),
       calibration: {
@@ -386,23 +516,39 @@
         bottomTime: reps[0]?.bottomTime ?? null,
         lockoutTime: reps[0]?.lockoutTime ?? null
       },
-      limitations: [
-        "Single-camera estimate.",
-        viewAngle === "front" ? "Front view is for asymmetry only; side-view depth and bar speed are limited." : "Side view cannot make reliable left-right asymmetry claims.",
-        pixelToMeter ? "Metric speed depends on calibration quality." : "Velocity is relative because no metric calibration was provided."
-      ]
+      limitations
     };
   }
 
   function buildSyntheticFrames(kind = "side", count = 60) {
     const frames = [];
+    const isBench = String(kind).toLowerCase().includes("bench");
     for (let i = 0; i < count; i += 1) {
       const phase = i / Math.max(count - 1, 1);
       const dip = Math.sin(Math.PI * phase);
       const yShift = dip * 0.18;
       const landmarks = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.5, visibility: 0.95 }));
+      if (isBench) {
+        const pressY = 0.28 + yShift;
+        landmarks[L.leftShoulder] = { x: 0.34, y: 0.58, visibility: 0.96 };
+        landmarks[L.rightShoulder] = { x: kind === "bench-front" ? 0.62 : 0.36, y: 0.58, visibility: 0.95 };
+        landmarks[L.leftElbow] = { x: 0.43, y: 0.48 + yShift * 0.55, visibility: 0.96 };
+        landmarks[L.rightElbow] = { x: kind === "bench-front" ? 0.68 : 0.45, y: 0.48 + yShift * (kind === "bench-front" ? 0.75 : 0.55), visibility: 0.94 };
+        landmarks[L.leftWrist] = { x: 0.52, y: pressY, visibility: 0.96 };
+        landmarks[L.rightWrist] = { x: kind === "bench-front" ? 0.74 : 0.54, y: pressY + (kind === "bench-front" ? 0.05 * dip : 0), visibility: 0.94 };
+        landmarks[L.leftHip] = { x: 0.62, y: 0.66, visibility: 0.9 };
+        landmarks[L.rightHip] = { x: kind === "bench-front" ? 0.56 : 0.64, y: 0.66, visibility: 0.9 };
+        landmarks[L.leftKnee] = { x: 0.72, y: 0.82, visibility: 0.85 };
+        landmarks[L.rightKnee] = { x: kind === "bench-front" ? 0.46 : 0.74, y: 0.82, visibility: 0.85 };
+        landmarks[L.leftAnkle] = { x: 0.8, y: 0.9, visibility: 0.82 };
+        landmarks[L.rightAnkle] = { x: kind === "bench-front" ? 0.38 : 0.82, y: 0.9, visibility: 0.82 };
+        frames.push({ time: i / 12, width: 720, height: 1280, landmarks });
+        continue;
+      }
       landmarks[L.leftShoulder] = { x: 0.45, y: 0.24 + yShift * 0.2, visibility: 0.95 };
       landmarks[L.rightShoulder] = { x: kind === "front" ? 0.57 : 0.47, y: 0.24 + yShift * 0.2, visibility: 0.95 };
+      landmarks[L.leftElbow] = { x: 0.43, y: 0.3 + yShift * 0.45, visibility: 0.92 };
+      landmarks[L.rightElbow] = { x: kind === "front" ? 0.6 : 0.45, y: 0.3 + yShift * 0.45, visibility: 0.92 };
       landmarks[L.leftHip] = { x: 0.44, y: 0.48 + yShift, visibility: 0.95 };
       landmarks[L.rightHip] = { x: kind === "front" ? 0.58 : 0.46, y: 0.48 + yShift * (kind === "front" ? 0.88 : 1), visibility: 0.95 };
       landmarks[L.leftKnee] = { x: 0.43, y: 0.68 + yShift * 0.35, visibility: 0.95 };
@@ -425,7 +571,9 @@
       detectRepPhases,
       velocitySummary,
       barPathSummary,
-      chooseSide
+      chooseSide,
+      chooseStableSide,
+      normalizeLiftFamily
     }
   };
 });

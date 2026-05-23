@@ -94,6 +94,39 @@ assert.strictEqual(sanitized.poseAnalysis.manualRpe, 8);
 assert.strictEqual(sanitized.poseAnalysis.velocity.velocityDropPct, 35);
 assert.strictEqual(sanitized.poseAnalysis.flags[0].includes("Velocity"), true);
 
+const benchSanitized = api.sanitizeRequestSummary({
+  requestFocus: "pose-weakness",
+  poseAnalysis: {
+    id: "bench-pose-1",
+    lift: "Bench",
+    liftFamily: "bench",
+    setType: "Top",
+    viewAngle: "side",
+    confidence: 0.62,
+    repPhases: [{ rep: 1 }, { rep: 2 }, { rep: 3 }],
+    velocityCurveSummary: { avgConcentricSeconds: 0.63, velocityDropPct: 0, unit: "relative frame/s" },
+    barPathSummary: { horizontalDriftPct: 9.5, verticalTravelPct: 24, unit: "relative frame" },
+    angleMetrics: {
+      liftFamily: "bench",
+      elbowAngle: { min: 54.9, max: 179.8, avg: 136.3 },
+      shoulderAngle: { avg: 117.7 },
+      forearmAngle: { avg: 31.6 },
+      wristStackPct: { avg: 6.1 },
+      lockoutElbowAngle: 171,
+      touchWristStackPct: 6.5,
+      touchProxy: "detected_from_wrist_low_point"
+    },
+    techniqueFlags: ["Bench bar path drift is large for this camera angle."],
+    coachCues: ["Review touch point, elbow position, and press-back path."]
+  }
+});
+
+assert.strictEqual(benchSanitized.poseAnalysis.angles.liftFamily, "bench");
+assert.strictEqual(benchSanitized.poseAnalysis.angles.elbowAvg, 136.3);
+assert.strictEqual(benchSanitized.poseAnalysis.angles.lockoutElbowAngle, 171);
+assert.strictEqual(benchSanitized.poseAnalysis.angles.hipAvg, null);
+assert(benchSanitized.poseAnalysis.flags[0].includes("Bench bar path"));
+
 const validSuggestion = {
   summary: "Reduce today's fatigue and keep skill work.",
   riskFlags: ["Low sleep", "Recent overshoot"],

@@ -558,12 +558,24 @@ function sanitizeRequestSummary(input = {}) {
         unit: safeString(input.poseAnalysis.barPathSummary?.unit, 80)
       },
       angles: {
+        liftFamily: safeString(input.poseAnalysis.angleMetrics?.liftFamily || input.poseAnalysis.liftFamily, 40),
         hipAvg: Number(input.poseAnalysis.angleMetrics?.hipAngle?.avg) || null,
         hipMin: Number(input.poseAnalysis.angleMetrics?.hipAngle?.min) || null,
         kneeAvg: Number(input.poseAnalysis.angleMetrics?.kneeAngle?.avg) || null,
         kneeMin: Number(input.poseAnalysis.angleMetrics?.kneeAngle?.min) || null,
         torsoAvg: Number(input.poseAnalysis.angleMetrics?.torsoAngle?.avg) || null,
-        depthProxy: safeString(input.poseAnalysis.angleMetrics?.bottomHipVsKnee, 80)
+        depthProxy: safeString(input.poseAnalysis.angleMetrics?.bottomHipVsKnee, 80),
+        elbowAvg: Number(input.poseAnalysis.angleMetrics?.elbowAngle?.avg) || null,
+        elbowMin: Number(input.poseAnalysis.angleMetrics?.elbowAngle?.min) || null,
+        elbowMax: Number(input.poseAnalysis.angleMetrics?.elbowAngle?.max) || null,
+        shoulderAvg: Number(input.poseAnalysis.angleMetrics?.shoulderAngle?.avg) || null,
+        forearmAvg: Number(input.poseAnalysis.angleMetrics?.forearmAngle?.avg) || null,
+        wristStackAvgPct: Number(input.poseAnalysis.angleMetrics?.wristStackPct?.avg) || null,
+        touchElbowAngle: Number(input.poseAnalysis.angleMetrics?.touchElbowAngle) || null,
+        lockoutElbowAngle: Number(input.poseAnalysis.angleMetrics?.lockoutElbowAngle) || null,
+        touchWristStackPct: Number(input.poseAnalysis.angleMetrics?.touchWristStackPct) || null,
+        lockoutWristStackPct: Number(input.poseAnalysis.angleMetrics?.lockoutWristStackPct) || null,
+        touchProxy: safeString(input.poseAnalysis.angleMetrics?.touchProxy, 80)
       },
       flags: [
         ...collectionValues(input.poseAnalysis.techniqueFlags),
@@ -662,6 +674,7 @@ async function callOpenAiCoach(requestSummary, apiKey) {
                 "You are not a medical professional and must not diagnose injuries.",
                 "If requestFocus is pose-weakness, focus on technique weak points, likely constraints, and 1-3 practical cues from pose metrics only.",
                 "If requestFocus is pose-rpe, provide an RPE second opinion range from velocity drop, concentric time, manual context, and pose confidence.",
+                "For bench press poseAnalysis, use bench-specific upper-body metrics such as elbow angle, shoulder angle, wrist/elbow stack, touch/lockout proxies, bar path, and velocity; do not cite squat depth, hip angle, or knee angle as bench evidence.",
                 "Use recentTraining.personalCalibration as athlete-specific context for RPE bias and recurring weak points, but do not claim the model has been trained.",
                 "Prefer conservative, explainable changes when pain, poor sleep, missed reps, or high RPE are present.",
                 "Return only the requested JSON shape. Any suggested change must require manual user approval."
