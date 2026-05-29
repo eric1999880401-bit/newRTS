@@ -273,12 +273,28 @@
       color: var(--ivory);
       font-weight: 600;
       letter-spacing: .04em;
+      box-shadow: 0 10px 24px rgba(43,36,25,.14);
     }
     .primary:hover { background: var(--moss-deep); border-color: var(--moss-deep); color: var(--ivory); }
-    .secondary { background: transparent; color: var(--ink-base); border-color: var(--rule-strong); }
+    .secondary {
+      background: var(--ivory-soft);
+      color: var(--ink-base);
+      border-color: var(--rule);
+      box-shadow: none;
+    }
+    .secondary:hover {
+      background: var(--paper-warm);
+      border-color: var(--moss);
+      color: var(--ink-base);
+    }
     .danger { background: transparent; color: var(--brick); border-color: var(--brick); }
     .danger:hover { background: rgba(163,80,60,.08); color: var(--brick); border-color: var(--brick); }
-    .ghost { background: transparent; color: var(--pencil); border-color: transparent; }
+    .ghost {
+      background: transparent;
+      color: var(--pencil);
+      border-color: transparent;
+      box-shadow: none;
+    }
     .ghost:hover { background: var(--ivory-soft); border-color: transparent; }
     .app {
       position: relative;
@@ -747,17 +763,19 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 36px;
+      min-height: 30px;
       border-radius: 999px;
-      padding: 6px 14px;
+      padding: 5px 11px;
       font-family: var(--font-label);
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 10.5px;
+      font-weight: 700;
       letter-spacing: var(--tracking-wide);
       text-transform: uppercase;
       border: 1px solid var(--rule);
       background: var(--ivory);
       color: var(--ink-soft);
+      box-shadow: none;
+      cursor: default;
     }
     .status.ok { color: var(--moss-deep); background: rgba(122,138,94,.10); border-color: rgba(94,108,70,.30); }
     .status.warn { color: var(--ochre); background: rgba(184,132,68,.10); border-color: rgba(184,132,68,.35); }
@@ -4277,12 +4295,454 @@
         border-radius: 0;
       }
     }
+    /* Training cockpit usability refresh */
+    .app {
+      padding-top: 20px;
+    }
+    .app-hero {
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      border-top-width: 3px;
+    }
+    .brand-row {
+      gap: 14px;
+    }
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      font-size: 19px;
+    }
+    .app-hero h1 {
+      font-size: clamp(28px, 3.4vw, 42px);
+      line-height: 1.02;
+    }
+    .app-hero .sub {
+      margin-top: 6px;
+      max-width: 42rem;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .header-actions {
+      align-items: center;
+    }
+    .header-actions .primary,
+    .header-actions .theme-toggle,
+    .header-actions .sync-chip {
+      min-height: 36px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+    .top-command-dock {
+      margin: 8px 0 12px;
+    }
+    .training-flow-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+    .flow-step {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      min-height: 72px;
+      padding: 12px 14px;
+      border: 1px solid var(--rule);
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--ivory), var(--ivory-soft));
+    }
+    .flow-step.is-current {
+      border-color: var(--moss);
+      background: linear-gradient(135deg, rgba(122,138,94,.16), var(--ivory));
+    }
+    .flow-step span {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--ink-base);
+      font-family: var(--font-label);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .flow-step strong {
+      display: block;
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 17px;
+      line-height: 1.12;
+    }
+    .flow-step small {
+      display: block;
+      margin-top: 3px;
+      color: var(--pencil);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    @media (min-width: 761px) {
+      #page-workout .today-detail-grid {
+        grid-template-columns: minmax(430px, .92fr) minmax(0, 1.08fr);
+        align-items: start;
+      }
+      #page-workout .today-detail-grid > .training-card:nth-child(2) {
+        order: -1;
+        position: sticky;
+        top: 72px;
+        z-index: 12;
+        border-color: var(--moss);
+        box-shadow: 0 20px 54px rgba(43,36,25,.13);
+      }
+      #page-workout .today-detail-grid > .training-card:nth-child(2) > .panel-header {
+        background: linear-gradient(135deg, rgba(122,138,94,.15), var(--ivory));
+      }
+    }
+    .today-day-picker {
+      margin-bottom: 10px;
+    }
+    .today-command-center {
+      margin-bottom: 14px;
+      padding: 16px;
+      border-radius: 22px;
+      box-shadow: 0 14px 42px rgba(43,36,25,.10);
+    }
+    .today-command-top {
+      gap: 14px;
+      padding: 2px 2px 4px;
+    }
+    .today-mission-copy h2 {
+      font-size: clamp(24px, 3.2vw, 36px);
+    }
+    .today-primary-stack {
+      display: grid;
+      gap: 6px;
+      align-content: center;
+      justify-items: end;
+      min-width: 174px;
+    }
+    .next-action-label {
+      color: var(--moss-deep);
+      font-family: var(--font-label);
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      text-transform: uppercase;
+    }
+    .today-primary-action {
+      min-height: 52px;
+      min-width: 174px;
+      padding: 0 20px;
+      border-radius: 999px;
+    }
+    .today-action-grid {
+      gap: 8px;
+    }
+    .mission-card {
+      min-height: 88px;
+      align-content: start;
+      border-radius: 14px;
+      border-color: var(--rule);
+      background: var(--ivory-soft);
+      background: color-mix(in srgb, var(--ivory) 68%, transparent);
+      box-shadow: none;
+    }
+    .mission-card:hover {
+      background: var(--ivory);
+      background: color-mix(in srgb, var(--ivory) 84%, transparent);
+      border-color: var(--moss);
+    }
+    .mission-card--next {
+      background: var(--ivory-soft);
+      background: color-mix(in srgb, var(--moss) 14%, var(--ivory));
+      border-color: rgba(94,108,70,.28);
+    }
+    .mission-card--status {
+      background: var(--paper-warm);
+      background: color-mix(in srgb, var(--paper-warm) 58%, transparent);
+      border-style: dashed;
+    }
+    .mission-card strong {
+      font-size: 19px;
+    }
+    .mini-visual {
+      min-height: 84px;
+      border-color: var(--rule-soft);
+      background: var(--ivory-soft);
+      background: color-mix(in srgb, var(--ivory) 70%, transparent);
+      box-shadow: none;
+    }
+    .mini-visual strong {
+      font-size: 22px;
+    }
+    .mini-visual.is-placeholder strong,
+    .metric.is-placeholder .v {
+      color: var(--pencil);
+      font-family: var(--font-label);
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 800;
+      letter-spacing: var(--tracking-wide);
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+    #page-workout .training-card {
+      border-color: rgba(92,75,49,.18);
+      box-shadow: 0 10px 30px rgba(43,36,25,.07);
+    }
+    #page-workout .training-card > .panel-header {
+      border-bottom-color: var(--rule-soft);
+      background: var(--ivory);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--ivory) 76%, transparent), color-mix(in srgb, var(--paper-warm) 56%, transparent));
+    }
+    #page-workout .log-console .metrics {
+      border-color: var(--rule-soft);
+      background: var(--ivory-soft);
+      background: color-mix(in srgb, var(--paper-warm) 40%, transparent);
+    }
+    #page-workout .log-console .metrics .metric {
+      min-height: 88px;
+      padding: 14px;
+      border-color: var(--rule-soft);
+    }
+    #page-workout .log-console .metrics .metric.is-placeholder {
+      background: var(--ivory-soft);
+      background: color-mix(in srgb, var(--ivory) 36%, transparent);
+    }
+    .quick-set-shell {
+      border-radius: 18px;
+      border-color: rgba(94,108,70,.28);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(122,138,94,.10), transparent 32%),
+        linear-gradient(180deg, color-mix(in srgb, var(--ivory) 74%, transparent), color-mix(in srgb, var(--paper-warm) 50%, transparent));
+      box-shadow: none;
+    }
+    .quick-set-header {
+      align-items: center;
+    }
+    .quick-log-card .segmented button {
+      min-height: 58px;
+      touch-action: manipulation;
+    }
+    .quick-log-card .segmented.set-types button {
+      min-height: 52px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+    .quick-weight-card {
+      border-color: rgba(94,108,70,.24);
+      background: var(--ivory);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--ivory) 72%, transparent), color-mix(in srgb, var(--paper-warm) 42%, transparent));
+    }
+    .quick-log-preview,
+    .quick-log-card,
+    .quick-number-card,
+    .quick-advanced-controls,
+    .fatigue-rail {
+      border-color: var(--rule-soft);
+      background-color: var(--ivory-soft);
+      background-color: color-mix(in srgb, var(--ivory) 42%, transparent);
+      box-shadow: none;
+    }
+    .quick-log-preview {
+      border-left-color: rgba(94,108,70,.60);
+    }
+    .weight-jump-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .weight-jump-row button {
+      min-height: 38px;
+      padding: 7px 8px;
+      border-radius: 999px;
+      border-color: var(--rule);
+      background: var(--paper);
+      color: var(--ink-soft);
+      font-family: var(--font-label);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+    .weight-jump-row button:hover {
+      border-color: var(--moss);
+      background: var(--paper-warm);
+      color: var(--ink-base);
+    }
+    .log-console .save-row {
+      padding: 12px;
+      border: 1px solid var(--rule-soft);
+      border-radius: 18px;
+      background: var(--ivory-soft);
+      background: color-mix(in srgb, var(--ivory) 58%, transparent);
+    }
+    .log-console .save-row .status {
+      justify-content: center;
+      min-width: 0;
+      max-width: 100%;
+      border-radius: 14px;
+      line-height: 1.25;
+      text-align: center;
+      white-space: normal;
+    }
+    .log-console .save-row .primary {
+      min-height: 50px;
+      min-width: 186px;
+      box-shadow: 0 12px 28px rgba(43,36,25,.18);
+    }
+    .today-secondary-log .empty,
+    #planCards .empty {
+      border: 1px dashed var(--rule-strong);
+      border-radius: 18px;
+      background: var(--ivory-soft);
+    }
+    .empty-guidance {
+      display: grid;
+      gap: 5px;
+      padding: 16px;
+      text-align: left;
+    }
+    .empty-guidance strong {
+      color: var(--ink-base);
+      font-family: var(--font-display);
+      font-size: 18px;
+      line-height: 1.15;
+    }
+    .empty-guidance span {
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    @media (max-width: 760px) {
+      .app {
+        padding-bottom: calc(164px + env(safe-area-inset-bottom, 0px));
+      }
+      .app-hero {
+        padding: 14px;
+        margin-bottom: 10px;
+      }
+      .brand-mark {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+      }
+      .training-flow-strip {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .flow-step {
+        min-height: 58px;
+        padding: 10px 12px;
+      }
+      .flow-step:not(.is-current) {
+        display: none;
+      }
+      .today-command-center {
+        padding: 13px;
+      }
+      .today-primary-stack {
+        display: none;
+      }
+      .today-action-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .mission-card {
+        min-height: 84px;
+      }
+      body[data-page="workout"] .mobile-quick-fab {
+        display: none;
+      }
+      #page-workout .today-detail-grid > .training-card:nth-child(2) {
+        overflow: visible;
+      }
+      #page-workout .log-console {
+        padding: 14px 14px 24px;
+      }
+      #page-workout .quick-set-grid,
+      #page-workout .quick-dose-grid,
+      #page-workout .quick-advanced-grid,
+      #page-workout .drawer-grid,
+      #page-workout .notes-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      #page-workout .quick-log-card,
+      #page-workout .quick-weight-card,
+      #page-workout .quick-number-card {
+        padding: 12px;
+      }
+      #page-workout .quick-log-card .segmented button {
+        min-height: 48px;
+      }
+      #page-workout .quick-log-card .segmented.set-types {
+        grid-template-columns: 1fr;
+      }
+      #page-workout .quick-log-card .segmented.set-types button {
+        min-height: 44px;
+      }
+      #page-workout .today-save-bar {
+        position: sticky;
+        bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+        z-index: 78;
+        grid-template-columns: 1fr;
+        margin: 16px -6px 0;
+        padding: 10px;
+        border-radius: 20px;
+        background: var(--ivory);
+        background: color-mix(in srgb, var(--ivory) 92%, transparent);
+        box-shadow: 0 14px 40px rgba(43,36,25,.22);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+      #page-workout .today-save-bar .status {
+        justify-content: center;
+        width: 100%;
+        min-height: 38px;
+        border-radius: 14px;
+        text-align: center;
+        white-space: normal;
+      }
+      #page-workout .today-save-bar .secondary {
+        order: 2;
+        width: 100%;
+      }
+      #page-workout .today-save-bar .primary {
+        order: 1;
+        width: 100%;
+        min-width: 0;
+        min-height: 54px;
+      }
+      .page-tabs {
+        position: fixed;
+        top: auto;
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        z-index: 80;
+        max-width: calc(100vw - 24px);
+      }
+      .mobile-quick-fab {
+        left: 18px;
+        right: 18px;
+        bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+        z-index: 90;
+      }
+      .quick-set-shell {
+        display: block;
+        padding: 12px;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       * { transition: none !important; scroll-behavior: auto !important; }
     }
   </style>
 </head>
-<body>
+<body data-page="workout">
   <div class="app">
     <section class="app-hero">
       <div class="brand-row">
@@ -4354,7 +4814,7 @@
     <section class="app-pocket-bar" aria-label="Today quick stats">
       <button class="pocket-card" id="mobilePocketPlanBtn" type="button">
         <span>任務</span>
-        <strong id="mobilePocketMission">--</strong>
+        <strong id="mobilePocketMission">選課表</strong>
       </button>
       <button class="pocket-card" id="mobilePocketQuickLogBtn" type="button">
         <span>組數</span>
@@ -4362,7 +4822,7 @@
       </button>
       <button class="pocket-card" id="mobilePocketTrendBtn" type="button">
         <span>e1RM</span>
-        <strong id="mobilePocketE1rm">--</strong>
+        <strong id="mobilePocketE1rm">待記錄</strong>
       </button>
     </section>
 
@@ -4673,6 +5133,21 @@
         </div>
       </section>
 
+      <section class="training-flow-strip" aria-label="今日訓練流程" data-i18n-aria-label="trainingFlowAria">
+        <div class="flow-step is-current">
+          <span>01</span>
+          <div><strong data-i18n="trainingFlowStepPlan">選課表日</strong><small data-i18n="trainingFlowStepPlanHint">確認週次與訓練日</small></div>
+        </div>
+        <div class="flow-step">
+          <span>02</span>
+          <div><strong data-i18n="trainingFlowStepTopSet">記錄頂組</strong><small data-i18n="trainingFlowStepTopSetHint">先存主項工作組</small></div>
+        </div>
+        <div class="flow-step">
+          <span>03</span>
+          <div><strong data-i18n="trainingFlowStepAdjust">調整退階</strong><small data-i18n="trainingFlowStepAdjustHint">看疲勞與建議重量</small></div>
+        </div>
+      </section>
+
       <section class="today-command-center" aria-label="今日訓練操作台">
         <div class="today-command-top">
           <div class="mission-ring" id="todayCompletionRing" aria-label="今日完成度">
@@ -4683,25 +5158,28 @@
             <h2 id="todayMissionTitle">今天怎麼練</h2>
             <p id="todayMissionSubtitle">先確認主項、建議重量，再記錄每一組。</p>
           </div>
-          <button class="primary today-primary-action" id="openQuickLogSheetBtn" type="button">記錄一組</button>
+          <div class="today-primary-stack">
+            <span class="next-action-label" id="todayNextActionLabel">下一步</span>
+            <button class="primary today-primary-action" id="openQuickLogSheetBtn" type="button">下一步：記錄一組</button>
+          </div>
         </div>
         <div class="today-action-grid">
-          <button class="mission-card" id="openTodayPlanSheetBtn" type="button">
+          <button class="mission-card mission-card--next" id="openTodayPlanSheetBtn" type="button">
             <span class="mini-label">今天做什麼</span>
             <strong id="todayPlanCardTitle">查看任務</strong>
             <small id="todayPlanCardHint">主項、副項與退階組數</small>
           </button>
-          <button class="mission-card primary" id="openQuickLogSheetBtnAlt" type="button">
-            <span class="mini-label">快速操作</span>
-            <strong>存一組</strong>
-            <small>重量、次數、RPE 一次完成</small>
+          <button class="mission-card mission-card--secondary" id="openQuickLogSheetBtnAlt" type="button">
+            <span class="mini-label">快速填表</span>
+            <strong>打開小表單</strong>
+            <small>主要記錄區在下方</small>
           </button>
-          <button class="mission-card" id="openReadySheetBtn" type="button">
+          <button class="mission-card mission-card--status" id="openReadySheetBtn" type="button">
             <span class="mini-label">今天狀態</span>
             <strong id="todayReadyCardTitle">未檢查</strong>
             <small id="todayReadyCardHint">睡眠、疼痛、疲勞</small>
           </button>
-          <button class="mission-card" id="openCoachSheetBtn" type="button">
+          <button class="mission-card mission-card--status" id="openCoachSheetBtn" type="button">
             <span class="mini-label">教練調整</span>
             <strong id="todayCoachCardTitle">查看建議</strong>
             <small id="todayCoachCardHint">套用前可先預覽</small>
@@ -4710,15 +5188,15 @@
         <div class="today-visual-grid">
           <button class="mini-visual" id="openE1rmTrendBtnToday" type="button">
             <span>e1RM 趨勢</span>
-            <strong id="todayE1rmMini">—</strong>
+            <strong id="todayE1rmMini">先存一組</strong>
           </button>
           <div class="mini-visual">
             <span>建議退階</span>
-            <strong id="todaySuggestedMini">—</strong>
+            <strong id="todaySuggestedMini">待計算</strong>
           </div>
           <div class="mini-visual">
             <span>疲勞下降</span>
-            <strong id="todayFatigueMini">—</strong>
+            <strong id="todayFatigueMini">待輸入</strong>
             <div class="mini-bar"><i id="todayFatigueBar"></i></div>
           </div>
         </div>
@@ -4788,6 +5266,12 @@
               <div class="quick-dose-grid">
                 <div class="field quick-weight-card weight-field">
                   <label for="logWeight">重量 (kg)</label>
+                  <div class="weight-jump-row" aria-label="快速調整重量">
+                    <button type="button" data-step-target="logWeight" data-step="-2.5">-2.5 kg</button>
+                    <button type="button" data-step-target="logWeight" data-step="2.5">+2.5 kg</button>
+                    <button type="button" data-step-target="logWeight" data-step="5">+5 kg</button>
+                    <button type="button" data-step-target="logWeight" data-step="10">+10 kg</button>
+                  </div>
                   <div class="number-stepper">
                     <button type="button" data-step-target="logWeight" data-step="-2.5">−</button>
                     <input id="logWeight" type="number" step="0.1" min="0" inputmode="decimal" placeholder="0" />
@@ -4850,19 +5334,19 @@
           <div class="metrics" style="margin-top:14px">
             <div class="metric">
               <div class="k">%1RM</div>
-              <div class="v" id="pct1rmMetric">—</div>
+              <div class="v" id="pct1rmMetric">待輸入</div>
             </div>
             <div class="metric">
               <div class="k">本組 e1RM</div>
-              <div class="v" id="e1rmMetric">—</div>
+              <div class="v" id="e1rmMetric">待重量</div>
             </div>
             <div class="metric">
               <div class="k">建議退階重量</div>
-              <div class="v" id="suggestedMetric">—</div>
+              <div class="v" id="suggestedMetric">先有頂組</div>
             </div>
             <div class="metric">
               <div class="k">疲勞下降</div>
-              <div class="v" id="fatigueMetric">—</div>
+              <div class="v" id="fatigueMetric">待比較</div>
             </div>
           </div>
 
@@ -4874,9 +5358,9 @@
             <div class="fatigue-track"><div class="fatigue-fill" id="fatigueRailFill"></div></div>
           </div>
 
-          <div class="save-row" style="margin-top:14px">
+          <div class="save-row today-save-bar" style="margin-top:14px">
             <div id="fatigueStatus" class="status warn">等待頂組作為基準</div>
-            <button id="applySuggestedBtn" type="button">套用建議重量</button>
+            <button class="secondary" id="applySuggestedBtn" type="button">套用建議重量</button>
             <button class="primary" id="saveSetBtn" type="button">儲存這一組</button>
           </div>
           <div class="footer-note" id="calcSourceNote"></div>
@@ -7436,9 +7920,18 @@
       trainingDayLabel: "Training day",
       usePlanForToday: "Load into today",
       todayCompletion: "Done",
+      trainingFlowAria: "Today training flow",
+      trainingFlowStepPlan: "Choose plan day",
+      trainingFlowStepPlanHint: "Confirm week and training day",
+      trainingFlowStepTopSet: "Log top set",
+      trainingFlowStepTopSetHint: "Save the main work set first",
+      trainingFlowStepAdjust: "Adjust back-off",
+      trainingFlowStepAdjustHint: "Use fatigue and load suggestions",
       todayMissionEyebrowDefault: "Today mission",
       todayMissionTitleDefault: "Today’s work",
       todayMissionSubtitleDefault: "Check the main lift, suggested load, then log each set.",
+      todayNextActionLabel: "Next action",
+      todayNextActionButton: "Next: log a set",
       quickLogButton: "Log a set",
       mobileFabHint: "Load, reps, RPE",
       missionPocketLabel: "Mission",
@@ -7457,9 +7950,9 @@
       adjustFromReadiness: "Adjust using sleep, pain, and fatigue.",
       todayPlanMiniLabel: "Today’s work",
       todayPlanMiniHint: "Main lift, secondary lift, and back-off sets",
-      quickActionMiniLabel: "Quick action",
-      quickActionTitle: "Save a set",
-      quickActionHint: "Weight, reps, and RPE in one step",
+      quickActionMiniLabel: "Quick fill",
+      quickActionTitle: "Open compact form",
+      quickActionHint: "Use when rushed; full form stays below",
       readyMiniLabel: "Today status",
       readyMiniHint: "Sleep, pain, fatigue",
       coachMiniLabel: "Coach adjustment",
@@ -7660,9 +8153,18 @@
       trainingDayLabel: "訓練日",
       usePlanForToday: "帶入今天訓練",
       todayCompletion: "完成",
+      trainingFlowAria: "今日訓練流程",
+      trainingFlowStepPlan: "選課表日",
+      trainingFlowStepPlanHint: "確認週次與訓練日",
+      trainingFlowStepTopSet: "記錄頂組",
+      trainingFlowStepTopSetHint: "先存主項工作組",
+      trainingFlowStepAdjust: "調整退階",
+      trainingFlowStepAdjustHint: "看疲勞與建議重量",
       todayMissionEyebrowDefault: "今日任務",
       todayMissionTitleDefault: "今天怎麼練",
       todayMissionSubtitleDefault: "先確認主項、建議重量，再記錄每一組。",
+      todayNextActionLabel: "下一步",
+      todayNextActionButton: "下一步：記錄一組",
       quickLogButton: "記錄一組",
       mobileFabHint: "重量、次數、RPE",
       missionPocketLabel: "任務",
@@ -7681,9 +8183,9 @@
       adjustFromReadiness: "可依睡眠、疼痛、疲勞調整",
       todayPlanMiniLabel: "今天做什麼",
       todayPlanMiniHint: "主項、副項與退階組數",
-      quickActionMiniLabel: "快速操作",
-      quickActionTitle: "存一組",
-      quickActionHint: "重量、次數、RPE 一次完成",
+      quickActionMiniLabel: "快速填表",
+      quickActionTitle: "打開小表單",
+      quickActionHint: "主要記錄區在下方",
       readyMiniLabel: "今天狀態",
       readyMiniHint: "睡眠、疼痛、疲勞",
       coachMiniLabel: "教練調整",
@@ -7921,7 +8423,8 @@
         "#todayMissionEyebrow": "todayMissionEyebrowDefault",
         "#todayMissionTitle": "todayMissionTitleDefault",
         "#todayMissionSubtitle": "todayMissionSubtitleDefault",
-        "#openQuickLogSheetBtn": "quickLogButton",
+        "#todayNextActionLabel": "todayNextActionLabel",
+        "#openQuickLogSheetBtn": "todayNextActionButton",
         "#mobileQuickLogFab .mobile-fab-text": "quickLogButton",
         "#mobileQuickLogFab .mobile-fab-hint": "mobileFabHint",
         "#mobilePocketPlanBtn span": "missionPocketLabel",
@@ -8572,12 +9075,17 @@
       if (coachTitle) coachTitle.textContent = decision ? (decision.applied ? t("applied") : t("pendingReview")) : t("viewAdvice");
       const coachHint = document.getElementById("todayCoachCardHint");
       if (coachHint) coachHint.textContent = decision?.action || t("adjustFromReadiness");
+      const setMiniVisual = (id, value, placeholder) => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        const hasValue = value !== null && value !== undefined && value !== "";
+        element.textContent = hasValue ? value : placeholder;
+        element.closest(".mini-visual")?.classList.toggle("is-placeholder", !hasValue);
+      };
       const e1rmMini = document.getElementById("todayE1rmMini");
-      if (e1rmMini) e1rmMini.textContent = bestToday?.e1rm ? `${formatNumber(bestToday.e1rm, 1)} kg` : fallbackBest ? `${formatNumber(fallbackBest, 1)} kg` : "—";
-      const suggestedMini = document.getElementById("todaySuggestedMini");
-      if (suggestedMini) suggestedMini.textContent = metrics.suggestedWeight ? `${formatNumber(metrics.suggestedWeight, 1)} kg` : "—";
-      const fatigueMini = document.getElementById("todayFatigueMini");
-      if (fatigueMini) fatigueMini.textContent = metrics.fatiguePct === null ? "—" : `${formatNumber(metrics.fatiguePct, 1)}%`;
+      if (e1rmMini) setMiniVisual("todayE1rmMini", bestToday?.e1rm ? `${formatNumber(bestToday.e1rm, 1)} kg` : (fallbackBest ? `${formatNumber(fallbackBest, 1)} kg` : ""), zh ? "先存第一組" : "Log first set");
+      setMiniVisual("todaySuggestedMini", metrics.suggestedWeight ? `${formatNumber(metrics.suggestedWeight, 1)} kg` : "", metrics.referenceTop ? (zh ? "輸入本組" : "Enter set") : (zh ? "先有頂組" : "Need top set"));
+      setMiniVisual("todayFatigueMini", metrics.fatiguePct === null ? "" : `${formatNumber(metrics.fatiguePct, 1)}%`, metrics.referenceTop ? (zh ? "輸入本組" : "Enter set") : (zh ? "等待頂組" : "Waiting top set"));
       const fatigueBar = document.getElementById("todayFatigueBar");
       if (fatigueBar) fatigueBar.style.width = `${fatigueValue}%`;
       const pocketMission = document.getElementById("mobilePocketMission");
@@ -10341,6 +10849,7 @@
     }
 
     function switchPage(pageName) {
+      document.body.dataset.page = pageName;
       document.querySelectorAll(".page-tab").forEach((t) => t.classList.toggle("active", t.dataset.page === pageName));
       document.querySelectorAll(".page-content").forEach((p) => p.classList.toggle("active", p.id === "page-" + pageName));
       if (pageName === "history") renderHistory();
@@ -11661,8 +12170,9 @@
       const cx = Math.round(Number(center.x) * width);
       const cy = Math.round(Number(center.y) * height);
       const hasManualAnchor = Boolean(poseManualBarPoint);
-      const rx = Math.round(width * (previous || hasManualAnchor ? 0.095 : 0.18));
-      const ry = Math.round(height * (previous || hasManualAnchor ? 0.07 : 0.12));
+      const hasTrackingAnchor = Boolean(previous || hasManualAnchor || fallback);
+      const rx = Math.round(width * (hasTrackingAnchor ? 0.095 : 0.18));
+      const ry = Math.round(height * (hasTrackingAnchor ? 0.07 : 0.12));
       const x0 = Math.max(0, cx - rx);
       const y0 = Math.max(0, cy - ry);
       const x1 = Math.min(width - 1, cx + rx);
@@ -11678,6 +12188,8 @@
       let weight = 0;
       let sumX = 0;
       let sumY = 0;
+      let minHitX = Infinity;
+      let maxHitX = -Infinity;
       const step = Math.max(1, Math.round(Math.min(width, height) / 560));
       for (let y = 0; y < boxH; y += step) {
         for (let x = 0; x < boxW; x += step) {
@@ -11698,17 +12210,28 @@
           weight += score;
           sumX += absX * score;
           sumY += absY * score;
+          minHitX = Math.min(minHitX, absX);
+          maxHitX = Math.max(maxHitX, absX);
         }
       }
       if (weight < 120) return previous || fallback || null;
-      const detected = { x: sumX / weight / width, y: sumY / weight / height, visibility: Math.min(1, weight / 220), source: "visual" };
-      if (!previous && !poseManualBarPoint) return detected;
-      const anchor = previous || poseManualBarPoint;
+      const anchorX = Number((poseManualBarPoint || fallback || previous)?.x) * width;
+      const centroidX = sumX / weight;
+      const centroidY = sumY / weight;
+      const edgeX = Number.isFinite(anchorX) && Number.isFinite(minHitX) && Number.isFinite(maxHitX)
+        ? (Math.abs(minHitX - anchorX) <= Math.abs(maxHitX - anchorX) ? minHitX : maxHitX)
+        : centroidX;
       return {
-        x: detected.x * 0.72 + Number(anchor.x) * 0.28,
-        y: detected.y * 0.72 + Number(anchor.y) * 0.28,
-        visibility: detected.visibility,
-        source: "visual"
+        x: edgeX / width,
+        y: centroidY / height,
+        visibility: Math.min(1, weight / 220),
+        source: "visual",
+        trackingAnchor: {
+          x: centroidX / width,
+          y: centroidY / height,
+          visibility: Math.min(1, weight / 220),
+          source: "visual-anchor"
+        }
       };
     }
 
@@ -12041,7 +12564,7 @@
             if (enableVisualBarTracking && trackingCtx && video.videoWidth && video.videoHeight) {
               trackingCtx.drawImage(video, 0, 0, trackingCanvas.width, trackingCanvas.height);
               visualBarPoint = detectVisualBarPoint(trackingCtx, trackingCanvas.width, trackingCanvas.height, fallbackBarPoint, previousVisualBarPoint);
-              if (visualBarPoint?.source === "visual") previousVisualBarPoint = visualBarPoint;
+              if (visualBarPoint?.source === "visual") previousVisualBarPoint = visualBarPoint.trackingAnchor || visualBarPoint;
             }
             frames.push({
               time: t,
@@ -12611,11 +13134,18 @@
       const user = getActiveUser();
       const metrics = computeCurrentMetrics();
       const zh = currentLanguage() === "zh";
+      const setMetricDisplay = (id, value, placeholder) => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        const hasValue = value !== null && value !== undefined && value !== "";
+        element.textContent = hasValue ? value : placeholder;
+        element.closest(".metric")?.classList.toggle("is-placeholder", !hasValue);
+      };
 
-      document.getElementById("pct1rmMetric").textContent = metrics.pct ? (metrics.pct * 100).toFixed(1) + "%" : "—";
-      document.getElementById("e1rmMetric").textContent = metrics.e1rm ? formatNumber(metrics.e1rm, 1) + " kg" : "—";
-      document.getElementById("suggestedMetric").textContent = metrics.suggestedWeight ? formatNumber(metrics.suggestedWeight, 1) + " kg" : "—";
-      document.getElementById("fatigueMetric").textContent = metrics.fatiguePct !== null ? formatNumber(metrics.fatiguePct, 1) + "%" : "—";
+      setMetricDisplay("pct1rmMetric", metrics.pct ? (metrics.pct * 100).toFixed(1) + "%" : "", zh ? "填重量" : "Add load");
+      setMetricDisplay("e1rmMetric", metrics.e1rm ? formatNumber(metrics.e1rm, 1) + " kg" : "", zh ? "待計算" : "Will calculate");
+      setMetricDisplay("suggestedMetric", metrics.suggestedWeight ? formatNumber(metrics.suggestedWeight, 1) + " kg" : "", metrics.referenceTop ? (zh ? "等本組資料" : "Need set data") : (zh ? "先存頂組" : "Save top set"));
+      setMetricDisplay("fatigueMetric", metrics.fatiguePct !== null ? formatNumber(metrics.fatiguePct, 1) + "%" : "", metrics.referenceTop ? (zh ? "等本組資料" : "Need set data") : (zh ? "待比較" : "Need baseline"));
       const railFill = document.getElementById("fatigueRailFill");
       const railValue = document.getElementById("fatigueRailValue");
       if (railFill && railValue) {
@@ -12674,9 +13204,12 @@
       const rows = getCurrentSessionLogs();
       renderDashboardSummary();
       if (!rows.length) {
-        const empty = currentLanguage() === "zh" ? "這一天尚未儲存組數。" : "No sets saved for the selected date.";
-        body.innerHTML = `<tr><td colspan="10" class="empty">${empty}</td></tr>`;
-        if (cards) cards.innerHTML = `<div class="empty">${empty}</div>`;
+        const zh = currentLanguage() === "zh";
+        const emptyTitle = zh ? "這一天還沒有訓練組數" : "No sets logged for this day yet";
+        const emptyHint = zh ? "先在上方表單填重量、次數與 RPE，按「儲存這一組」後會出現在這裡。" : "Enter load, reps, and RPE above, then press Save this set to build the session log.";
+        const emptyHtml = `<div class="empty empty-guidance"><strong>${emptyTitle}</strong><span>${emptyHint}</span></div>`;
+        body.innerHTML = `<tr><td colspan="10">${emptyHtml}</td></tr>`;
+        if (cards) cards.innerHTML = emptyHtml;
         return;
       }
       if (cards) {
@@ -14575,5 +15108,6 @@
     refreshAll();
     tryAutoReconnect();
   </script>
+
 </body>
 </html>
