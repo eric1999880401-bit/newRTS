@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#f1e9d6" />
+  <meta name="theme-color" content="#f5f7f8" />
   <title>Powerlifting Log</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b2419'/%3E%3Cpath d='M15 28h34v8H15zM8 24h6v16H8zM50 24h6v16h-6zM25 17h14v7H25zM25 40h14v7H25z' fill='%23fbf6ea'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     // Apply theme BEFORE first paint to avoid flash
     (function () {
@@ -30,6 +30,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="./video-analysis-engine.js"></script>
   <style>
+    @layer legacy {
     /* === 文青風 / Literary Notebook theme === */
     :root {
       /* paper palette */
@@ -4740,23 +4741,28 @@
     @media (prefers-reduced-motion: reduce) {
       * { transition: none !important; scroll-behavior: auto !important; }
     }
+    }
   </style>
+  <link rel="stylesheet" href="./app-ui.css" />
+  <script src="./app-ui.js"></script>
 </head>
 <body data-page="workout">
+  <a class="skip-link" href="#page-workout">跳至訓練 / Skip to training</a>
   <div class="app">
     <section class="app-hero">
       <div class="brand-row">
-        <div class="brand-mark" aria-hidden="true">PL</div>
+        <div class="brand-mark" aria-hidden="true"><img src="./assets/icons/dumbbell.svg" alt="" width="24" height="24" /></div>
         <div>
           <h1>健力訓練助手</h1>
           <div class="sub">今天怎麼練、怎麼調整、怎麼回顧，一個地方完成。</div>
         </div>
       </div>
       <div class="header-actions" aria-label="App actions">
+        <select id="athleteSelect" aria-label="選手 / Athlete"></select>
         <div class="sync-chip"><span class="sync-dot" aria-hidden="true"></span><span id="syncStatusText">offline</span></div>
-        <button class="theme-toggle" id="themeToggleBtn" type="button" aria-label="Toggle light or dark theme" title="Toggle theme">
+        <button class="theme-toggle" id="themeToggleBtn" type="button" aria-label="深色模式" aria-pressed="false" title="開啟深色模式">
           <span class="theme-toggle-icon" aria-hidden="true">☾</span>
-          <span class="theme-toggle-label">夜間</span>
+          <span class="theme-toggle-label">深色</span>
         </button>
         <button class="theme-toggle language-toggle" id="languageToggleBtn" type="button" aria-label="Switch language" title="Switch language">中文</button>
         <button class="primary" id="addUserBtn" type="button">新增選手</button>
@@ -4855,13 +4861,17 @@
       </div>
     </section>
 
-    <div class="page-tabs">
+    <nav class="page-tabs" aria-label="主要導覽 / Main navigation">
       <button class="page-tab active" data-page="workout" data-icon="●">今日</button>
       <button class="page-tab" data-page="planner" data-icon="▦">課表</button>
       <button class="page-tab" data-page="coach" data-icon="▷">影片</button>
       <button class="page-tab" data-page="dashboard" data-icon="⌁">回顧</button>
       <button class="page-tab consumer-hidden-tab" data-page="history" data-icon="≡">紀錄</button>
       <button class="page-tab" data-page="settings" data-icon="◎">我的</button>
+    </nav>
+    <div id="guestNotice" class="guest-notice">
+      <span id="guestNoticeText">目前為範例預覽，登入後查看你的課表與紀錄。</span>
+      <button id="guestSignInBtn" type="button">登入帳號</button>
     </div>
 
     <button class="mobile-quick-fab" id="mobileQuickLogFab" type="button" aria-label="記錄一組">
@@ -5122,6 +5132,10 @@
         </div>
         <div class="today-picker-controls">
           <div class="field">
+            <label for="sessionDate">日期</label>
+            <input id="sessionDate" type="date" />
+          </div>
+          <div class="field">
             <label for="filterWeek">週次</label>
             <select id="filterWeek"></select>
           </div>
@@ -5163,6 +5177,7 @@
             <button class="primary today-primary-action" id="openQuickLogSheetBtn" type="button">下一步：記錄一組</button>
           </div>
         </div>
+        <div id="todayExerciseSummary" class="today-exercise-summary"></div>
         <div class="today-action-grid">
           <button class="mission-card mission-card--next" id="openTodayPlanSheetBtn" type="button">
             <span class="mini-label">今天做什麼</span>
@@ -5204,11 +5219,14 @@
 
       <div class="grid workout-layout today-detail-grid">
         <section class="panel training-card">
+          <details id="todayPlanDisclosure" class="plan-disclosure">
+          <summary id="todayPlanDisclosureLabel">完整課表與備註</summary>
           <div class="panel-header">
           <h2 id="todayPlanDetailsTitle">完整課表細節</h2>
           <div class="hint">需要看規則、主副項、輔助與疲勞上限時再往下看。</div>
           </div>
           <div id="planCards" style="margin-top:14px"></div>
+          </details>
         </section>
 
         <section class="panel training-card">
@@ -5790,7 +5808,10 @@
             <div id="videoEstimateOutput"></div>
           </div>
         </details>
-        <div id="personalCalibrationPanel" class="feature-band calibration-summary"></div>
+        <details class="calibration-drawer">
+          <summary id="calibrationDrawerLabel">個人化校準</summary>
+          <div id="personalCalibrationPanel" class="feature-band calibration-summary"></div>
+        </details>
         <div class="feature-band" style="margin-top:14px">
           <div class="feature-title">
             <strong data-i18n="poseAnalysisTitle">Pose analysis</strong>
@@ -5862,8 +5883,10 @@
     <div id="page-dashboard" class="page-content">
       <section class="panel">
         <h2 id="dashboardHistoryTitle">完整訓練紀錄</h2>
-        <div class="hint">這裡會列出目前選手的所有舊紀錄。找不到時，先確認上方選手是否選到 Camel 或 Pig。</div>
+        <div class="hint" id="historyIntro">查看、搜尋目前與已封存的訓練紀錄。</div>
         <div id="reviewCommandPanel" class="review-command-panel"></div>
+        <details id="recordBrowserDrawer" class="review-detail-drawer">
+        <summary id="recordBrowserLabel">依日期瀏覽與封存管理</summary>
         <div class="history-control-bar">
           <span class="history-summary-chip" id="historySummaryText">目前選手</span>
           <div class="actions-inline">
@@ -5879,19 +5902,23 @@
           <summary>已封存週期</summary>
           <div id="archiveCycleList" class="archive-list"></div>
         </details>
+        </details>
       </section>
+      <details class="review-detail-drawer">
+      <summary id="reviewInsightsLabel">恢復狀態與詳細分析</summary>
       <section class="panel" style="margin-top:16px">
         <h2 id="dashboardTrendTitle">訓練趨勢</h2>
         <div class="hint">快速看最近 28 天的 e1RM、訓練量、恢復狀態與教練調整。</div>
         <div id="progressOverview" class="metric-strip"></div>
         <div id="dashboardLanes" class="dashboard-lanes"></div>
       </section>
+      </details>
       <section class="panel" style="margin-top:16px">
         <div class="feature-title">
           <strong>本週回顧</strong>
           <span class="status warn" id="weeklyReviewStatus">最近 7 天</span>
         </div>
-        <div class="hint">每週回顧完成率、e1RM 趨勢、RPE 校準與疲勞警訊，讓使用者看得出每月付費的訓練決策價值。</div>
+        <div class="hint" id="weeklyReviewIntro">回顧完成率、力量趨勢與疲勞，安排下一週訓練。</div>
         <div id="weeklyReviewOutput" class="weekly-grid"></div>
       </section>
     </div>
@@ -8420,9 +8447,6 @@
         "label[for='filterDay']": "trainingDayLabel",
         "#usePlanForLogBtn": "usePlanForToday",
         "#todayCompletionRing small": "todayCompletion",
-        "#todayMissionEyebrow": "todayMissionEyebrowDefault",
-        "#todayMissionTitle": "todayMissionTitleDefault",
-        "#todayMissionSubtitle": "todayMissionSubtitleDefault",
         "#todayNextActionLabel": "todayNextActionLabel",
         "#openQuickLogSheetBtn": "todayNextActionButton",
         "#mobileQuickLogFab .mobile-fab-text": "quickLogButton",
@@ -8431,14 +8455,11 @@
         "#mobilePocketQuickLogBtn span": "setsPocketLabel",
         "#mobilePocketTrendBtn span": "e1rmPocketLabel",
         "#openTodayPlanSheetBtn .mini-label": "todayPlanMiniLabel",
-        "#todayPlanCardHint": "todayPlanMiniHint",
         "#openQuickLogSheetBtnAlt .mini-label": "quickActionMiniLabel",
         "#openQuickLogSheetBtnAlt strong": "quickActionTitle",
         "#openQuickLogSheetBtnAlt small": "quickActionHint",
         "#openReadySheetBtn .mini-label": "readyMiniLabel",
-        "#todayReadyCardHint": "readyMiniHint",
         "#openCoachSheetBtn .mini-label": "coachMiniLabel",
-        "#todayCoachCardHint": "coachMiniHint",
         "#openE1rmTrendBtnToday span": "e1rmTrendMiniLabel",
         ".today-visual-grid .mini-visual:nth-child(2) span": "suggestedBackoffMiniLabel",
         ".today-visual-grid .mini-visual:nth-child(3) span": "fatigueDropMiniLabel",
@@ -8490,15 +8511,13 @@
       setAttr(".today-day-picker", "aria-label", t("todayPickerAria"));
       if (lang === "zh") {
         setText("#todayPlanDetailsTitle", "完整課表細節");
-        setText("#page-planner h2", "課表產生");
-        setText("#page-coach h2", "影片與教練");
+        setText("#planBuilderTitle", "課表產生");
         setText("#dashboardHistoryTitle", "完整訓練紀錄");
         setText("#dashboardTrendTitle", "訓練趨勢");
         setText("#page-history h2", "完整訓練紀錄");
       } else {
         setText("#todayPlanDetailsTitle", "Full plan details");
-        setText("#page-planner h2", "Plan builder");
-        setText("#page-coach h2", "Video and coach");
+        setText("#planBuilderTitle", "Plan builder");
         setText("#dashboardHistoryTitle", "Full training history");
         setText("#dashboardTrendTitle", "Training trends");
         setText("#page-history h2", "Full training history");
@@ -8510,6 +8529,8 @@
       }
       renderMembershipStatus();
       renderTopActionDock();
+      renderTodayCommandCenter();
+      refreshAppShell();
     }
 
     async function toggleLanguage() {
@@ -8876,8 +8897,8 @@
       return Math.max(min, Math.min(max, Number(value) || 0));
     }
 
-    function todayString() {
-      return new Date().toISOString().slice(0, 10);
+    function todayString(date = new Date()) {
+      return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
     }
 
     function parseDateValue(value) {
@@ -9005,7 +9026,7 @@
     }
 
     function getPlannedSetEstimate(row) {
-      if (!row) return { topSets: 1, topReps: Number(document.getElementById("logReps")?.value) || 1, backoffSets: 2, backoffReps: Number(document.getElementById("targetReps")?.value) || 5 };
+      if (!row) return { topSets: 0, topReps: 0, backoffSets: 0, backoffReps: 0 };
       const structured = getStructuredPrescription(row);
       const topSets = Number(structured.topSets) || 1;
       const topReps = Number(structured.topReps) || 1;
@@ -9023,8 +9044,11 @@
       const row = getTodayScheduleRow();
       const rows = (user.logs || []).filter((item) => item.date === date);
       const estimate = getPlannedSetEstimate(row);
-      const plannedSets = Math.max(1, estimate.topSets + estimate.backoffSets);
-      const completion = Math.max(0, Math.min(100, Math.round((rows.length / plannedSets) * 100)));
+      const progress = window.AppUI.mainLiftProgress(rows, {
+        date, week, day, family: liftFamily(row?.mainLift), topSets: estimate.topSets, backoffSets: estimate.backoffSets
+      });
+      const plannedSets = progress.planned;
+      const completion = progress.percent;
       const metrics = computeCurrentMetrics();
       const bestToday = rows
         .filter((item) => Number.isFinite(Number(item.e1rm)))
@@ -9044,17 +9068,42 @@
       if (!subtitleParts.length) subtitleParts.push(t("noMissionSelected"));
 
       const ring = document.getElementById("todayCompletionRing");
-      if (ring) ring.style.setProperty("--pct", completion);
+      if (ring) {
+        ring.style.setProperty("--pct", completion);
+        ring.setAttribute("role", "progressbar");
+        ring.setAttribute("aria-valuemin", "0");
+        ring.setAttribute("aria-valuemax", "100");
+        ring.setAttribute("aria-valuenow", String(completion));
+        ring.setAttribute("aria-label", zh ? "主項工作組進度" : "Main lift working sets");
+      }
       const completionText = document.getElementById("todayCompletionPct");
       if (completionText) completionText.textContent = `${completion}%`;
       const eyebrow = document.getElementById("todayMissionEyebrow");
       if (eyebrow) eyebrow.textContent = `${user.name} · ${date}`;
       const title = document.getElementById("todayMissionTitle");
-      if (title) title.textContent = row?.focus || (zh ? `第 ${week} 週 · 第 ${day} 天` : `Week ${week} · Day ${day}`);
+      if (title) title.textContent = row ? (zh ? `第 ${week} 週 · 第 ${day} 天` : `Week ${week} · Day ${day}`) : (zh ? "自由訓練" : "Free training");
       const subtitle = document.getElementById("todayMissionSubtitle");
-      if (subtitle) subtitle.textContent = `${subtitleParts.join(" + ")} · ${t("plannedSavedSets").replace("{planned}", plannedSets).replace("{saved}", rows.length)}`;
+      if (subtitle) subtitle.textContent = row
+        ? (zh ? `主項工作組 ${progress.done} / ${plannedSets} 組完成` : `Main lift: ${progress.done} / ${plannedSets} working sets`)
+        : (zh ? "這一天沒有安排課表，可直接記錄訓練。" : "No scheduled session. You can still log your training.");
+      const summary = document.getElementById("todayExerciseSummary");
+      if (summary) {
+        const dose = (name, sets, reps, rpe, source) => {
+          const load = String(source || "").match(/\b(\d+(?:\.\d+)?)\s*kg\b/i);
+          return `<div class="exercise-dose"><span>${name}</span><strong>${sets} × ${reps}</strong><small>${zh ? "組 × 下" : "sets × reps"} · RPE ${escapeHtml(rpe || "—")}${load ? ` · ${escapeHtml(load[1])} kg` : ""}</small></div>`;
+        };
+        const prescription = row ? getStructuredPrescription(row) : null;
+        summary.innerHTML = row ? `
+          <div class="exercise-summary-row"><span class="exercise-order">01</span><div>
+            <h3>${escapeHtml(window.AppUI.trainingLabel(row.mainLift, currentLanguage()))}</h3>
+            ${dose(zh ? "頂組" : "Top", estimate.topSets, estimate.topReps, prescription.topRpe, row.topSetTarget)}
+            ${estimate.backoffSets ? dose(zh ? "退階" : "Back-off", estimate.backoffSets, estimate.backoffReps, prescription.backoffRpe, row.backoffPlan) : ""}
+          </div></div>
+          ${row.secondaryLift ? `<div class="exercise-summary-row secondary"><span class="exercise-order">02</span><div><h3>${escapeHtml(window.AppUI.trainingLabel(row.secondaryLift, currentLanguage()))}</h3>${renderPrescriptionMiniList(row.secondaryPrescription, currentLanguage())}</div></div>` : ""}
+        ` : "";
+      }
       const planCardTitle = document.getElementById("todayPlanCardTitle");
-      if (planCardTitle) planCardTitle.textContent = row?.mainLift || t("viewMission");
+      if (planCardTitle) planCardTitle.textContent = zh ? "完整課表" : "Full plan";
       const planCardHint = document.getElementById("todayPlanCardHint");
       if (planCardHint) {
         planCardHint.textContent = row
@@ -9091,7 +9140,7 @@
       const pocketMission = document.getElementById("mobilePocketMission");
       if (pocketMission) pocketMission.textContent = row?.mainLift ? liftFamily(row.mainLift) : (zh ? `第 ${week} 週` : `Week ${week}`);
       const pocketSets = document.getElementById("mobilePocketSets");
-      if (pocketSets) pocketSets.textContent = `${rows.length}/${plannedSets}`;
+      if (pocketSets) pocketSets.textContent = `${progress.done}/${plannedSets}`;
       const pocketE1rm = document.getElementById("mobilePocketE1rm");
       if (pocketE1rm) pocketE1rm.textContent = bestToday?.e1rm ? `${formatNumber(bestToday.e1rm, 0)}` : fallbackBest ? `${formatNumber(fallbackBest, 0)}` : "--";
     }
@@ -9101,6 +9150,10 @@
         const stringValue = String(value);
         return `<option value="${escapeHtml(stringValue)}"${String(selectedValue) === stringValue ? " selected" : ""}>${escapeHtml(stringValue)}</option>`;
       }).join("");
+    }
+
+    function buildTrainingOptions(values, selectedValue) {
+      return values.map((value) => `<option value="${escapeHtml(value)}"${String(selectedValue) === String(value) ? " selected" : ""}>${escapeHtml(window.AppUI.trainingLabel(value, currentLanguage()))}</option>`).join("");
     }
 
     function openE1rmTrendModal(options = {}) {
@@ -9219,12 +9272,16 @@
       const variationValues = ["Competition", "Paused", "Tempo", "Close Grip", "Deficit", "Board", "Pin", "Spoto", "Box", "Touch and Go", "Other"];
       openInteractionModal(zh ? "記錄一組" : "Log a set", `
         <div class="choice-row" data-sheet-lift>
-          ${["Squat", "Bench", "Deadlift"].map((item) => `<button type="button" data-value="${item}" class="${item === lift ? "active" : ""}">${item}</button>`).join("")}
+          ${["Squat", "Bench", "Deadlift"].map((item) => `<button type="button" data-value="${item}" aria-pressed="${item === lift}" class="${item === lift ? "active" : ""}">${escapeHtml(window.AppUI.trainingLabel(item, currentLanguage()))}</button>`).join("")}
         </div>
         <div class="quick-sheet-grid" style="margin-top:14px">
+          <div class="field wide">
+            <label for="sheetWeight">${zh ? "重量 kg" : "Weight kg"}</label>
+            <input id="sheetWeight" type="number" min="0" step="0.1" value="${escapeHtml(weight)}" inputmode="decimal" />
+          </div>
           <div class="field">
             <label for="sheetSetType">${zh ? "組別" : "Set type"}</label>
-            <select id="sheetSetType">${buildSelectOptions(["Warm up", "Top", "Back off", "Secondary", "Deload", "Accessory", "Other"], setType)}</select>
+            <select id="sheetSetType">${buildTrainingOptions(["Warm up", "Top", "Back off", "Secondary", "Deload", "Accessory", "Other"], setType)}</select>
           </div>
           <div class="field">
             <label for="sheetReps">${zh ? "次數" : "Reps"}</label>
@@ -9235,12 +9292,16 @@
             <select id="sheetRpe">${buildSelectOptions(rpeValues, Number(rpe).toFixed(1))}</select>
           </div>
           <div class="field wide">
-            <label for="sheetWeight">${zh ? "重量 kg" : "Weight kg"}</label>
-            <input id="sheetWeight" type="number" min="0" step="0.1" value="${escapeHtml(weight)}" inputmode="decimal" />
+            <label for="sheetVariation">${zh ? "變化式" : "Variation"}</label>
+            <select id="sheetVariation">${buildTrainingOptions(variationValues, variation)}</select>
+          </div>
+          <div class="field wide" id="sheetVariationOtherWrap" ${variation !== "Other" ? "hidden" : ""}>
+            <label for="sheetVariationOther">${zh ? "自訂變化式" : "Custom variation"}</label>
+            <input id="sheetVariationOther" value="${escapeHtml(document.getElementById("logVariationOther").value)}" />
           </div>
           <div class="field wide">
-            <label for="sheetVariation">${zh ? "變化式" : "Variation"}</label>
-            <select id="sheetVariation">${buildSelectOptions(variationValues, variation)}</select>
+            <label for="sheetNotes">${zh ? "備註（選填）" : "Notes (optional)"}</label>
+            <input id="sheetNotes" value="${escapeHtml(document.getElementById("logGeneralNotes").value)}" />
           </div>
         </div>
         <div class="quick-sheet-save">
@@ -9262,11 +9323,17 @@
         body.querySelectorAll("[data-sheet-lift] button").forEach((button) => {
           button.addEventListener("click", () => {
             selectedLift = button.dataset.value;
-            body.querySelectorAll("[data-sheet-lift] button").forEach((item) => item.classList.toggle("active", item === button));
+            body.querySelectorAll("[data-sheet-lift] button").forEach((item) => {
+              item.classList.toggle("active", item === button);
+              item.setAttribute("aria-pressed", String(item === button));
+            });
           });
         });
         ["sheetWeight", "sheetReps", "sheetRpe"].forEach((id) => body.querySelector("#" + id)?.addEventListener("input", updatePreview));
         updatePreview();
+        body.querySelector("#sheetVariation").addEventListener("change", (event) => {
+          body.querySelector("#sheetVariationOtherWrap").hidden = event.target.value !== "Other";
+        });
         body.querySelector("#sheetSaveSetBtn")?.addEventListener("click", async () => {
           document.getElementById("logLift").value = selectedLift;
           document.getElementById("logSetType").value = body.querySelector("#sheetSetType")?.value || "Top";
@@ -9274,6 +9341,9 @@
           document.getElementById("logRpe").value = body.querySelector("#sheetRpe")?.value || "8.0";
           document.getElementById("logWeight").value = body.querySelector("#sheetWeight")?.value || "";
           document.getElementById("logVariation").value = body.querySelector("#sheetVariation")?.value || "Competition";
+          document.getElementById("logVariationOther").value = body.querySelector("#sheetVariationOther").value;
+          document.getElementById("logGeneralNotes").value = body.querySelector("#sheetNotes").value;
+          document.getElementById("variationOtherWrap").style.display = document.getElementById("logVariation").value === "Other" ? "block" : "none";
           syncAllSegmentedControls();
           renderMetrics();
           const saved = await saveSet();
@@ -9415,34 +9485,39 @@
         body.querySelector("#sheetOpenAiCoachBtn")?.addEventListener("click", () => {
           closeInteractionModal();
           switchPage("coach");
+          const drawer = document.getElementById("coachDrawer");
+          if (drawer) { drawer.open = true; drawer.scrollIntoView({ block: "start", behavior: "smooth" }); }
         });
       }, { mode: "sheet" });
     }
 
     function openHistoryCenterModal() {
       const user = getActiveUser();
-      openInteractionModal("紀錄中心", `
+      const zh = currentLanguage() === "zh";
+      openInteractionModal(zh ? "紀錄中心" : "Training records", `
         <div class="modal-stat-grid">
-          <div class="modal-stat"><div class="k">目前週期</div><div class="v">${(user.logs || []).length}</div></div>
-          <div class="modal-stat"><div class="k">封存週期</div><div class="v">${(user.archivedCycles || []).length}</div></div>
-          <div class="modal-stat"><div class="k">全部紀錄</div><div class="v">${getAllTrainingLogs(user).length}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "目前週期" : "Current cycle"}</div><div class="v">${(user.logs || []).length}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "封存週期" : "Archived cycles"}</div><div class="v">${(user.archivedCycles || []).length}</div></div>
+          <div class="modal-stat"><div class="k">${zh ? "全部紀錄" : "All records"}</div><div class="v">${getAllTrainingLogs(user).length}</div></div>
         </div>
         <div class="record-filter-grid">
-          <select id="recordScopeFilter"><option value="active">目前週期</option><option value="all">全部</option><option value="archived">已封存</option></select>
-          <select id="recordLiftFilter"><option value="all">全部動作</option><option>Squat</option><option>Bench</option><option>Deadlift</option></select>
-          <select id="recordDaysFilter"><option value="30">最近 30 天</option><option value="90">最近 90 天</option><option value="180">最近 180 天</option><option value="all">全部日期</option></select>
-          <input id="recordSearchFilter" type="search" placeholder="搜尋備註或日期" />
+          <select id="recordScopeFilter" aria-label="${zh ? "週期範圍" : "Cycle scope"}"><option value="all">${zh ? "全部週期" : "All cycles"}</option><option value="active">${zh ? "目前週期" : "Current cycle"}</option><option value="archived">${zh ? "已封存" : "Archived"}</option></select>
+          <select id="recordLiftFilter" aria-label="${zh ? "動作" : "Lift"}"><option value="all">${zh ? "全部動作" : "All lifts"}</option>${buildTrainingOptions(["Squat", "Bench", "Deadlift"], "all")}</select>
+          <select id="recordDaysFilter" aria-label="${zh ? "日期範圍" : "Date range"}"><option value="all">${zh ? "全部日期" : "All dates"}</option>${[30,90,180].map((days) => `<option value="${days}">${zh ? `最近 ${days} 天` : `Last ${days} days`}</option>`).join("")}</select>
+          <input id="recordSearchFilter" type="search" aria-label="${zh ? "搜尋紀錄" : "Search records"}" placeholder="${zh ? "搜尋備註或日期" : "Search notes or date"}" />
         </div>
         <div class="record-center-list" id="recordCenterList"></div>
+        <div class="record-pagination"><span id="recordResultCount" aria-live="polite"></span><button id="recordLoadMore" type="button">${zh ? "顯示更多" : "Show more"}</button></div>
         <div class="modal-action-grid">
-          <button id="sheetArchiveCycleBtn" type="button">封存目前週期</button>
-          <button class="danger" id="sheetDeleteLogsBtn" type="button">刪除紀錄</button>
+          <button id="sheetArchiveCycleBtn" type="button">${zh ? "封存目前週期" : "Archive current cycle"}</button>
+          <button class="danger" id="sheetDeleteLogsBtn" type="button">${zh ? "刪除目前週期紀錄" : "Delete current cycle logs"}</button>
         </div>
       `, (body) => {
+        let visibleLimit = 80;
         const renderList = () => {
-          const scope = body.querySelector("#recordScopeFilter")?.value || "active";
+          const scope = body.querySelector("#recordScopeFilter")?.value || "all";
           const lift = body.querySelector("#recordLiftFilter")?.value || "all";
-          const days = body.querySelector("#recordDaysFilter")?.value || "30";
+          const days = body.querySelector("#recordDaysFilter")?.value || "all";
           const query = String(body.querySelector("#recordSearchFilter")?.value || "").toLowerCase().trim();
           const cutoff = days === "all" ? null : new Date(Date.now() - Number(days) * 86400000);
           const includeArchived = scope !== "active";
@@ -9456,19 +9531,22 @@
             if (query && !haystack.includes(query)) return false;
             return true;
           });
-          logs = logs.sort((a, b) => String(b.date).localeCompare(String(a.date)) || Number(b.order) - Number(a.order)).slice(0, 80);
+          const total = logs.length;
+          logs = logs.sort((a, b) => String(b.date).localeCompare(String(a.date)) || Number(b.order) - Number(a.order)).slice(0, visibleLimit);
+          body.querySelector("#recordResultCount").textContent = zh ? `顯示 ${logs.length} / ${total} 筆` : `${logs.length} of ${total} records`;
+          body.querySelector("#recordLoadMore").hidden = logs.length >= total;
           const list = body.querySelector("#recordCenterList");
           if (!list) return;
           list.innerHTML = logs.length ? logs.map((row) => `
             <div class="record-center-item">
               <div>
-                <strong>${escapeHtml(row.date)} · ${escapeHtml(row.lift)} · ${escapeHtml(row.setType || "")}</strong>
-                <span>${row.reps} 下 x ${formatNumber(row.weight, 1)} kg @ ${formatNumber(row.rpe, 1)} · e1RM ${formatNumber(row.e1rm, 1)} kg</span>
-                <span>${row.archived ? "已封存 · " + escapeHtml(row.archiveName || "") : "目前週期"} ${row.techNotes ? " · " + escapeHtml(row.techNotes) : ""}</span>
+                <strong>${escapeHtml(row.date)} · ${escapeHtml(window.AppUI.trainingLabel(row.lift, currentLanguage()))} · ${escapeHtml(window.AppUI.trainingLabel(row.setType || "", currentLanguage()))}</strong>
+                <span>${row.reps} ${zh ? "下" : "reps"} × ${formatNumber(row.weight, 1)} kg · RPE ${formatNumber(row.rpe, 1)} · e1RM ${formatNumber(row.e1rm, 1)} kg</span>
+                <span>${row.archived ? (zh ? "已封存 · " : "Archived · ") + escapeHtml(row.archiveName || "") : (zh ? "目前週期" : "Current cycle")} ${row.techNotes ? " · " + escapeHtml(row.techNotes) : ""}</span>
               </div>
-              <button class="edit-btn" type="button" data-edit-log="${escapeHtml(row.id)}"${row.archived ? " disabled" : ""}>編輯</button>
+              <button class="edit-btn" type="button" data-edit-log="${escapeHtml(row.id)}"${row.archived ? " disabled" : ""}>${zh ? "編輯" : "Edit"}</button>
             </div>
-          `).join("") : `<div class="empty">沒有符合條件的紀錄。</div>`;
+          `).join("") : `<div class="empty">${zh ? "沒有符合條件的紀錄。" : "No matching records."}</div>`;
           list.querySelectorAll("[data-edit-log]").forEach((button) => {
             button.addEventListener("click", () => {
               closeInteractionModal();
@@ -9477,8 +9555,9 @@
           });
         };
         ["recordScopeFilter", "recordLiftFilter", "recordDaysFilter", "recordSearchFilter"].forEach((id) => {
-          body.querySelector("#" + id)?.addEventListener("input", renderList);
+          body.querySelector("#" + id)?.addEventListener("input", () => { visibleLimit = 80; renderList(); });
         });
+        body.querySelector("#recordLoadMore").addEventListener("click", () => { visibleLimit += 80; renderList(); });
         body.querySelector("#sheetArchiveCycleBtn")?.addEventListener("click", () => {
           closeInteractionModal();
           openArchiveCycleModal();
@@ -10849,6 +10928,7 @@
     }
 
     function switchPage(pageName) {
+      closeInteractionModal();
       document.body.dataset.page = pageName;
       document.querySelectorAll(".page-tab").forEach((t) => t.classList.toggle("active", t.dataset.page === pageName));
       document.querySelectorAll(".page-content").forEach((p) => p.classList.toggle("active", p.id === "page-" + pageName));
@@ -10866,6 +10946,8 @@
         renderProgressDashboard();
         renderHistory();
       }
+      refreshAppShell();
+      window.scrollTo({ top: 0, behavior: "instant" });
     }
 
     document.querySelectorAll(".page-tab").forEach((tab) => {
@@ -10900,6 +10982,18 @@
         };
         el.appendChild(btn);
       });
+      refreshAppShell();
+    }
+
+    function refreshAppShell() {
+      if (!window.AppUI) return;
+      window.AppUI.refresh({ lang: currentLanguage(), athletes: Object.values(state.users), activeId: state.activeUserId, signedIn: Boolean(authUser) });
+      const description = document.getElementById("plannerCurrentDescription");
+      if (description) {
+        const program = getActiveUser().program || [];
+        const weeks = new Set(program.map((row) => row.week)).size;
+        description.textContent = currentLanguage() === "zh" ? `${weeks} 週 · ${program.length} 堂訓練` : `${weeks} weeks · ${program.length} sessions`;
+      }
     }
 
     function renderSettings() {
@@ -10913,7 +11007,7 @@
 
     function renderDashboardSummary() {
       const user = getActiveUser();
-      const date = document.getElementById("logDate")?.value || new Date().toISOString().slice(0, 10);
+      const date = document.getElementById("logDate")?.value || todayString();
       const rows = (user.logs || []).filter((row) => row.date === date);
       const liftNames = [...new Set(rows.map((row) => row.lift).filter(Boolean))];
       const bestRow = rows
@@ -11533,6 +11627,7 @@
     }
 
     function renderBuilderVisualSummary() {
+      const zh = currentLanguage() === "zh";
       const weeksEl = document.getElementById("builderWeeks");
       if (!weeksEl) return;
       const weeks = Number(weeksEl.value) || 8;
@@ -11549,21 +11644,21 @@
         const el = document.getElementById(id);
         if (el) el.textContent = text;
       };
-      setTextSafe("builderWeeksPreview", `${weeks} 週`);
-      setTextSafe("builderSessionsPreview", `預計 ${sessions} 堂`);
-      setTextSafe("builderDaysPreview", `${days} 天/週`);
+      setTextSafe("builderWeeksPreview", zh ? `${weeks} 週` : `${weeks} weeks`);
+      setTextSafe("builderSessionsPreview", zh ? `預計 ${sessions} 堂` : `${sessions} sessions`);
+      setTextSafe("builderDaysPreview", zh ? `${days} 天/週` : `${days} days/week`);
       setTextSafe("builderGoalPreview", goal);
       setTextSafe("builderStrategyPreview", strategy);
       setTextSafe("builderWeaknessPreview", weakness);
-      setTextSafe("builderStressPreview", `壓力：${stress}`);
+      setTextSafe("builderStressPreview", zh ? `壓力：${stress}` : `Stress: ${stress}`);
       if (status) {
         status.className = `status ${meetDate ? "ok" : "warn"}`;
-        status.textContent = meetDate ? "目標日已設定" : "可先產生草稿";
+        status.textContent = meetDate ? (zh ? "目標日已設定" : "Target date set") : (zh ? "草稿" : "Draft");
       }
       if (hint) {
-        hint.textContent = meetDate
-          ? `${weeks} 週、每週 ${days} 天，往 ${meetDate} 的 ${goal} block。`
-          : `${weeks} 週、每週 ${days} 天，先產生可編輯草稿再決定是否套用。`;
+        hint.textContent = zh
+          ? `${weeks} 週，每週 ${days} 天${meetDate ? ` · 目標日 ${meetDate}` : ""}`
+          : `${weeks} weeks, ${days} days/week${meetDate ? ` · Target ${meetDate}` : ""}`;
       }
     }
 
@@ -12950,7 +13045,7 @@
             <h3>${escapeHtml(user.name || "Athlete")} ${zh ? "的訓練雷達" : "training radar"}</h3>
             <div class="compact-list">${zh ? "先看趨勢與最近訓練，需要細節時再展開完整紀錄。" : "Scan trends first, then open full records only when needed."}</div>
             <div class="review-score-grid">
-              <div class="review-score-tile"><div class="k">${zh ? "全部組數" : "Total sets"}</div><div class="v">${logs.length}</div><span>${trainingDates.size} ${zh ? "個訓練日" : "training days"}</span></div>
+              <div class="review-score-tile"><div class="k">${zh ? "目前週期組數" : "Current cycle sets"}</div><div class="v">${logs.length}</div><span>${trainingDates.size} ${zh ? "個訓練日" : "training days"}</span></div>
               <div class="review-score-tile"><div class="k">${zh ? "近 28 天" : "Last 28 days"}</div><div class="v">${recent.length}</div><span>${zh ? "目前週期工作量" : "current-cycle volume"}</span></div>
               <div class="review-score-tile"><div class="k">${zh ? "最近一次" : "Latest"}</div><div class="v">${latest ? shortDateLabel(latest.date) : "--"}</div><span>${latest ? `${latest.setCount} ${zh ? "組" : "sets"}` : (zh ? "尚無紀錄" : "No logs")}</span></div>
               <div class="review-score-tile"><div class="k">${zh ? "封存週期" : "Archives"}</div><div class="v">${archivedCycles.length}</div><span>${zh ? "可回頭比較" : "saved cycles"}</span></div>
@@ -12979,6 +13074,7 @@
         button.addEventListener("click", () => {
           historyExpanded = true;
           renderHistory();
+          document.getElementById("recordBrowserDrawer").open = true;
           document.getElementById("historyAccordionWrap")?.scrollIntoView({ behavior: "smooth", block: "start" });
         });
       });
@@ -13714,10 +13810,12 @@
       document.getElementById("targetRpe").value = "6.0";
       document.getElementById("logReps").value = "1";
       document.getElementById("targetReps").value = "5";
-      document.getElementById("logDate").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("logDate").value = todayString();
     }
 
+    let setSaveInFlight = false;
     async function saveSet() {
+      if (setSaveInFlight) return false;
       if (!canWriteFirebase()) return false;
       const user = getActiveUser();
       const metrics = computeCurrentMetrics();
@@ -13730,8 +13828,8 @@
       const reps = Number(document.getElementById("logReps").value);
       const rpe = Number(document.getElementById("logRpe").value);
 
-      if (!date || !weight || !reps || !rpe) {
-        alert("Please enter date, reps, weight, and RPE.");
+      if (!date || !Number.isFinite(weight) || weight <= 0 || !Number.isInteger(reps) || reps < 1 || reps > 10 || !Number.isFinite(rpe) || rpe < 1 || rpe > 10) {
+        showToast(currentLanguage() === "zh" ? "請填寫日期、有效重量、次數與 RPE。" : "Enter a date, positive weight, reps, and RPE.", "warn");
         return false;
       }
 
@@ -13754,8 +13852,20 @@
         fatiguePct: metrics.fatiguePct
       };
 
+      setSaveInFlight = true;
+      const saveButtons = [document.getElementById("saveSetBtn"), document.getElementById("sheetSaveSetBtn")].filter(Boolean);
+      saveButtons.forEach((button) => { button.disabled = true; button.setAttribute("aria-busy", "true"); });
       user.logs.push(row);
-      const saved = await saveState("Set saved to Firebase.");
+      let saved = false;
+      try {
+        saved = await saveState(currentLanguage() === "zh" ? "這一組已儲存。" : "Set saved.");
+      } catch (error) {
+        console.error("Set save failed:", error);
+        showToast(currentLanguage() === "zh" ? "儲存未完成，請檢查連線後重試。" : "Could not save. Check your connection and retry.", "bad");
+      } finally {
+        setSaveInFlight = false;
+        saveButtons.forEach((button) => { button.disabled = false; button.removeAttribute("aria-busy"); });
+      }
       if (!saved) {
         user.logs = user.logs.filter((savedRow) => savedRow.id !== row.id);
         refreshAll();
@@ -13767,9 +13877,6 @@
       renderHistory();
       renderTodayCommandCenter();
 
-      if (setType === "Top") {
-        document.getElementById("targetReps").focus();
-      }
       return true;
     }
 
@@ -14568,6 +14675,7 @@
     }
 
     function renderOnboardingQuestProgress() {
+      const zh = currentLanguage() === "zh";
       const status = document.getElementById("onboardingStatus");
       const fill = document.getElementById("onboardingProgressFill");
       const hint = document.getElementById("onboardingQuestHint");
@@ -14578,9 +14686,9 @@
       const hasE1rm = ["onboardSquat", "onboardBench", "onboardDeadlift"].some((id) => Number(document.getElementById(id)?.value) > 0);
       const done = [hasGoal, hasPlanProfile, hasWeakness, hasE1rm].filter(Boolean).length;
       const pct = Math.round((done / 4) * 100);
-      status.textContent = `任務 ${done}/4`;
+      status.textContent = zh ? `已填 ${done}/4` : `${done}/4 ready`;
       fill.style.setProperty("--quest-progress", `${pct}%`);
-      hint.textContent = done >= 4
+      hint.textContent = !zh ? "Training goals, weekly schedule, focus, and recent strength." : done >= 4
         ? "任務資料已就緒，可以產生第一份可編輯課表。"
         : done >= 2
           ? "快完成了：補上目標日或三項 e1RM，課表會更個人化。"
@@ -14832,11 +14940,7 @@
     });
 
     document.getElementById("clearActiveDataBtn").addEventListener("click", () => {
-      if (!canWriteFirebase()) return;
-      if (!confirm("Clear all logged sets for the active user?")) return;
-      getActiveUser().logs = [];
-      saveState();
-      refreshAll();
+      openDeleteCurrentLogsModal();
     });
 
     document.getElementById("programImport").addEventListener("change", async (e) => {
@@ -14931,6 +15035,7 @@
 
     ["logDate","logWeek","logDay","logLift","logVariation","logSetType","logReps","logWeight","logRpe","targetReps","targetRpe","filterWeek","filterDay"].forEach((id) => {
       document.getElementById(id).addEventListener("input", () => {
+        if (id === "filterWeek" || id === "filterDay") return;
         if (id === "targetReps" || id === "targetRpe") manualBackoffTargetOverride = true;
         if (id === "logWeek" || id === "logDay") autoFillSessionFocus();
         if (id === "filterWeek" || id === "filterDay") renderPlanCards();
@@ -14947,6 +15052,11 @@
         renderMetrics();
       });
       document.getElementById(id).addEventListener("change", () => {
+        if (id === "filterWeek" || id === "filterDay") {
+          selectTrainingDay(Number(document.getElementById("filterWeek").value), Number(document.getElementById("filterDay").value));
+          renderSessionLog();
+          return;
+        }
         if (id === "targetReps" || id === "targetRpe") manualBackoffTargetOverride = true;
         if (id === "logWeek" || id === "logDay") autoFillSessionFocus();
         if (id === "filterWeek" || id === "filterDay") renderPlanCards();
@@ -14961,6 +15071,7 @@
           syncBackoffTargetsFromPlan(getTodayScheduleRow(), { force: true });
         }
         renderMetrics();
+        refreshAppShell();
       });
     });
 
@@ -15045,16 +15156,15 @@
         const icon = btn.querySelector(".theme-toggle-icon");
         const label = btn.querySelector(".theme-toggle-label");
         const zh = typeof currentLanguage === "function" && currentLanguage() === "zh";
-        if (theme === "dark") {
-          if (icon) icon.textContent = "☀";
-          if (label) label.textContent = zh ? "日間" : "Day";
-        } else {
-          if (icon) icon.textContent = "☾";
-          if (label) label.textContent = zh ? "夜間" : "Night";
-        }
+        const dark = theme === "dark";
+        if (icon) icon.textContent = "";
+        if (label) label.textContent = zh ? "深色" : "Dark";
+        btn.setAttribute("aria-pressed", String(dark));
+        btn.setAttribute("aria-label", zh ? "深色模式" : "Dark mode");
+        btn.title = zh ? (dark ? "關閉深色模式" : "開啟深色模式") : (dark ? "Turn off dark mode" : "Turn on dark mode");
       }
       const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute("content", theme === "dark" ? "#1a1510" : "#f1e9d6");
+      if (meta) meta.setAttribute("content", theme === "dark" ? "#121618" : "#f5f7f8");
     }
     function toggleTheme() {
       const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -15105,6 +15215,7 @@
     setupSelectSteppers();
     populateFixedSelectors();
     loadFbConfigUI();
+    window.AppUI.init();
     refreshAll();
     tryAutoReconnect();
   </script>

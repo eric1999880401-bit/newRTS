@@ -8,7 +8,17 @@
       "functions/**",
       "**/.*",
       "**/node_modules/**",
-      "tests/**"
+      "tests/**",
+      "artifacts/**",
+      "evals/**",
+      "scripts/**",
+      "tools/**",
+      "AGENTS.md",
+      "README.md",
+      "**/*.xlsx",
+      "**/*.csv",
+      "**/*.MOV",
+      "**/*.mp4"
     ]
   },
   "database": {
